@@ -1,0 +1,10 @@
+Product_Name,expected_n,expected_p,expected_k,max_moisture_pct,typical_adulterants
+Urea,46.0,0.0,0.0,1.5,"Sand, Low-grade Urea, Salt, Water"
+TSP (Triple Super Phosphate),0.0,46.0,0.0,3.0,"Inert red soil, Rock powder, Crushed brick"
+MOP (Muriate of Potash),0.0,0.0,60.0,2.0,"Table salt (NaCl), Red dyed sand, Sand"
+NPK 15-15-15,15.0,15.0,15.0,2.0,"Inert filler, Clay, Sand"
+NPK 12-12-17,12.0,12.0,17.0,2.0,"Inert filler, Clay, Sand"
+Ammonium Sulfate (SOA),21.0,0.0,0.0,1.5,"Industrial gypsum, Salt, Water"
+Dolomite,0.0,0.0,0.0,2.5,"Limestone powder, Sand"
+Compost / Organic,1.5,1.0,1.2,25.0,"Raw soil, Debris, Non-composted waste"
+Eppawala Rock Phosphate (ERP),0.0,28.0,0.0,2.0,"Inert soil, River sand"
