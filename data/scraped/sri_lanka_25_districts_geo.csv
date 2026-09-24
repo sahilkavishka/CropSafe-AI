@@ -1,0 +1,26 @@
+Province,District,Primary_Agrarian_Hub,Latitude,Longitude,Zone,Agri_Priority
+North Central Province,Anuradhapura,Anuradhapura Central Agrarian Hub,8.3114,80.4037,Dry Zone,Very High
+North Central Province,Polonnaruwa,Polonnaruwa Rice Belt Hub,7.9403,81.0188,Dry Zone,Very High
+Eastern Province,Ampara,Ampara Digamadulla Hub,7.2912,81.6724,Dry Zone,Very High
+Eastern Province,Batticaloa,Batticaloa Coastal Agrarian Hub,7.731,81.6747,Dry Zone,High
+Eastern Province,Trincomalee,Trincomalee Agri Trading Center,8.5874,81.2152,Dry Zone,Medium
+North Western Province,Kurunegala,Kurunegala Wayamba Agri Complex,7.4863,80.3623,Intermediate Zone,Very High
+North Western Province,Puttalam,Puttalam Agro-Fisheries Hub,8.0362,79.8283,Dry Zone,Medium
+Central Province,Kandy,Kandy Peradeniya Agri Center,7.2906,80.6337,Wet Zone,High
+Central Province,Matale,Matale Spice & Vegetable Center,7.4675,80.6234,Intermediate Zone,High
+Central Province,Nuwara Eliya,Nuwara Eliya Upcountry Vegetable Hub,6.9497,80.7891,Wet Zone - Montane,Very High
+Uva Province,Badulla,Badulla Uva Agri Development Center,6.9934,81.055,Intermediate Zone,High
+Uva Province,Monaragala,Monaragala Commercial Farming Hub,6.8728,81.3507,Dry Zone,High
+Southern Province,Hambantota,Hambantota Ruhunu Agrarian Center,6.1429,81.1212,Dry Zone,Very High
+Southern Province,Matara,Matara Agri Supplies Center,5.9549,80.555,Wet Zone,Medium
+Southern Province,Galle,Galle Southern Agro Hub,6.0535,80.221,Wet Zone,Medium
+Northern Province,Jaffna,Jaffna Peninsula Agri Depot,9.6615,80.0255,Dry Zone,High
+Northern Province,Kilinochchi,Kilinochchi Paddy & Seed Hub,9.3803,80.377,Dry Zone,High
+Northern Province,Mannar,Mannar Agri Marketing Center,8.981,79.9044,Dry Zone,Medium
+Northern Province,Vavuniya,Vavuniya Agrarian Transit Center,8.7514,80.4971,Dry Zone,Medium
+Northern Province,Mullaitivu,Mullaitivu Farming Support Center,9.2671,80.8142,Dry Zone,Medium
+Sabaragamuwa Province,Ratnapura,Ratnapura Plantation & Paddy Hub,6.6828,80.4037,Wet Zone,High
+Sabaragamuwa Province,Kegalle,Kegalle Agri Services Center,7.2513,80.3464,Wet Zone,Medium
+Western Province,Colombo,Colombo Commercial & Harbor Hub,6.9271,79.8612,Wet Zone,High
+Western Province,Gampaha,Gampaha Peri-Urban Agro Center,7.084,79.9939,Wet Zone,Medium
+Western Province,Kalutara,Kalutara Plantation Belt Hub,6.5854,79.9607,Wet Zone,Medium

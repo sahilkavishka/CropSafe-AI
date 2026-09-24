@@ -1,0 +1,29 @@
+{
+    "model_name": "Optuna-Tuned LightGBM Classifier",
+    "architecture_tier": "Multi-Engine (Supervised Multi-Class + 2-Stage Hierarchical + Unsupervised Zero-Day)",
+    "target_variable": "Adulterant_Type",
+    "classes": [
+        "Heavy_Insoluble_Filler",
+        "Moisture_Weight_Padding",
+        "Standard_Pure",
+        "Substandard_Blend"
+    ],
+    "test_accuracy": 0.8975,
+    "test_f1_macro": 0.9136,
+    "hierarchical_accuracy": 0.8925,
+    "hierarchical_macro_f1": 0.9106,
+    "unsupervised_anomaly_roc_auc": 0.9264,
+    "cost_optimal_threshold": 0.14,
+    "single_sample_latency_ms": 1.887,
+    "batch_throughput_samples_per_sec": 37543.6,
+    "model_size_kb": 1118.9,
+    "optimal_hyperparameters": {
+        "n_estimators": 191,
+        "max_depth": 4,
+        "learning_rate": 0.02018730409250065,
+        "num_leaves": 25,
+        "subsample": 0.7437860250845147,
+        "colsample_bytree": 0.7648740401993589
+    },
+    "feature_count": 14
+}

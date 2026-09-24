@@ -1,0 +1,11 @@
+Crop_Name,Category,Typical_Season,Recommended_N_kg_ha,Recommended_P2O5_kg_ha,Recommended_K2O_kg_ha,Tolerance_Moisture_Sensitivity,Avg_Yield_MT_per_ha,Avg_Market_Price_LKR_per_kg,Critical_Deficiency_Impact
+Paddy (Rice),Cereal,Maha & Yala,105.0,25.0,35.0,High,4.8,115.0,"Stunted tillering, unfilled grains, severe yield reduction (up to 40%)"
+Maize (Corn),Grain / Feed,Maha,120.0,45.0,40.0,Medium,5.2,140.0,"Poor cob filling, yellowing leaves, up to 35% yield reduction"
+Tea (Mature VP),Plantation,Year-round,140.0,30.0,90.0,Low,2.2,260.0,"Shoot elongation decline, chlorosis, long-term bush degradation"
+Chili (Green Chili),Spice / Cash Crop,Yala & Maha,90.0,60.0,60.0,High,8.5,450.0,"Flower drop, pod abortion, pod distortion, high financial loss"
+Big Onion,Vegetable / Cash Crop,Yala,80.0,70.0,80.0,High,15.0,220.0,"Small bulb size, neck rot vulnerability, splitting"
+Potato,Tuber / Up-country,Yala & Maha,110.0,150.0,120.0,High,18.0,280.0,"Tuber size reduction, scab susceptibility, severe economic drop"
+Tomato,Vegetable,Year-round,100.0,80.0,70.0,High,22.0,180.0,"Blossom end rot (calcium/moisture imbalance), fruit softening"
+Banana,Fruit Crop,Year-round,160.0,40.0,220.0,Medium,25.0,130.0,"Bunch weight loss, fragile peduncle, finger tip rot"
+Coconut,Plantation,Year-round,80.0,30.0,110.0,Low,7.0,90.0,"Nut fall, yellowing of fronds, reduced copra content"
+Rubber,Plantation,Year-round,60.0,40.0,40.0,Low,1.5,650.0,"Latex yield reduction, bark renewal delay"
