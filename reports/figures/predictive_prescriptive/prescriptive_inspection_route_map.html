@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_6b6133007f78c8c243218fde62730f31 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_6b6133007f78c8c243218fde62730f31" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_6b6133007f78c8c243218fde62730f31 = L.map(
+                "map_6b6133007f78c8c243218fde62730f31",
+                {
+                    center: [8.18, 80.65],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 10,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_644c3a9bfc9b613f8e3bd4a19bf16e7b = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_644c3a9bfc9b613f8e3bd4a19bf16e7b.addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var circle_marker_96cae4ba73396f7d65a1f6fe0b082e4e = L.circleMarker(
+                [8.3114, 80.4037],
+                {"bubblingMouseEvents": true, "color": "green", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "green", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 17.527121840165318, "stroke": true, "weight": 3}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+        var popup_1594bd31d55ecbd8b828b2f8e1922b5d = L.popup({
+  "maxWidth": 260,
+});
+
+        
+            
+                var html_2a93a5bfadb991513342d63dd9847245 = $(`<div id="html_2a93a5bfadb991513342d63dd9847245" style="width: 100.0%; height: 100.0%;">     <div style='font-family: Arial; width: 220px;'>         <h4 style='margin-bottom: 5px; color: #2c3e50;'>Stop #1: Anuradhapura Agrarian Central Hub</h4>         <hr style='margin: 3px 0;'>         <b>Store ID:</b> RET-NCP-01<br>         <b>Forensic Risk:</b> <span style='color: green; font-weight: bold;'>42.0%</span><br>         <b>Inventory Stock:</b> 120 Metric Tons<br>         <b>Expected Fraud Yield:</b> 50.4 MT<br>         <b>Direct Legal Action:</b> Random Bag Core Sampling     </div>     </div>`)[0];
+                popup_1594bd31d55ecbd8b828b2f8e1922b5d.setContent(html_2a93a5bfadb991513342d63dd9847245);
+            
+        
+
+        circle_marker_96cae4ba73396f7d65a1f6fe0b082e4e.bindPopup(popup_1594bd31d55ecbd8b828b2f8e1922b5d)
+        ;
+
+        
+    
+    
+            var marker_ce0b291d892fcef0badbd7b1999abe22 = L.marker(
+                [8.3114, 80.4037],
+                {
+}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var div_icon_803ebbe58f2c3d5a9e71fd447d793026 = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size: 11pt; font-weight: bold; color: black; background: white; border: 1px solid black; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px;\u0027\u003e1\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_ce0b291d892fcef0badbd7b1999abe22.setIcon(div_icon_803ebbe58f2c3d5a9e71fd447d793026);
+            
+    
+            var circle_marker_d6a104dcf3aff038b3aec32ef0140913 = L.circleMarker(
+                [8.5421, 80.4912],
+                {"bubblingMouseEvents": true, "color": "orange", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "orange", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 12.393546707863734, "stroke": true, "weight": 3}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+        var popup_b5795045db5bbe01ed071c993a0019ee = L.popup({
+  "maxWidth": 260,
+});
+
+        
+            
+                var html_0ef8bbcb0be74b8a307a4b47c1f78c1f = $(`<div id="html_0ef8bbcb0be74b8a307a4b47c1f78c1f" style="width: 100.0%; height: 100.0%;">     <div style='font-family: Arial; width: 220px;'>         <h4 style='margin-bottom: 5px; color: #2c3e50;'>Stop #2: Medawachchiya Agro Traders</h4>         <hr style='margin: 3px 0;'>         <b>Store ID:</b> RET-NCP-03<br>         <b>Forensic Risk:</b> <span style='color: orange; font-weight: bold;'>55.0%</span><br>         <b>Inventory Stock:</b> 60 Metric Tons<br>         <b>Expected Fraud Yield:</b> 33.0 MT<br>         <b>Direct Legal Action:</b> Random Bag Core Sampling     </div>     </div>`)[0];
+                popup_b5795045db5bbe01ed071c993a0019ee.setContent(html_0ef8bbcb0be74b8a307a4b47c1f78c1f);
+            
+        
+
+        circle_marker_d6a104dcf3aff038b3aec32ef0140913.bindPopup(popup_b5795045db5bbe01ed071c993a0019ee)
+        ;
+
+        
+    
+    
+            var marker_b3e1d8227e863f5212bb89eb54a71e2f = L.marker(
+                [8.5421, 80.4912],
+                {
+}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var div_icon_dcc66a532ac1bc19fa98693f3fa0e832 = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size: 11pt; font-weight: bold; color: black; background: white; border: 1px solid black; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px;\u0027\u003e2\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_b3e1d8227e863f5212bb89eb54a71e2f.setIcon(div_icon_dcc66a532ac1bc19fa98693f3fa0e832);
+            
+    
+            var circle_marker_dbaa5c508abc1ab6777306ce4d1dad5e = L.circleMarker(
+                [8.1521, 80.3012],
+                {"bubblingMouseEvents": true, "color": "orange", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "orange", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 14.75127113166862, "stroke": true, "weight": 3}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+        var popup_4ec5b1998d7f41ea24da674484c6f7cc = L.popup({
+  "maxWidth": 260,
+});
+
+        
+            
+                var html_9df0e7600266a7b73c84b0a363b79753 = $(`<div id="html_9df0e7600266a7b73c84b0a363b79753" style="width: 100.0%; height: 100.0%;">     <div style='font-family: Arial; width: 220px;'>         <h4 style='margin-bottom: 5px; color: #2c3e50;'>Stop #3: Tambuttegama Farmer Supply Co</h4>         <hr style='margin: 3px 0;'>         <b>Store ID:</b> RET-NCP-02<br>         <b>Forensic Risk:</b> <span style='color: orange; font-weight: bold;'>68.0%</span><br>         <b>Inventory Stock:</b> 85 Metric Tons<br>         <b>Expected Fraud Yield:</b> 57.8 MT<br>         <b>Direct Legal Action:</b> Random Bag Core Sampling     </div>     </div>`)[0];
+                popup_4ec5b1998d7f41ea24da674484c6f7cc.setContent(html_9df0e7600266a7b73c84b0a363b79753);
+            
+        
+
+        circle_marker_dbaa5c508abc1ab6777306ce4d1dad5e.bindPopup(popup_4ec5b1998d7f41ea24da674484c6f7cc)
+        ;
+
+        
+    
+    
+            var marker_9c40b2829aeb5e5e90e69a60b3d568b6 = L.marker(
+                [8.1521, 80.3012],
+                {
+}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var div_icon_1553a0ae1cfd15d3944b1f7043a7d483 = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size: 11pt; font-weight: bold; color: black; background: white; border: 1px solid black; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px;\u0027\u003e3\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_9c40b2829aeb5e5e90e69a60b3d568b6.setIcon(div_icon_1553a0ae1cfd15d3944b1f7043a7d483);
+            
+    
+            var circle_marker_13e19a6591506b5d042e8be61013cc57 = L.circleMarker(
+                [8.0412, 80.5921],
+                {"bubblingMouseEvents": true, "color": "green", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "green", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 15.594870951694341, "stroke": true, "weight": 3}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+        var popup_a9329f8aad2625a6d71e31b22920d198 = L.popup({
+  "maxWidth": 260,
+});
+
+        
+            
+                var html_b56bb8a6cd686c271bebfc095a62f1cf = $(`<div id="html_b56bb8a6cd686c271bebfc095a62f1cf" style="width: 100.0%; height: 100.0%;">     <div style='font-family: Arial; width: 220px;'>         <h4 style='margin-bottom: 5px; color: #2c3e50;'>Stop #4: Kekirawa Fertilizer Depot</h4>         <hr style='margin: 3px 0;'>         <b>Store ID:</b> RET-NCP-04<br>         <b>Forensic Risk:</b> <span style='color: green; font-weight: bold;'>35.0%</span><br>         <b>Inventory Stock:</b> 95 Metric Tons<br>         <b>Expected Fraud Yield:</b> 33.2 MT<br>         <b>Direct Legal Action:</b> Random Bag Core Sampling     </div>     </div>`)[0];
+                popup_a9329f8aad2625a6d71e31b22920d198.setContent(html_b56bb8a6cd686c271bebfc095a62f1cf);
+            
+        
+
+        circle_marker_13e19a6591506b5d042e8be61013cc57.bindPopup(popup_a9329f8aad2625a6d71e31b22920d198)
+        ;
+
+        
+    
+    
+            var marker_5418a777d9be2fd7b325c9a19d4cefa1 = L.marker(
+                [8.0412, 80.5921],
+                {
+}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var div_icon_09710312d4f199444e20ca83ceaa251a = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size: 11pt; font-weight: bold; color: black; background: white; border: 1px solid black; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px;\u0027\u003e4\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_5418a777d9be2fd7b325c9a19d4cefa1.setIcon(div_icon_09710312d4f199444e20ca83ceaa251a);
+            
+    
+            var circle_marker_effb20016d7353c96e2b881ee92e32ab = L.circleMarker(
+                [8.0354, 80.7512],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 16.780941570722426, "stroke": true, "weight": 3}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+        var popup_4f9729e3dda1d23df964161b29a6f979 = L.popup({
+  "maxWidth": 260,
+});
+
+        
+            
+                var html_724f263695e04889a770549a94623f1c = $(`<div id="html_724f263695e04889a770549a94623f1c" style="width: 100.0%; height: 100.0%;">     <div style='font-family: Arial; width: 220px;'>         <h4 style='margin-bottom: 5px; color: #2c3e50;'>Stop #5: Habarana Junction Warehouse</h4>         <hr style='margin: 3px 0;'>         <b>Store ID:</b> RET-NCP-05<br>         <b>Forensic Risk:</b> <span style='color: red; font-weight: bold;'>72.0%</span><br>         <b>Inventory Stock:</b> 110 Metric Tons<br>         <b>Expected Fraud Yield:</b> 79.2 MT<br>         <b>Direct Legal Action:</b> Full Seizure & Laboratory Assay     </div>     </div>`)[0];
+                popup_4f9729e3dda1d23df964161b29a6f979.setContent(html_724f263695e04889a770549a94623f1c);
+            
+        
+
+        circle_marker_effb20016d7353c96e2b881ee92e32ab.bindPopup(popup_4f9729e3dda1d23df964161b29a6f979)
+        ;
+
+        
+    
+    
+            var marker_35604c35ff751bb9cbaeadbff15a5dd7 = L.marker(
+                [8.0354, 80.7512],
+                {
+}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var div_icon_96f9f80550c6073dc7b68a34cd1ab08f = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size: 11pt; font-weight: bold; color: black; background: white; border: 1px solid black; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px;\u0027\u003e5\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_35604c35ff751bb9cbaeadbff15a5dd7.setIcon(div_icon_96f9f80550c6073dc7b68a34cd1ab08f);
+            
+    
+            var circle_marker_0e9354b08a27aa69913ce75dbadad59e = L.circleMarker(
+                [7.9403, 81.0188],
+                {"bubblingMouseEvents": true, "color": "orange", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "orange", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 18.24280680158621, "stroke": true, "weight": 3}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+        var popup_fa68cb1116f41992b53d371685359aee = L.popup({
+  "maxWidth": 260,
+});
+
+        
+            
+                var html_46f0c2330a885eea047f9cacb10b8bdc = $(`<div id="html_46f0c2330a885eea047f9cacb10b8bdc" style="width: 100.0%; height: 100.0%;">     <div style='font-family: Arial; width: 220px;'>         <h4 style='margin-bottom: 5px; color: #2c3e50;'>Stop #6: Polonnaruwa Kaduruwela Store</h4>         <hr style='margin: 3px 0;'>         <b>Store ID:</b> RET-NCP-07<br>         <b>Forensic Risk:</b> <span style='color: orange; font-weight: bold;'>62.0%</span><br>         <b>Inventory Stock:</b> 130 Metric Tons<br>         <b>Expected Fraud Yield:</b> 80.6 MT<br>         <b>Direct Legal Action:</b> Random Bag Core Sampling     </div>     </div>`)[0];
+                popup_fa68cb1116f41992b53d371685359aee.setContent(html_46f0c2330a885eea047f9cacb10b8bdc);
+            
+        
+
+        circle_marker_0e9354b08a27aa69913ce75dbadad59e.bindPopup(popup_fa68cb1116f41992b53d371685359aee)
+        ;
+
+        
+    
+    
+            var marker_cf404bece2f0ffbb8f2f93474cfe2610 = L.marker(
+                [7.9403, 81.0188],
+                {
+}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var div_icon_f1bb732884550b8fb444baea1fdf6a0f = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size: 11pt; font-weight: bold; color: black; background: white; border: 1px solid black; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px;\u0027\u003e6\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_cf404bece2f0ffbb8f2f93474cfe2610.setIcon(div_icon_f1bb732884550b8fb444baea1fdf6a0f);
+            
+    
+            var circle_marker_b54c83e67696e0d2ffffd6731627b84d = L.circleMarker(
+                [8.0512, 80.9812],
+                {"bubblingMouseEvents": true, "color": "red", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "red", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 18.93145530591877, "stroke": true, "weight": 3}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+        var popup_655de4a830d34c45b47f225ae04becfc = L.popup({
+  "maxWidth": 260,
+});
+
+        
+            
+                var html_16d23082d4d1d9fb95e88c9b2608bb64 = $(`<div id="html_16d23082d4d1d9fb95e88c9b2608bb64" style="width: 100.0%; height: 100.0%;">     <div style='font-family: Arial; width: 220px;'>         <h4 style='margin-bottom: 5px; color: #2c3e50;'>Stop #7: Hingurakgoda Agro Services</h4>         <hr style='margin: 3px 0;'>         <b>Store ID:</b> RET-NCP-06<br>         <b>Forensic Risk:</b> <span style='color: red; font-weight: bold;'>81.0%</span><br>         <b>Inventory Stock:</b> 140 Metric Tons<br>         <b>Expected Fraud Yield:</b> 113.4 MT<br>         <b>Direct Legal Action:</b> Full Seizure & Laboratory Assay     </div>     </div>`)[0];
+                popup_655de4a830d34c45b47f225ae04becfc.setContent(html_16d23082d4d1d9fb95e88c9b2608bb64);
+            
+        
+
+        circle_marker_b54c83e67696e0d2ffffd6731627b84d.bindPopup(popup_655de4a830d34c45b47f225ae04becfc)
+        ;
+
+        
+    
+    
+            var marker_b05e66f4534c550e92caca1cf2eefead = L.marker(
+                [8.0512, 80.9812],
+                {
+}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var div_icon_dafeb1632a6f0ab616985fb8161d2ae3 = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size: 11pt; font-weight: bold; color: black; background: white; border: 1px solid black; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px;\u0027\u003e7\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_b05e66f4534c550e92caca1cf2eefead.setIcon(div_icon_dafeb1632a6f0ab616985fb8161d2ae3);
+            
+    
+            var circle_marker_db529ae20290ef3dcab451fb84f3cd03 = L.circleMarker(
+                [8.0312, 80.8921],
+                {"bubblingMouseEvents": true, "color": "green", "dashArray": null, "dashOffset": null, "fill": true, "fillColor": "green", "fillOpacity": 0.7, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "opacity": 1.0, "radius": 11.313708498984761, "stroke": true, "weight": 3}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+        var popup_8f2f49e240593ebd9c59e591a0831a41 = L.popup({
+  "maxWidth": 260,
+});
+
+        
+            
+                var html_54982b367bc1dc913c7ffe6dddd3cef9 = $(`<div id="html_54982b367bc1dc913c7ffe6dddd3cef9" style="width: 100.0%; height: 100.0%;">     <div style='font-family: Arial; width: 220px;'>         <h4 style='margin-bottom: 5px; color: #2c3e50;'>Stop #8: Minneriya Commercial Outlet</h4>         <hr style='margin: 3px 0;'>         <b>Store ID:</b> RET-NCP-08<br>         <b>Forensic Risk:</b> <span style='color: green; font-weight: bold;'>28.0%</span><br>         <b>Inventory Stock:</b> 50 Metric Tons<br>         <b>Expected Fraud Yield:</b> 14.0 MT<br>         <b>Direct Legal Action:</b> Random Bag Core Sampling     </div>     </div>`)[0];
+                popup_8f2f49e240593ebd9c59e591a0831a41.setContent(html_54982b367bc1dc913c7ffe6dddd3cef9);
+            
+        
+
+        circle_marker_db529ae20290ef3dcab451fb84f3cd03.bindPopup(popup_8f2f49e240593ebd9c59e591a0831a41)
+        ;
+
+        
+    
+    
+            var marker_b190a0e50632824a31fb5043b2caae59 = L.marker(
+                [8.0312, 80.8921],
+                {
+}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            var div_icon_c0918ac7161f4a25e2f7701bee538622 = L.divIcon({
+  "html": "\u003cdiv style=\u0027font-size: 11pt; font-weight: bold; color: black; background: white; border: 1px solid black; border-radius: 50%; width: 22px; height: 22px; text-align: center; line-height: 20px;\u0027\u003e8\u003c/div\u003e",
+  "className": "empty",
+});
+        
+    
+                marker_b190a0e50632824a31fb5043b2caae59.setIcon(div_icon_c0918ac7161f4a25e2f7701bee538622);
+            
+    
+            var poly_line_702a258e6ba40aa22dc5ff280d50ae1b = L.polyline(
+                [[8.3114, 80.4037], [8.5421, 80.4912], [8.1521, 80.3012], [8.0412, 80.5921], [8.0354, 80.7512], [7.9403, 81.0188], [8.0512, 80.9812], [8.0312, 80.8921]],
+                {"bubblingMouseEvents": true, "color": "#0052cc", "dashArray": "6", "dashOffset": null, "fill": false, "fillColor": "#0052cc", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.85, "smoothFactor": 1.0, "stroke": true, "weight": 3.5}
+            ).addTo(map_6b6133007f78c8c243218fde62730f31);
+        
+    
+            poly_line_702a258e6ba40aa22dc5ff280d50ae1b.bindTooltip(
+                `<div>
+                     Prescriptive 2-Opt Patrol Tour: 181.8 km
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+</script>
+</html>

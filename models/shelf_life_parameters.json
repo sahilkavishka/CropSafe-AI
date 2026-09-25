@@ -1,0 +1,9 @@
+{
+    "baseline_safe_days": 365.0,
+    "urea_crh_pct": 72.5,
+    "wet_zone_rh_multiplier": 1.45,
+    "dry_zone_rh_multiplier": 0.85,
+    "wet_zone_max_stack_bags": 8,
+    "intermediate_zone_max_stack_bags": 12,
+    "dry_zone_max_stack_bags": 16
+}
