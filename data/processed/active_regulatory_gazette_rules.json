@@ -1,0 +1,19 @@
+{
+    "last_gazette_number": "Gazette Extra. No. 2395/22",
+    "effective_date": "2026-09-25T21:21:49.042064",
+    "mrp_ceilings_lkr": {
+        "urea_subsidized_50kg": 2500.0,
+        "urea_commercial_50kg": 8800.0,
+        "mop_subsidized_50kg": 4500.0,
+        "mop_commercial_50kg": 11500.0,
+        "tsp_subsidized_50kg": 4000.0,
+        "tsp_commercial_50kg": 11000.0
+    },
+    "prohibited_adulterants": [
+        "auramine_o_dye",
+        "rhodamine_b",
+        "crushed_marble_dust",
+        "industrial_untreated_gypsum",
+        "sodium_chloride_rock_salt"
+    ]
+}

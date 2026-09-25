@@ -220,7 +220,13 @@ def run_full_audit():
         "src.models.drone_multispectral_ndvi_prescription",
         "src.models.fertilizer_carbon_lca_footprint",
         "src.models.agrarian_micro_credit_scorecard",
-        "src.models.import_quarantine_border_protocol"
+        "src.models.import_quarantine_border_protocol",
+        # 5 Macro-Policy, Supply-Chain & Agro-Ecological Engines (The 50 Milestone)
+        "src.models.national_policy_wargame_simulator",
+        "src.models.offline_farmer_sync_engine",
+        "src.models.hologram_anti_counterfeit_vision",
+        "src.models.gazette_regulatory_monitor",
+        "src.models.ellangawa_cascade_eutrophication_model"
     ]
 
     for mod_name in modules_to_test:
@@ -282,7 +288,11 @@ def run_full_audit():
         "reports/figures/predictive_prescriptive/paddy_straw_nutrient_recycling_kinetics.png",
         "reports/figures/predictive_prescriptive/soil_acidity_dolomite_titration_curves.png",
         "reports/figures/predictive_prescriptive/drone_multispectral_ndvi_heatmap.png",
-        "reports/figures/predictive_prescriptive/fertilizer_carbon_lifecycle_comparison.png"
+        "reports/figures/predictive_prescriptive/fertilizer_carbon_lifecycle_comparison.png",
+        # Macro-Policy, Anti-Counterfeit & Cascade Eutrophication Figures
+        "reports/figures/predictive_prescriptive/national_policy_wargame_scenarios.png",
+        "reports/figures/predictive_prescriptive/anti_counterfeit_packaging_assay.png",
+        "reports/figures/predictive_prescriptive/ellangawa_cascade_eutrophication_dynamics.png"
     ]
 
     for item_path in expected_reports_and_figures:

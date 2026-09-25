@@ -323,6 +323,21 @@
         },
         "src.models.import_quarantine_border_protocol": {
             "status": "PASS"
+        },
+        "src.models.national_policy_wargame_simulator": {
+            "status": "PASS"
+        },
+        "src.models.offline_farmer_sync_engine": {
+            "status": "PASS"
+        },
+        "src.models.hologram_anti_counterfeit_vision": {
+            "status": "PASS"
+        },
+        "src.models.gazette_regulatory_monitor": {
+            "status": "PASS"
+        },
+        "src.models.ellangawa_cascade_eutrophication_model": {
+            "status": "PASS"
         }
     },
     "reports_and_figures": {
@@ -477,6 +492,18 @@
         "reports/figures/predictive_prescriptive/fertilizer_carbon_lifecycle_comparison.png": {
             "status": "PASS",
             "size_kb": 197.9
+        },
+        "reports/figures/predictive_prescriptive/national_policy_wargame_scenarios.png": {
+            "status": "PASS",
+            "size_kb": 165.6
+        },
+        "reports/figures/predictive_prescriptive/anti_counterfeit_packaging_assay.png": {
+            "status": "PASS",
+            "size_kb": 149.9
+        },
+        "reports/figures/predictive_prescriptive/ellangawa_cascade_eutrophication_dynamics.png": {
+            "status": "PASS",
+            "size_kb": 181.9
         }
     },
     "statistical_rigor": {
