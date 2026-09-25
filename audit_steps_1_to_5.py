@@ -201,7 +201,12 @@ def run_full_audit():
         "src.models.smartphone_field_camera_assay",
         "src.models.cargo_tampering_transit_tracker",
         "src.models.asc_subsidy_ewallet_ledger",
-        "src.models.trilingual_agri_knowledge_bot"
+        "src.models.trilingual_agri_knowledge_bot",
+        # 4 Ecological & Natural Farming Engines
+        "src.models.compost_feedstock_optimizer",
+        "src.models.liquid_biofertilizer_formulator",
+        "src.models.biochar_inoculation_calculator",
+        "src.models.botanical_pest_repellent_engine"
     ]
 
     for mod_name in modules_to_test:
@@ -248,7 +253,12 @@ def run_full_audit():
         "reports/figures/predictive_prescriptive/provincial_stockout_early_warning.png",
         # Smartphone Camera & Cargo Transit Figures
         "reports/figures/predictive_prescriptive/smartphone_field_camera_assay_benchmark.png",
-        "reports/figures/predictive_prescriptive/cargo_transit_tampering_audit.png"
+        "reports/figures/predictive_prescriptive/cargo_transit_tampering_audit.png",
+        # Natural & Ecological Farming Figures
+        "reports/figures/predictive_prescriptive/compost_feedstock_optimization_model.png",
+        "reports/figures/predictive_prescriptive/liquid_biofertilizer_fermentation_guide.png",
+        "reports/figures/predictive_prescriptive/biochar_charging_and_sequestration_model.png",
+        "reports/figures/predictive_prescriptive/botanical_pest_repellent_matrix.png"
     ]
 
     for item_path in expected_reports_and_figures:

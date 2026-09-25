@@ -275,6 +275,18 @@
         },
         "src.models.trilingual_agri_knowledge_bot": {
             "status": "PASS"
+        },
+        "src.models.compost_feedstock_optimizer": {
+            "status": "PASS"
+        },
+        "src.models.liquid_biofertilizer_formulator": {
+            "status": "PASS"
+        },
+        "src.models.biochar_inoculation_calculator": {
+            "status": "PASS"
+        },
+        "src.models.botanical_pest_repellent_engine": {
+            "status": "PASS"
         }
     },
     "reports_and_figures": {
@@ -381,6 +393,22 @@
         "reports/figures/predictive_prescriptive/cargo_transit_tampering_audit.png": {
             "status": "PASS",
             "size_kb": 259.8
+        },
+        "reports/figures/predictive_prescriptive/compost_feedstock_optimization_model.png": {
+            "status": "PASS",
+            "size_kb": 391.6
+        },
+        "reports/figures/predictive_prescriptive/liquid_biofertilizer_fermentation_guide.png": {
+            "status": "PASS",
+            "size_kb": 233.0
+        },
+        "reports/figures/predictive_prescriptive/biochar_charging_and_sequestration_model.png": {
+            "status": "PASS",
+            "size_kb": 255.6
+        },
+        "reports/figures/predictive_prescriptive/botanical_pest_repellent_matrix.png": {
+            "status": "PASS",
+            "size_kb": 240.1
         }
     },
     "statistical_rigor": {
