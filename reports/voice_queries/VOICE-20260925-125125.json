@@ -1,0 +1,14 @@
+{
+  "session_id": "VOICE-20260925-125125",
+  "input_transcript": "මගේ යූරියා එක වතුරට දැම්මම කිරි පාට වෙලා අඩියේ වැලි තියෙනවා, ශීතල උනෙත් නෑ මොකද කරන්නේ?",
+  "detected_intent": "INTENT_ADULTERATION_TEST",
+  "extracted_entities": {
+    "fertilizer_type": "Urea"
+  },
+  "action_routing": "DISPATCH_FIELD_WIZARD",
+  "speech_synthesis_transcript": {
+    "sinhala_response": "ගොවි මහත්මයා, ඔබගේ පොහොර සාම්පලයේ වැලි හෝ දිය නොවන අපද්‍රව්‍ය තැන්පත් වේ නම් එය බාල පොහොරක් වීමට ඉහළ අවදානමක් ඇත. නියම යූරියා වතුරට දැමූ විගස ජලය අයිස් මෙන් ශීතල විය යුතුය. වහාම විනාකිරි බිංදු කිහිපයක් දමා පරීක්ෂා කරන්න; බුබුළු නගී නම් හුණු කුඩු මිශ්‍ර කර ඇත. කුඹුරට යෙදීමට පෙර ගොවිජන සේවා මධ්‍යස්ථානයට පෙන්වන්න.",
+    "english_translation": "Farmer, if your fertilizer leaves sediment or milky residue, there is high risk of adulteration. Genuine urea must cause an instant icy cold reaction. Do not apply to field until checked."
+  },
+  "timestamp": "2026-09-25T12:51:25.705588+00:00"
+}

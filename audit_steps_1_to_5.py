@@ -189,7 +189,12 @@ def run_full_audit():
         "src.models.farmer_field_screening_wizard",
         "src.models.precision_dosage_calculator",
         "src.models.fertilizer_toxicity_troubleshooter",
-        "src.models.whistleblower_incident_engine"
+        "src.models.whistleblower_incident_engine",
+        # 4 Advanced Civic & Agronomic Engines
+        "src.models.voice_farmer_assistant",
+        "src.models.monsoon_weather_fertilizer_advisor",
+        "src.models.label_ocr_registration_scanner",
+        "src.models.stockout_early_warning_engine"
     ]
 
     for mod_name in modules_to_test:
@@ -230,7 +235,10 @@ def run_full_audit():
         # Farmer & Citizen-Centric Figures
         "reports/figures/predictive_prescriptive/farmer_diy_field_screening_matrix.png",
         "reports/figures/predictive_prescriptive/precision_dosage_cost_schedule.png",
-        "reports/figures/predictive_prescriptive/crop_toxicity_diagnostic_report.png"
+        "reports/figures/predictive_prescriptive/crop_toxicity_diagnostic_report.png",
+        # Weather & Stockout Figures
+        "reports/figures/predictive_prescriptive/monsoon_weather_fertilizer_schedule.png",
+        "reports/figures/predictive_prescriptive/provincial_stockout_early_warning.png"
     ]
 
     for item_path in expected_reports_and_figures:

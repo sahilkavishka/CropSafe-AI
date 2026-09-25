@@ -243,6 +243,18 @@
         },
         "src.models.whistleblower_incident_engine": {
             "status": "PASS"
+        },
+        "src.models.voice_farmer_assistant": {
+            "status": "PASS"
+        },
+        "src.models.monsoon_weather_fertilizer_advisor": {
+            "status": "PASS"
+        },
+        "src.models.label_ocr_registration_scanner": {
+            "status": "PASS"
+        },
+        "src.models.stockout_early_warning_engine": {
+            "status": "PASS"
         }
     },
     "reports_and_figures": {
@@ -333,6 +345,14 @@
         "reports/figures/predictive_prescriptive/crop_toxicity_diagnostic_report.png": {
             "status": "PASS",
             "size_kb": 131.5
+        },
+        "reports/figures/predictive_prescriptive/monsoon_weather_fertilizer_schedule.png": {
+            "status": "PASS",
+            "size_kb": 204.1
+        },
+        "reports/figures/predictive_prescriptive/provincial_stockout_early_warning.png": {
+            "status": "PASS",
+            "size_kb": 189.9
         }
     },
     "statistical_rigor": {
