@@ -305,6 +305,24 @@
         },
         "src.models.farmer_collective_bulk_buying_pool": {
             "status": "PASS"
+        },
+        "src.models.paddy_straw_decomposition_engine": {
+            "status": "PASS"
+        },
+        "src.models.soil_ph_buffer_titration_calculator": {
+            "status": "PASS"
+        },
+        "src.models.drone_multispectral_ndvi_prescription": {
+            "status": "PASS"
+        },
+        "src.models.fertilizer_carbon_lca_footprint": {
+            "status": "PASS"
+        },
+        "src.models.agrarian_micro_credit_scorecard": {
+            "status": "PASS"
+        },
+        "src.models.import_quarantine_border_protocol": {
+            "status": "PASS"
         }
     },
     "reports_and_figures": {
@@ -443,6 +461,22 @@
         "reports/figures/predictive_prescriptive/farmer_bulk_buying_arbitrage_savings.png": {
             "status": "PASS",
             "size_kb": 172.3
+        },
+        "reports/figures/predictive_prescriptive/paddy_straw_nutrient_recycling_kinetics.png": {
+            "status": "PASS",
+            "size_kb": 217.8
+        },
+        "reports/figures/predictive_prescriptive/soil_acidity_dolomite_titration_curves.png": {
+            "status": "PASS",
+            "size_kb": 264.5
+        },
+        "reports/figures/predictive_prescriptive/drone_multispectral_ndvi_heatmap.png": {
+            "status": "PASS",
+            "size_kb": 247.4
+        },
+        "reports/figures/predictive_prescriptive/fertilizer_carbon_lifecycle_comparison.png": {
+            "status": "PASS",
+            "size_kb": 197.9
         }
     },
     "statistical_rigor": {

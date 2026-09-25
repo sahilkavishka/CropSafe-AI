@@ -213,7 +213,14 @@ def run_full_audit():
         "src.models.green_manure_nitrogen_planner",
         "src.models.groundwater_nitrate_leaching_risk",
         "src.models.soil_salinity_reclamation_engine",
-        "src.models.farmer_collective_bulk_buying_pool"
+        "src.models.farmer_collective_bulk_buying_pool",
+        # 6 Precision AgTech & Biosecurity Engines
+        "src.models.paddy_straw_decomposition_engine",
+        "src.models.soil_ph_buffer_titration_calculator",
+        "src.models.drone_multispectral_ndvi_prescription",
+        "src.models.fertilizer_carbon_lca_footprint",
+        "src.models.agrarian_micro_credit_scorecard",
+        "src.models.import_quarantine_border_protocol"
     ]
 
     for mod_name in modules_to_test:
@@ -270,7 +277,12 @@ def run_full_audit():
         "reports/figures/predictive_prescriptive/fertilizer_tank_mix_compatibility_matrix.png",
         "reports/figures/predictive_prescriptive/groundwater_nitrate_leaching_dynamics.png",
         "reports/figures/predictive_prescriptive/soil_salinity_reclamation_curves.png",
-        "reports/figures/predictive_prescriptive/farmer_bulk_buying_arbitrage_savings.png"
+        "reports/figures/predictive_prescriptive/farmer_bulk_buying_arbitrage_savings.png",
+        # Precision AgTech & Biosecurity Figures
+        "reports/figures/predictive_prescriptive/paddy_straw_nutrient_recycling_kinetics.png",
+        "reports/figures/predictive_prescriptive/soil_acidity_dolomite_titration_curves.png",
+        "reports/figures/predictive_prescriptive/drone_multispectral_ndvi_heatmap.png",
+        "reports/figures/predictive_prescriptive/fertilizer_carbon_lifecycle_comparison.png"
     ]
 
     for item_path in expected_reports_and_figures:
