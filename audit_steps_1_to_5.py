@@ -183,7 +183,8 @@ def run_full_audit():
         "src.models.ussd_farmer_simulator",
         "src.models.multi_agent_inspection_swarm",
         "src.models.court_charge_sheet_generator",
-        "src.models.nano_liquid_fertilizer_assay"
+        "src.models.nano_liquid_fertilizer_assay",
+        "src.models.organic_natural_fertilizer_assay"
     ]
 
     for mod_name in modules_to_test:
@@ -219,6 +220,7 @@ def run_full_audit():
         "reports/figures/predictive_prescriptive/iot_warehouse_digital_twin_telemetry.png",
         "reports/figures/predictive_prescriptive/game_theoretic_deterrence_equilibrium.png",
         "reports/figures/predictive_prescriptive/nano_liquid_fertilizer_quality_assay.png",
+        "reports/figures/predictive_prescriptive/organic_natural_fertilizer_quality_benchmark.png",
         "reports/court_charge_sheets/Charge_Sheet_BATCH-LK-2026-X89.html"
     ]
 

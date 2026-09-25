@@ -228,6 +228,9 @@
         },
         "src.models.nano_liquid_fertilizer_assay": {
             "status": "PASS"
+        },
+        "src.models.organic_natural_fertilizer_assay": {
+            "status": "PASS"
         }
     },
     "reports_and_figures": {
@@ -298,6 +301,10 @@
         "reports/figures/predictive_prescriptive/nano_liquid_fertilizer_quality_assay.png": {
             "status": "PASS",
             "size_kb": 743.1
+        },
+        "reports/figures/predictive_prescriptive/organic_natural_fertilizer_quality_benchmark.png": {
+            "status": "PASS",
+            "size_kb": 747.7
         },
         "reports/court_charge_sheets/Charge_Sheet_BATCH-LK-2026-X89.html": {
             "status": "PASS",
