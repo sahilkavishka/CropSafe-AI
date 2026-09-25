@@ -184,7 +184,12 @@ def run_full_audit():
         "src.models.multi_agent_inspection_swarm",
         "src.models.court_charge_sheet_generator",
         "src.models.nano_liquid_fertilizer_assay",
-        "src.models.organic_natural_fertilizer_assay"
+        "src.models.organic_natural_fertilizer_assay",
+        # 4 Farmer & Citizen-Centric Empowerment Engines
+        "src.models.farmer_field_screening_wizard",
+        "src.models.precision_dosage_calculator",
+        "src.models.fertilizer_toxicity_troubleshooter",
+        "src.models.whistleblower_incident_engine"
     ]
 
     for mod_name in modules_to_test:
@@ -221,7 +226,11 @@ def run_full_audit():
         "reports/figures/predictive_prescriptive/game_theoretic_deterrence_equilibrium.png",
         "reports/figures/predictive_prescriptive/nano_liquid_fertilizer_quality_assay.png",
         "reports/figures/predictive_prescriptive/organic_natural_fertilizer_quality_benchmark.png",
-        "reports/court_charge_sheets/Charge_Sheet_BATCH-LK-2026-X89.html"
+        "reports/court_charge_sheets/Charge_Sheet_BATCH-LK-2026-X89.html",
+        # Farmer & Citizen-Centric Figures
+        "reports/figures/predictive_prescriptive/farmer_diy_field_screening_matrix.png",
+        "reports/figures/predictive_prescriptive/precision_dosage_cost_schedule.png",
+        "reports/figures/predictive_prescriptive/crop_toxicity_diagnostic_report.png"
     ]
 
     for item_path in expected_reports_and_figures:

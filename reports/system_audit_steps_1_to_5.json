@@ -231,6 +231,18 @@
         },
         "src.models.organic_natural_fertilizer_assay": {
             "status": "PASS"
+        },
+        "src.models.farmer_field_screening_wizard": {
+            "status": "PASS"
+        },
+        "src.models.precision_dosage_calculator": {
+            "status": "PASS"
+        },
+        "src.models.fertilizer_toxicity_troubleshooter": {
+            "status": "PASS"
+        },
+        "src.models.whistleblower_incident_engine": {
+            "status": "PASS"
         }
     },
     "reports_and_figures": {
@@ -309,6 +321,18 @@
         "reports/court_charge_sheets/Charge_Sheet_BATCH-LK-2026-X89.html": {
             "status": "PASS",
             "size_kb": 5.3
+        },
+        "reports/figures/predictive_prescriptive/farmer_diy_field_screening_matrix.png": {
+            "status": "PASS",
+            "size_kb": 156.6
+        },
+        "reports/figures/predictive_prescriptive/precision_dosage_cost_schedule.png": {
+            "status": "PASS",
+            "size_kb": 218.4
+        },
+        "reports/figures/predictive_prescriptive/crop_toxicity_diagnostic_report.png": {
+            "status": "PASS",
+            "size_kb": 131.5
         }
     },
     "statistical_rigor": {
