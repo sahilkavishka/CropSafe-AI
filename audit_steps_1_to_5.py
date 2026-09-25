@@ -171,12 +171,19 @@ def run_full_audit():
         "src.models.smart_routing",
         "src.models.forecasting_engine",
         "src.models.fraud_network_graph",
-        # 5 Novel Super-Features
+        # 5 Novel Super-Features (Batch 1)
         "src.models.cv_granulometry_assay",
         "src.models.crypto_provenance_qr",
         "src.models.soil_ecotoxicology_simulator",
         "src.models.drift_retrain",
-        "src.models.legal_rag_assistant"
+        "src.models.legal_rag_assistant",
+        # 6 Breakthrough Super-Features (Batch 2)
+        "src.models.iot_warehouse_digital_twin",
+        "src.models.game_theory_arbitrage_equilibrium",
+        "src.models.ussd_farmer_simulator",
+        "src.models.multi_agent_inspection_swarm",
+        "src.models.court_charge_sheet_generator",
+        "src.models.nano_liquid_fertilizer_assay"
     ]
 
     for mod_name in modules_to_test:
@@ -204,10 +211,15 @@ def run_full_audit():
         "reports/figures/predictive_prescriptive/residual_diagnostics_yield_loss.png",
         "reports/figures/predictive_prescriptive/crop_yield_loss_sensitivity_curves.png",
         "reports/figures/predictive_prescriptive/shelf_life_degradation_kinetics.png",
-        # New Super-Feature Figures & QR Tokens
+        # Novel Super-Feature Figures & QR Tokens
         "reports/figures/predictive_prescriptive/computer_vision_granulometry_benchmark.png",
         "reports/figures/predictive_prescriptive/soil_ecotoxicology_ckdu_risk.png",
-        "reports/figures/predictive_prescriptive/concept_drift_psi_monitoring.png"
+        "reports/figures/predictive_prescriptive/concept_drift_psi_monitoring.png",
+        # Breakthrough Super-Feature Figures & Court Filings
+        "reports/figures/predictive_prescriptive/iot_warehouse_digital_twin_telemetry.png",
+        "reports/figures/predictive_prescriptive/game_theoretic_deterrence_equilibrium.png",
+        "reports/figures/predictive_prescriptive/nano_liquid_fertilizer_quality_assay.png",
+        "reports/court_charge_sheets/Charge_Sheet_BATCH-LK-2026-X89.html"
     ]
 
     for item_path in expected_reports_and_figures:

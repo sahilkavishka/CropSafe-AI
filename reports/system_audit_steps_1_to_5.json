@@ -210,6 +210,24 @@
         },
         "src.models.legal_rag_assistant": {
             "status": "PASS"
+        },
+        "src.models.iot_warehouse_digital_twin": {
+            "status": "PASS"
+        },
+        "src.models.game_theory_arbitrage_equilibrium": {
+            "status": "PASS"
+        },
+        "src.models.ussd_farmer_simulator": {
+            "status": "PASS"
+        },
+        "src.models.multi_agent_inspection_swarm": {
+            "status": "PASS"
+        },
+        "src.models.court_charge_sheet_generator": {
+            "status": "PASS"
+        },
+        "src.models.nano_liquid_fertilizer_assay": {
+            "status": "PASS"
         }
     },
     "reports_and_figures": {
@@ -268,6 +286,22 @@
         "reports/figures/predictive_prescriptive/concept_drift_psi_monitoring.png": {
             "status": "PASS",
             "size_kb": 188.8
+        },
+        "reports/figures/predictive_prescriptive/iot_warehouse_digital_twin_telemetry.png": {
+            "status": "PASS",
+            "size_kb": 568.3
+        },
+        "reports/figures/predictive_prescriptive/game_theoretic_deterrence_equilibrium.png": {
+            "status": "PASS",
+            "size_kb": 267.8
+        },
+        "reports/figures/predictive_prescriptive/nano_liquid_fertilizer_quality_assay.png": {
+            "status": "PASS",
+            "size_kb": 743.1
+        },
+        "reports/court_charge_sheets/Charge_Sheet_BATCH-LK-2026-X89.html": {
+            "status": "PASS",
+            "size_kb": 5.3
         }
     },
     "statistical_rigor": {
