@@ -287,6 +287,24 @@
         },
         "src.models.botanical_pest_repellent_engine": {
             "status": "PASS"
+        },
+        "src.models.fertilizer_tank_mix_compatibility": {
+            "status": "PASS"
+        },
+        "src.models.crop_deficiency_symptom_key": {
+            "status": "PASS"
+        },
+        "src.models.green_manure_nitrogen_planner": {
+            "status": "PASS"
+        },
+        "src.models.groundwater_nitrate_leaching_risk": {
+            "status": "PASS"
+        },
+        "src.models.soil_salinity_reclamation_engine": {
+            "status": "PASS"
+        },
+        "src.models.farmer_collective_bulk_buying_pool": {
+            "status": "PASS"
         }
     },
     "reports_and_figures": {
@@ -409,6 +427,22 @@
         "reports/figures/predictive_prescriptive/botanical_pest_repellent_matrix.png": {
             "status": "PASS",
             "size_kb": 240.1
+        },
+        "reports/figures/predictive_prescriptive/fertilizer_tank_mix_compatibility_matrix.png": {
+            "status": "PASS",
+            "size_kb": 158.0
+        },
+        "reports/figures/predictive_prescriptive/groundwater_nitrate_leaching_dynamics.png": {
+            "status": "PASS",
+            "size_kb": 173.2
+        },
+        "reports/figures/predictive_prescriptive/soil_salinity_reclamation_curves.png": {
+            "status": "PASS",
+            "size_kb": 201.7
+        },
+        "reports/figures/predictive_prescriptive/farmer_bulk_buying_arbitrage_savings.png": {
+            "status": "PASS",
+            "size_kb": 172.3
         }
     },
     "statistical_rigor": {

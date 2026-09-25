@@ -206,7 +206,14 @@ def run_full_audit():
         "src.models.compost_feedstock_optimizer",
         "src.models.liquid_biofertilizer_formulator",
         "src.models.biochar_inoculation_calculator",
-        "src.models.botanical_pest_repellent_engine"
+        "src.models.botanical_pest_repellent_engine",
+        # 6 Advanced Agronomic & Farmer Empowerment Engines
+        "src.models.fertilizer_tank_mix_compatibility",
+        "src.models.crop_deficiency_symptom_key",
+        "src.models.green_manure_nitrogen_planner",
+        "src.models.groundwater_nitrate_leaching_risk",
+        "src.models.soil_salinity_reclamation_engine",
+        "src.models.farmer_collective_bulk_buying_pool"
     ]
 
     for mod_name in modules_to_test:
@@ -258,7 +265,12 @@ def run_full_audit():
         "reports/figures/predictive_prescriptive/compost_feedstock_optimization_model.png",
         "reports/figures/predictive_prescriptive/liquid_biofertilizer_fermentation_guide.png",
         "reports/figures/predictive_prescriptive/biochar_charging_and_sequestration_model.png",
-        "reports/figures/predictive_prescriptive/botanical_pest_repellent_matrix.png"
+        "reports/figures/predictive_prescriptive/botanical_pest_repellent_matrix.png",
+        # Advanced Agronomic & Farmer Empowerment Figures
+        "reports/figures/predictive_prescriptive/fertilizer_tank_mix_compatibility_matrix.png",
+        "reports/figures/predictive_prescriptive/groundwater_nitrate_leaching_dynamics.png",
+        "reports/figures/predictive_prescriptive/soil_salinity_reclamation_curves.png",
+        "reports/figures/predictive_prescriptive/farmer_bulk_buying_arbitrage_savings.png"
     ]
 
     for item_path in expected_reports_and_figures:
