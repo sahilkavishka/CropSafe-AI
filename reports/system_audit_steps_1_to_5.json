@@ -178,6 +178,14 @@
                 4
             ],
             "total_nulls": 0
+        },
+        "data/processed/trilingual_agri_faq_knowledge_base.json": {
+            "status": "PASS",
+            "records": 5
+        },
+        "reports/subsidy_ewallet/subsidy_transactions_ledger.json": {
+            "status": "PASS",
+            "records": 1
         }
     },
     "modules": {
@@ -254,6 +262,18 @@
             "status": "PASS"
         },
         "src.models.stockout_early_warning_engine": {
+            "status": "PASS"
+        },
+        "src.models.smartphone_field_camera_assay": {
+            "status": "PASS"
+        },
+        "src.models.cargo_tampering_transit_tracker": {
+            "status": "PASS"
+        },
+        "src.models.asc_subsidy_ewallet_ledger": {
+            "status": "PASS"
+        },
+        "src.models.trilingual_agri_knowledge_bot": {
             "status": "PASS"
         }
     },
@@ -353,6 +373,14 @@
         "reports/figures/predictive_prescriptive/provincial_stockout_early_warning.png": {
             "status": "PASS",
             "size_kb": 189.9
+        },
+        "reports/figures/predictive_prescriptive/smartphone_field_camera_assay_benchmark.png": {
+            "status": "PASS",
+            "size_kb": 292.8
+        },
+        "reports/figures/predictive_prescriptive/cargo_transit_tampering_audit.png": {
+            "status": "PASS",
+            "size_kb": 259.8
         }
     },
     "statistical_rigor": {

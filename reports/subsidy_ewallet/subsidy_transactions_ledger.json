@@ -1,0 +1,19 @@
+[
+  {
+    "voucher_token": "EVOUCHER-LK-2026-20C30874",
+    "otp_pin": "841122",
+    "farmer_nic": "841920831V",
+    "farmer_name": "K.G. Bandara",
+    "asc_division": "Polonnaruwa Central ASC",
+    "crop": "Paddy",
+    "land_acres": 2.0,
+    "approved_urea_bags": 4,
+    "unit_subsidized_price_lkr": 2500.0,
+    "total_payable_lkr": 10000.0,
+    "open_market_value_lkr": 34000.0,
+    "subsidy_benefit_lkr": 24000.0,
+    "season": "Maha 2026",
+    "voucher_status": "ACTIVE_UNREDEEMED",
+    "issued_at": "2026-09-25T13:07:32.259398+00:00"
+  }
+]

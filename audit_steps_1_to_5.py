@@ -136,7 +136,9 @@ def run_full_audit():
         ("data/scraped/provincial_agrarian_stats.csv", (9, 7)),
         ("data/scraped/slsi_fertilizer_standards.csv", (6, 9)),
         ("data/scraped/sri_lanka_25_districts_geo.csv", (25, 7)),
-        ("data/scraped/sri_lanka_weather_2022_2024.csv", (75, 7))
+        ("data/scraped/sri_lanka_weather_2022_2024.csv", (75, 7)),
+        ("data/processed/trilingual_agri_faq_knowledge_base.json", None),
+        ("reports/subsidy_ewallet/subsidy_transactions_ledger.json", None)
     ]
 
     for d_path, expected_shape in expected_datasets:
@@ -194,7 +196,12 @@ def run_full_audit():
         "src.models.voice_farmer_assistant",
         "src.models.monsoon_weather_fertilizer_advisor",
         "src.models.label_ocr_registration_scanner",
-        "src.models.stockout_early_warning_engine"
+        "src.models.stockout_early_warning_engine",
+        # 4 Next-Level Operational & Mobile Engines
+        "src.models.smartphone_field_camera_assay",
+        "src.models.cargo_tampering_transit_tracker",
+        "src.models.asc_subsidy_ewallet_ledger",
+        "src.models.trilingual_agri_knowledge_bot"
     ]
 
     for mod_name in modules_to_test:
@@ -238,7 +245,10 @@ def run_full_audit():
         "reports/figures/predictive_prescriptive/crop_toxicity_diagnostic_report.png",
         # Weather & Stockout Figures
         "reports/figures/predictive_prescriptive/monsoon_weather_fertilizer_schedule.png",
-        "reports/figures/predictive_prescriptive/provincial_stockout_early_warning.png"
+        "reports/figures/predictive_prescriptive/provincial_stockout_early_warning.png",
+        # Smartphone Camera & Cargo Transit Figures
+        "reports/figures/predictive_prescriptive/smartphone_field_camera_assay_benchmark.png",
+        "reports/figures/predictive_prescriptive/cargo_transit_tampering_audit.png"
     ]
 
     for item_path in expected_reports_and_figures:
