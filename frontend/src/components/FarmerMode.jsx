@@ -37,6 +37,8 @@ import {
   Copy
 } from 'lucide-react';
 import ThreeGranuleCanvas from './ThreeGranuleCanvas';
+import ThreePlantCanvas from './ThreePlantCanvas';
+import ThreeBagCanvas from './ThreeBagCanvas';
 import { translations } from '../i18n';
 
 const API_BASE = "http://localhost:8000";
@@ -1485,6 +1487,9 @@ export default function FarmerMode({ language = 'si' }) {
           </div>
 
           <div className="space-y-4">
+            {/* 3D Animated Paddy Plant Disease Inspector */}
+            <ThreePlantCanvas symptom={selectedSymptom} />
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
                 { id: 'yellow_lower', label: t.symptomYellowLower, sub: t.symptomYellowLowerSub },
@@ -1510,7 +1515,17 @@ export default function FarmerMode({ language = 'si' }) {
 
             {leafResult && (
               <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-slate-900 space-y-2">
-                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block">{t.diagnosedDiseaseLabel}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block">{t.diagnosedDiseaseLabel}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleSpeakText(`${leafResult.title}. ${leafResult.solution}`)}
+                    className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center space-x-1 shadow-sm transition-all"
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    <span>{t.btnSpeak || "හඬින් අසන්න"}</span>
+                  </button>
+                </div>
                 <h3 className="text-lg font-black text-emerald-950">{leafResult.title}</h3>
                 <p className="text-xs text-slate-600">{leafResult.cause}</p>
                 <div className="p-3 bg-white rounded-xl border border-emerald-200 mt-2">
@@ -2261,7 +2276,15 @@ export default function FarmerMode({ language = 'si' }) {
             </div>
 
             {/* Results Panel */}
-            <div>
+            <div className="space-y-4">
+              {/* 3D Sack Hologram Preview */}
+              <div className="h-64 sm:h-72 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
+                <ThreeBagCanvas 
+                  isAuthentic={bagResult ? bagResult.authenticity_score_pct >= 75 : (!sealTampered && hologramScore >= 0.7 && microprintScore >= 0.7 && stitchType === 'double_chainstitch')}
+                  brand={bagBrand}
+                />
+              </div>
+
               {bagResult ? (
                 <div className={`p-6 rounded-2xl border-2 space-y-4 ${
                   bagResult.authenticity_score_pct >= 75
@@ -2303,8 +2326,8 @@ export default function FarmerMode({ language = 'si' }) {
                   </div>
                 </div>
               ) : (
-                <div className="h-full min-h-[220px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
-                  <Scan className="w-10 h-10 text-slate-400" />
+                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
+                  <Scan className="w-8 h-8 text-slate-400" />
                   <p className="text-xs font-bold">
                     {language === 'en' ? 'Click "Verify Bag Packaging" to analyze security marks.' : 'උරයේ සත්‍යතාවය පරීක්ෂා කිරීමට ඉහත බොත්තම ඔබන්න.'}
                   </p>

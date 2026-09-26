@@ -50,6 +50,7 @@ from src.models.ellangawa_cascade_eutrophication_model import EllangawaCascadeEu
 from src.models.fertilizer_carbon_lca_footprint import FertilizerCarbonLCAFootprintEngine
 from src.models.agrarian_micro_credit_scorecard import AgrarianMicroCreditScorecardEngine
 from src.models.whistleblower_incident_engine import WhistleblowerIncidentEngine
+from src.models.asc_subsidy_ewallet_ledger import ASCSubsidyEWalletLedger
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -91,6 +92,7 @@ ellangawa_engine = EllangawaCascadeEutrophicationEngine()
 carbon_engine = FertilizerCarbonLCAFootprintEngine()
 credit_scorecard = AgrarianMicroCreditScorecardEngine()
 whistleblower_engine = WhistleblowerIncidentEngine()
+subsidy_ledger = ASCSubsidyEWalletLedger()
 
 # Load Machine Learning Model Zoo
 try:
@@ -184,6 +186,23 @@ class WhistleblowerRequest(BaseModel):
     charged_price: float = 3800.0
     narrative: str = "Dealer charged excessive price above maximum retail price and refused official receipt."
     evidence_files: List[str] = ["receipt_photo.jpg"]
+
+class SubsidyClaimRequest(BaseModel):
+    farmer_nic: str = "198512345678"
+    farmer_name: str = "K. M. Bandara"
+    asc_division: str = "Polonnaruwa Central ASC"
+    crop: str = "Paddy"
+    registered_land_acres: float = 2.0
+    requested_urea_bags: int = 4
+    season: str = "Maha 2026"
+
+class CarbonFootprintRequest(BaseModel):
+    urea_kg: float = 100.0
+    tsp_kg: float = 50.0
+    mop_kg: float = 50.0
+    compost_kg: float = 250.0
+    biochar_kg: float = 50.0
+    land_area_ha: float = 1.0
 
 # -------------------------------------------------------------
 # Endpoints
@@ -319,6 +338,31 @@ def submit_whistleblower_complaint(req: WhistleblowerRequest):
         "narrative": req.narrative,
         "evidence_files": req.evidence_files
     })
+
+@app.post("/api/farmer/subsidy")
+def claim_subsidy_quota(req: SubsidyClaimRequest):
+    """Processes farmer fertilizer subsidy e-voucher and anti-corruption quota validation."""
+    return subsidy_ledger.process_subsidy_claim({
+        "farmer_nic": req.farmer_nic,
+        "farmer_name": req.farmer_name,
+        "asc_division": req.asc_division,
+        "crop": req.crop,
+        "registered_land_acres": req.registered_land_acres,
+        "requested_urea_bags": req.requested_urea_bags,
+        "season": req.season
+    })
+
+@app.post("/api/farmer/carbon")
+def calculate_carbon_lca(req: CarbonFootprintRequest):
+    """Calculates cradle-to-gate fertilizer carbon footprint and voluntary carbon credit offsets."""
+    return carbon_engine.calculate_footprint(
+        urea_kg=req.urea_kg,
+        tsp_kg=req.tsp_kg,
+        mop_kg=req.mop_kg,
+        compost_kg=req.compost_kg,
+        biochar_kg=req.biochar_kg,
+        land_area_ha=req.land_area_ha
+    )
 
 @app.get("/api/inspector/warehouse-twin")
 def get_warehouse_telemetry():
