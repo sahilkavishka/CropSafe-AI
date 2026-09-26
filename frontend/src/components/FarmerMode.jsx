@@ -1715,10 +1715,11 @@ export default function FarmerMode({ language = 'si' }) {
                     <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
                       selectedCategory === cat.id ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'
                     }`}>
-                      {cat.count}
+                      {count}
                     </span>
                   </button>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -2183,6 +2184,17 @@ export default function FarmerMode({ language = 'si' }) {
                     {t.detectedAdulterantsLabel} {screeningResult.adulterants.join(', ')}
                   </div>
                 )}
+                
+                <div className="mt-4 flex justify-end">
+                  <a 
+                    href={`https://wa.me/?text=${encodeURIComponent(screeningResult.title + ' - ' + screeningResult.description)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold rounded-xl shadow-sm transition-all"
+                  >
+                    <span>WhatsApp</span>
+                  </a>
+                </div>
               </div>
             )}
 
@@ -2313,7 +2325,13 @@ export default function FarmerMode({ language = 'si' }) {
                     </span>
                     <span className="text-xs text-green-100">{t.savingsSub}</span>
                   </div>
-                  <div className="text-4xl">💰</div>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="text-4xl">💰</div>
+                    <button onClick={() => window.print()} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs font-bold rounded-lg transition-all flex items-center space-x-1">
+                      <Printer className="w-3.5 h-3.5" />
+                      <span>{tr("මුද්‍රණය", "Print", "அச்சிடு")}</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Stage Schedule */}
@@ -3920,6 +3938,24 @@ export default function FarmerMode({ language = 'si' }) {
             >
               {t.btnSend}
             </button>
+          </div>
+          
+          <div className="flex flex-wrap gap-2 mt-2">
+            {[
+              "යූරියා කොතරම් ඕනෙද?",
+              "MOP ගාන",
+              "කාලගුණය",
+              "ව්යාජ හඳුනාගැනීම"
+            ].map((chip, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setChatInput(chip)}
+                className="px-3 py-1 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 text-xs font-bold border border-slate-200 hover:border-emerald-200 transition-all"
+              >
+                {chip}
+              </button>
+            ))}
           </div>
         </div>
       )}

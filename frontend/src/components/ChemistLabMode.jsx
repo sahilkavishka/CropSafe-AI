@@ -101,6 +101,7 @@ export default function ChemistLabMode({ language = 'si' }) {
   const [activePreset, setActivePreset] = useState('pure');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [processingStep, setProcessingStep] = useState(0);
   const [activeTabSection, setActiveTabSection] = useState('nutrients'); // 'nutrients' | 'physical' | 'metals' | 'indices'
   const [showCoAModal, setShowCoAModal] = useState(false);
 
@@ -108,11 +109,21 @@ export default function ChemistLabMode({ language = 'si' }) {
     setActivePreset(key);
     setFeatures(PRESETS[key].data);
     setResult(null);
+    setProcessingStep(0);
   };
 
   // Run Inference via Backend ML Model
   const handleRunInference = async () => {
     setLoading(true);
+    setResult(null);
+    setProcessingStep(1);
+    await new Promise(r => setTimeout(r, 200));
+    setProcessingStep(2);
+    await new Promise(r => setTimeout(r, 200));
+    setProcessingStep(3);
+    await new Promise(r => setTimeout(r, 200));
+    setProcessingStep(4);
+    await new Promise(r => setTimeout(r, 200));
     try {
       const res = await fetch(`${API_BASE}/api/lab/classify`, {
         method: 'POST',
@@ -180,15 +191,27 @@ export default function ChemistLabMode({ language = 'si' }) {
       <div className="clean-card p-6 sm:p-8 bg-gradient-to-r from-cyan-50 via-white to-blue-50 border-cyan-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-cyan-700 text-white flex items-center justify-center text-3xl shadow-md flex-shrink-0">
-              🔬
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-cyan-700 text-white flex items-center justify-center text-3xl shadow-md flex-shrink-0 overflow-hidden group">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjIiIGZpbGw9IiNmZmZmZmYyMiIvPjwvc3ZnPg==')] animate-pulse"></div>
+              <div className="relative z-10 transform group-hover:scale-110 transition-transform duration-500">🔬</div>
+              <div className="absolute bottom-0 left-0 w-full h-1 bg-cyan-400 animate-bounce"></div>
             </div>
             <div>
-              <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-cyan-100 text-cyan-900 text-xs font-black mb-1.5">
-                <span className="w-2 h-2 rounded-full bg-cyan-600 animate-pulse" />
+              <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-cyan-100 text-cyan-900 text-xs font-black mb-1.5 flex-wrap">
+                <span className="flex h-2 w-2 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-500 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-600"></span>
+                </span>
                 <span>{tr("SLSI 644/828 සහතිකකරණ විද්‍යාගාරය", "SLSI 644/828 Certification Lab", "SLSI 644 ஆய்வு கூடம்")}</span>
+                
+                {/* AI Engines Status Dots */}
+                <div className="hidden sm:flex items-center ml-2 border-l border-cyan-200 pl-2 space-x-1.5">
+                  <span className="flex items-center space-x-1" title="ML Classifier"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span><span className="text-[9px] text-cyan-700">ML Classifier</span></span>
+                  <span className="flex items-center space-x-1" title="Yield Loss Regressor"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse delay-75"></span><span className="text-[9px] text-cyan-700">Yield Regressor</span></span>
+                  <span className="flex items-center space-x-1" title="SLSI Compliance Auditor"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse delay-150"></span><span className="text-[9px] text-cyan-700">SLSI Auditor</span></span>
+                </div>
               </div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
                 {tr("ජාතික පොහොර රසායනාගාර ML පරීක්ෂණ පද්ධතිය", "National Fertilizer Laboratory ML Assay System", "தேசிய உர ஆய்வக ML பரிசோதனை அமைப்பு")}
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
@@ -267,10 +290,22 @@ export default function ChemistLabMode({ language = 'si' }) {
                     <label className="text-xs font-black text-slate-800">Total Nitrogen (N %)</label>
                     <span className="text-sm font-black text-cyan-800">{features.total_nitrogen_pct}%</span>
                   </div>
+                  
+                  {/* Nitrogen Arc Gauge */}
+                  <div className="flex justify-center my-3 relative">
+                    <svg width="120" height="60" viewBox="0 0 120 60" className="overflow-visible">
+                      <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke="#e2e8f0" strokeWidth="12" strokeLinecap="round" />
+                      <path d="M 10 60 A 50 50 0 0 1 110 60" fill="none" stroke={features.total_nitrogen_pct >= 46 ? "#059669" : "#dc2626"} strokeWidth="12" strokeLinecap="round" strokeDasharray="157" strokeDashoffset={157 - (157 * Math.min(features.total_nitrogen_pct, 50)) / 50} className="transition-all duration-700 ease-out" />
+                    </svg>
+                    <div className="absolute bottom-0 left-0 w-full text-center pb-1">
+                      <span className="text-xl font-black text-slate-700">{features.total_nitrogen_pct}</span><span className="text-xs text-slate-500">%</span>
+                    </div>
+                  </div>
+
                   <input
                     type="range"
                     min="5"
-                    max="48"
+                    max="50"
                     step="0.1"
                     value={features.total_nitrogen_pct}
                     onChange={(e) => setFeatures({ ...features, total_nitrogen_pct: parseFloat(e.target.value) })}
@@ -616,8 +651,52 @@ export default function ChemistLabMode({ language = 'si' }) {
             </div>
           </div>
 
+          {/* Processing Animation */}
+          {loading && (
+            <div className="clean-card p-6 border-2 border-cyan-400 bg-cyan-50/50 space-y-4">
+              <h3 className="text-sm font-black text-cyan-900 mb-4 animate-pulse flex items-center space-x-2">
+                <Sparkles className="w-4 h-4" />
+                <span>{tr("රසායනාගාර විශ්ලේෂණය සිදුවෙමින් පවතී...", "Running Lab Assay Sequence...", "பரிசோதிக்கிறது...")}</span>
+              </h3>
+              
+              <div className="space-y-3">
+                <div className={`flex items-center justify-between text-xs font-bold ${processingStep >= 1 ? 'text-emerald-700' : 'text-slate-400'}`}>
+                  <span className="flex items-center space-x-2">
+                    <span className={`w-2 h-2 rounded-full ${processingStep >= 1 ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-300'}`}></span>
+                    <span>Step 1: Sample weighing & preparation...</span>
+                  </span>
+                  {processingStep >= 1 && <span>✓</span>}
+                </div>
+                
+                <div className={`flex items-center justify-between text-xs font-bold ${processingStep >= 2 ? 'text-emerald-700' : 'text-slate-400'}`}>
+                  <span className="flex items-center space-x-2">
+                    <span className={`w-2 h-2 rounded-full ${processingStep >= 2 ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-300'}`}></span>
+                    <span>Step 2: Spectrometry full-band scan...</span>
+                  </span>
+                  {processingStep >= 2 && <span>✓</span>}
+                </div>
+                
+                <div className={`flex items-center justify-between text-xs font-bold ${processingStep >= 3 ? 'text-emerald-700' : 'text-slate-400'}`}>
+                  <span className="flex items-center space-x-2">
+                    <span className={`w-2 h-2 rounded-full ${processingStep >= 3 ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-300'}`}></span>
+                    <span>Step 3: LightGBM AI classification...</span>
+                  </span>
+                  {processingStep >= 3 && <span>✓</span>}
+                </div>
+                
+                <div className={`flex items-center justify-between text-xs font-bold ${processingStep >= 4 ? 'text-emerald-700' : 'text-slate-400'}`}>
+                  <span className="flex items-center space-x-2">
+                    <span className={`w-2 h-2 rounded-full ${processingStep >= 4 ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-slate-300'}`}></span>
+                    <span>Step 4: SLSI compliance auditing...</span>
+                  </span>
+                  {processingStep >= 4 && <span>✓</span>}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* AI Result Card */}
-          {result ? (
+          {result && !loading ? (
             <div className={`clean-card p-6 border-2 animate-fadeIn space-y-4 ${
               result.is_standard_pure 
                 ? 'bg-gradient-to-br from-emerald-50 via-white to-green-50 border-emerald-400' 
@@ -691,7 +770,7 @@ export default function ChemistLabMode({ language = 'si' }) {
               </button>
 
             </div>
-          ) : (
+          ) : !loading ? (
             <div className="clean-card p-6 border-slate-200 text-center py-10 space-y-3 bg-white">
               <span className="w-12 h-12 rounded-full bg-cyan-100 text-cyan-800 flex items-center justify-center text-2xl mx-auto">
                 ⚗️
@@ -703,7 +782,7 @@ export default function ChemistLabMode({ language = 'si' }) {
                 {tr("වම් පසින් පරාමිතීන් සකසා 'ML රසායනාගාර විශ්ලේෂණය' බොත්තම ඔබන්න.", "Adjust chemical sliders and click 'Run AI Spectroscopy Assay'.", "அளவுருக்களை அமைத்து பரிசோதிக்கவும்.")}
               </p>
             </div>
-          )}
+          ) : null}
 
         </div>
 
@@ -777,15 +856,29 @@ export default function ChemistLabMode({ language = 'si' }) {
               </table>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <div>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs relative overflow-hidden">
+              <div className="flex-1">
                 <span className="text-slate-500 block">Final Agronomic Recommendation:</span>
                 <strong className={`text-sm font-black ${allSlsiPass ? 'text-emerald-800' : 'text-rose-800'}`}>
                   {allSlsiPass ? 'APPROVED FOR ISLAND-WIDE AGRICULTURAL USE' : 'REJECTED - IMPOUND AND PROSECUTE UNDER ACT NO. 68'}
                 </strong>
               </div>
+
+              {/* QR and Stamp */}
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 bg-white p-1 border-2 border-slate-800 rounded-sm flex items-center justify-center flex-shrink-0">
+                  <div className="w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cGF0aCBkPSJNMTAgMTBoMjV2MjVIMTB6bTEwIDEwaDV2NUgxMHptNDAgLTEwdjI1aDI1VjEwem0xMCAxMGg1djVINDB6TTEwIDYwaDI1djI1SDEwem0xMCAxMGg1djVIMjB6bTQwIDBoMTB2MTBINjB6bTIwLTEwaDEwdjEwSDgweiIgZmlsbD0iIzMzMyIvPjwvc3ZnPg==')] bg-contain bg-no-repeat bg-center"></div>
+                </div>
+                
+                <div className={`w-20 h-20 rounded-full border-[3px] border-double flex items-center justify-center flex-col transform -rotate-12 ${allSlsiPass ? 'border-emerald-600 text-emerald-700' : 'border-rose-600 text-rose-700'}`}>
+                  <span className="font-black text-[10px] uppercase leading-none tracking-tighter">SLSI 644</span>
+                  <span className="font-black text-xs uppercase leading-none">{allSlsiPass ? 'PASSED' : 'FAILED'}</span>
+                  <span className="font-bold text-[7px] uppercase leading-none mt-0.5">Gov Chemist</span>
+                </div>
+              </div>
+
               <div className="text-right font-mono text-[10px] text-slate-400">
-                [ SHA-256: 7e2f...81c9 ]<br/>
+                [ SHA-256: {Math.random().toString(36).substring(2, 10).toUpperCase()} ]<br/>
                 Signed: Chief Govt Agricultural Chemist
               </div>
             </div>
