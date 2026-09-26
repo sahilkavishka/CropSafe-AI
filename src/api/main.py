@@ -248,7 +248,7 @@ def diagnose_deficiency(req: DeficiencyRequest):
 @app.post("/api/farmer/voice")
 def query_voice_assistant(req: VoiceQueryRequest):
     """Sinhala natural language voice/text intent parser and agronomic answer engine."""
-    return voice_bot.process_voice_query(query_text=req.query_text)
+    return voice_bot.process_voice_query(voice_transcript=req.query_text)
 
 @app.get("/api/farmer/weather")
 def get_weather_advisory(district: str = "Anuradhapura", target_crop: str = "Paddy"):

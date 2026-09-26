@@ -39,8 +39,22 @@ export const translations = {
     tileOrganicDesc: "ජීවාමෘත හා කොහොඹ වට්ටෝරු",
     tileGranule3D: "3D පොහොර කැටය බලන්න",
     tileGranule3DDesc: "සැබෑ සහ ව්‍යාජ කැටය ත්‍රිමාණව",
+    tileDolomite: "පසේ ඇඹුල් ගතියට ඩොලමයිට්",
+    tileDolomiteDesc: "පොහොර නාස්තිය වළක්වන ඩොලමයිට් මාත්‍රාව",
+    tileStraw: "පිදුරු දිරවීමෙන් MOP ඉතිරිය",
+    tileStrawDesc: "පිදුරු මගින් 80% පොටෑසියම් පසට එක් කිරීම",
+    tileDrone: "ඩ්‍රෝන කුඹුරු නිරෝගීතා සිතියම",
+    tileDroneDesc: "නයිට්‍රජන් ඌන කලාප හඳුනාගන්නා ඩ්‍රෝන සිතියම",
+    tileBagScan: "පොහොර උරයේ හොලෝග්‍රෑම් පරීක්ෂාව",
+    tileBagScanDesc: "ව්‍යාජ උර අසුවන ආරක්ෂිත මුද්‍රණ පරීක්ෂාව",
     tileChat: "ගොවි AI උපදේශක",
     tileChatDesc: "ඕනෑම ගැටලුවක් අසන්න",
+
+    // Categories
+    catQuality: "🛡️ තත්ත්ව පරීක්ෂාව හා ව්‍යාජ හඳුනාගැනීම",
+    catDosage: "⚖️ නියම පොහොර ප්‍රමාණය හා මිශ්‍රණ",
+    catSoilCrop: "🌱 පස්, පිදුරු, බෝග හා ඩ්‍රෝන සෞඛ්‍යය",
+    catWeatherOrganic: "🌧️ කාලගුණය, කාබනික හා AI උපදෙස්",
 
     // DIY Screening
     screeningHeader: "ගෙදරදීම හෝ කුඹුරේදීම පොහොර බාලදැයි පරීක්ෂා කරමු",
@@ -213,8 +227,22 @@ export const translations = {
     tileOrganicDesc: "Jeevamrutha & Neem spray recipes",
     tileGranule3D: "3D Fertilizer Grain",
     tileGranule3DDesc: "Compare genuine vs fake in 3D",
+    tileDolomite: "Soil Acidity & Dolomite",
+    tileDolomiteDesc: "Calculate dolomite to fix soil acidity",
+    tileStraw: "Straw Bio-Decomposition",
+    tileStrawDesc: "Recycle 80% K2O and save 1 bag MOP",
+    tileDrone: "Drone Field Health Map",
+    tileDroneDesc: "Aerial NDVI canopy scan & VRA nitrogen",
+    tileBagScan: "Bag Hologram & Stitch Verification",
+    tileBagScanDesc: "Spot counterfeit fertilizer bags",
     tileChat: "Farmer AI Assistant",
     tileChatDesc: "Ask any agricultural question",
+
+    // Categories
+    catQuality: "🛡️ Quality & Anti-Fraud Testing",
+    catDosage: "⚖️ Precision Dosage & Mixing Safety",
+    catSoilCrop: "🌱 Soil, Straw, Crop & Drone Health",
+    catWeatherOrganic: "🌧️ Weather, Organic & AI Assistant",
 
     // DIY Screening
     screeningHeader: "Test Fertilizer Quality at Home or in the Field",
@@ -387,8 +415,22 @@ export const translations = {
     tileOrganicDesc: "ஜீவாமிருதம் & வேம்பு கரைசல்",
     tileGranule3D: "3D உர மணி ஆய்வு",
     tileGranule3DDesc: "3D முறையில் போலி மற்றும் உண்மையான மணி",
+    tileDolomite: "மண் அமிலத்தன்மை & டோலமைட்",
+    tileDolomiteDesc: "மண் அமிலத்தை சீராக்கும் டோலமைட் அளவு",
+    tileStraw: "வைக்கோல் மட்க வைத்து MOP சேமிப்பு",
+    tileStrawDesc: "80% பொட்டாசியத்தை மீட்டு MOP சேமிக்க",
+    tileDrone: "ட்ரோன் பயிர் ஆரோக்கிய வரைபடம்",
+    tileDroneDesc: "ட்ரோன் மூலம் நைட்ரஜன் பற்றாக்குறை அறிதல்",
+    tileBagScan: "உரப்பை ஹோலோகிராம் ஆய்வு",
+    tileBagScanDesc: "போலி உரப்பைகளை கண்டறியும் முறை",
     tileChat: "விவசாய AI வழிகாட்டி",
     tileChatDesc: "எந்த கேள்வியையும் கேட்கலாம்",
+
+    // Categories
+    catQuality: "🛡️ உர தரம் மற்றும் போலி சரிபார்ப்பு",
+    catDosage: "⚖️ துல்லிய அளவு மற்றும் கலவை பாதுகாப்பு",
+    catSoilCrop: "🌱 மண், வைக்கோல், பயிர் மற்றும் ட்ரோன் நலன்",
+    catWeatherOrganic: "🌧️ வானிலை, இயற்கை உரம் மற்றும் AI உதவி",
 
     // DIY Screening
     screeningHeader: "வீட்டிலோ வயலிலோ உரத்தின் தரத்தை சோதிக்க",

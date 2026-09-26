@@ -20,7 +20,14 @@ import {
   Check,
   HelpCircle,
   Wheat,
-  Sun
+  Sun,
+  Scan,
+  ShieldAlert,
+  Cpu,
+  Activity,
+  Play,
+  RefreshCw,
+  Eye
 } from 'lucide-react';
 import ThreeGranuleCanvas from './ThreeGranuleCanvas';
 import { translations } from '../i18n';
@@ -29,6 +36,9 @@ const API_BASE = "http://localhost:8000";
 
 export default function FarmerMode({ language = 'si' }) {
   const t = translations[language] || translations.si;
+
+  // Category filter: 'all' | 'quality' | 'dosage' | 'soilcrop' | 'weatherorganic'
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Active Action Tab inside Farmer Mode
   const [activeTab, setActiveTab] = useState('screening');
@@ -69,6 +79,33 @@ export default function FarmerMode({ language = 'si' }) {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
+
+  // --- 9. Soil Dolomite / Acidity State ---
+  const [soilPh, setSoilPh] = useState(4.8);
+  const [soilTexture, setSoilTexture] = useState('loam_podzolic');
+  const [dolomiteAcres, setDolomiteAcres] = useState(1.0);
+  const [dolomiteResult, setDolomiteResult] = useState(null);
+  const [dolomiteLoading, setDolomiteLoading] = useState(false);
+
+  // --- 10. Paddy Straw In-situ Decomposition State ---
+  const [strawAcres, setStrawAcres] = useState(1.0);
+  const [grainYield, setGrainYield] = useState(4.5);
+  const [strawResult, setStrawResult] = useState(null);
+  const [strawLoading, setStrawLoading] = useState(false);
+
+  // --- 11. Drone Multispectral NDVI Field State ---
+  const [droneArea, setDroneArea] = useState(1.0);
+  const [droneResult, setDroneResult] = useState(null);
+  const [droneScanning, setDroneScanning] = useState(false);
+
+  // --- 12. Bag Authenticity / Hologram Scanner State ---
+  const [bagBrand, setBagBrand] = useState('ceylon_fertilizer_lakpohora');
+  const [hologramScore, setHologramScore] = useState(0.88);
+  const [microprintScore, setMicroprintScore] = useState(0.90);
+  const [stitchType, setStitchType] = useState('double_chainstitch');
+  const [sealTampered, setSealTampered] = useState(false);
+  const [bagResult, setBagResult] = useState(null);
+  const [bagLoading, setBagLoading] = useState(false);
 
   // Reset or update localized defaults on language change
   useEffect(() => {
@@ -195,8 +232,33 @@ export default function FarmerMode({ language = 'si' }) {
     }
   };
 
-  // 3. Tank Mix Check
-  const handleCheckTankMix = () => {
+  // 3. Tank Mix Check (Live API Call with WALES sequence)
+  const handleCheckTankMix = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/farmer/tankmix`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fertilizers: tankFertilizers,
+          water_volume_liters: 16.0
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const isSafe = data.overall_verdict === "COMPATIBLE_SAFE";
+        setTankResult({
+          safe: isSafe,
+          title: isSafe 
+            ? (language === 'en' ? "✅ Safe! These fertilizers are compatible to mix." : (language === 'ta' ? "✅ பாதுகாப்பானது! இவற்றை ஒன்றாக கலக்கலாம்." : "✅ ආරක්ෂිතයි! මෙම පොහොර වර්ග එකට කලවම් කළ හැක."))
+            : (language === 'en' ? "❌ Danger! Chemical Antagonism Detected!" : (language === 'ta' ? "❌ ஆபத்து! ரசாயன முரண்பாடு உள்ளது!" : "❌ අන්තරායයි! දිය නොවන අවක්ෂේප හෝ විෂ වායු හැදේ!")),
+          detail: data.scientific_rationale_si || (language === 'en' ? "Adhere to the WALES tank-mix dissolution sequence." : "ස්ප්‍රේ නොසලය හිරවීම වැළැක්වීමට WALES අනුපිළිවෙල අනුව දියකරන්න.")
+        });
+        return;
+      }
+    } catch {
+      // Local fallback
+    }
+
     const hasCa = tankFertilizers.includes('calcium_nitrate');
     const hasTSP = tankFertilizers.includes('tsp');
     const hasCopper = tankFertilizers.includes('copper');
@@ -235,13 +297,46 @@ export default function FarmerMode({ language = 'si' }) {
     }
   };
 
-  // 4. Leaf Doctor
-  const handleDiagnoseLeaf = (symptomKey) => {
+  // 4. Leaf Doctor (Live API Call)
+  const handleDiagnoseLeaf = async (symptomKey) => {
     setSelectedSymptom(symptomKey);
+    const symptomMap = {
+      yellow_lower: { pos: "older_leaves", desc: "uniform_yellowing", veins: false },
+      scorch_edges: { pos: "older_leaves", desc: "marginal_scorch", veins: false },
+      purple_leaves: { pos: "older_leaves", desc: "purplish_bronze_discoloration", veins: false },
+      veins_green: { pos: "older_leaves", desc: "interveinal_chlorosis", veins: true }
+    };
+    const q = symptomMap[symptomKey] || symptomMap.yellow_lower;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/farmer/deficiency`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          crop_type: selectedCrop || 'paddy',
+          leaf_position: q.pos,
+          symptom_description: q.desc,
+          is_veins_green: q.veins
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const top = data.top_diagnosis;
+        setLeafResult({
+          title: language === 'en' ? top.element_name : (language === 'ta' ? top.name_ta : top.name_si),
+          cause: data.field_action_alert_si || top.paddy_specific,
+          solution: language === 'en' ? top.immediate_remedy.foliar_spray_en : top.immediate_remedy.foliar_spray_si
+        });
+        return;
+      }
+    } catch {
+      // Local fallback
+    }
+
     const remedies = {
       yellow_lower: {
         title: language === 'en' ? "Nitrogen (N) Deficiency" : (language === 'ta' ? "நைட்ரஜன் (N) குறைபாடு" : "නයිට්‍රජන් (N) ඌනතාවය"),
-        cause: language === 'en' ? "Nitrogen leaching due to rain or low basal application." : (language === 'ta' ? "மண்ணில் நைட்ரஜன் சத்து குறைவு." : "පසේ යූරියා සේදී යාම හෝ මූලික යෙදුම මදිවීම."),
+        cause: language === 'en' ? "Nitrogen leaching due to rain or low basal application." : (language === 'ta' ? "மண்ணில் நைட்ரஜன் சத்து குறைவு." : "පසේ යූරියා සේදී යාම හෝ මූලික යෙදුම මදිවීම නිසා පහළ කොළ ඒකාකාරීව කහ වේ."),
         solution: language === 'en' ? "Dissolve 160g Urea in a 16L knapsack sprayer (1.0% foliar spray) and spray early morning. Leaves recover in 3-4 days." : (language === 'ta' ? "16L ஸ்ப்ரே டேங்கில் 160g யூரியாவை கரைத்து காலையில் தெளிக்கவும்." : "වතුර ලීටර් 16 ක ස්ප්‍රේ ටැංකියකට යූරියා ග්‍රෑම් 160ක් දියකර උදෑසන ගොයමට ඉසින්න. දින 3-4 කින් කොළ නැවත තද කොළ පැහැයට හැරේ.")
       },
       scorch_edges: {
@@ -263,9 +358,32 @@ export default function FarmerMode({ language = 'si' }) {
     setLeafResult(remedies[symptomKey]);
   };
 
-  // 5. Weather
-  const handleFetchWeather = (dist = selectedDistrict) => {
+  // 5. Weather (Live API Call)
+  const handleFetchWeather = async (dist = selectedDistrict) => {
     setSelectedDistrict(dist);
+    try {
+      const res = await fetch(`${API_BASE}/api/farmer/weather?district=${encodeURIComponent(dist)}&target_crop=Paddy`);
+      if (res.ok) {
+        const data = await res.json();
+        const days = data.forecast_evaluation.map(d => ({
+          day: d.day,
+          rain: `${d.rainfall_mm} mm`,
+          status: d.rainfall_mm > 20 ? "🌧️ තද වැසි" : (d.rainfall_mm > 5 ? "⛅ මද වැසි" : "☀️ හොඳ අව්ව"),
+          canSpray: d.status_tier === "OPTIMAL_GREEN_WINDOW"
+        }));
+        setWeatherData({
+          district: dist,
+          advice: language === 'en'
+            ? `Recommended application window: ${data.optimal_application_day}. Minimum leaching risk: ${data.minimum_nutrient_loss_risk_pct}%.`
+            : `පොහොර යෙදීමට සුදුසුම දිනය: ${data.optimal_application_day}. අවම සේදීයාම් අවදානම: ${data.minimum_nutrient_loss_risk_pct}%.`,
+          days
+        });
+        return;
+      }
+    } catch {
+      // Local fallback
+    }
+
     const isEn = language === 'en';
     const isTa = language === 'ta';
     setWeatherData({
@@ -274,55 +392,222 @@ export default function FarmerMode({ language = 'si' }) {
         ? "Heavy rain expected today and tomorrow. 70% of nitrogen will leach away if applied today. Postpone until Wednesday."
         : (isTa ? "இன்றும் நாளையும் கனமழை எதிர்பார்க்கப்படுகிறது. உரம் இடுவதை புதன்கிழமை வரை தள்ளி வைக்கவும்." : "අද සහ හෙට තද වැසි අපේක්ෂා කෙරේ. අද යූරියා යෙදුවහොත් 70% ක්ම සේදී යයි. බදාදා වන තෙක් පොහොර යෙදීම කල් තබන්න."),
       days: [
-        { day: isEn ? "Today" : (isTa ? "இன்று" : "අද"), rain: "45 mm", status: isEn ? "🌧️ Heavy Rain" : (isTa ? "🌧️ கனமழை" : "🌧️ තද වැසි"), canSpray: false },
-        { day: isEn ? "Tomorrow" : (isTa ? "நாளை" : "හෙට"), rain: "35 mm", status: isEn ? "🌧️ Rainy" : (isTa ? "🌧️ மிதமான மழை" : "🌧️ වැසි සහිතයි"), canSpray: false },
-        { day: isEn ? "Day 3" : (isTa ? "3 ஆம் நாள்" : "අනිද්දා"), rain: "10 mm", status: isEn ? "⛅ Light Rain" : (isTa ? "⛅ லேசான மழை" : "⛅ මද වැසි"), canSpray: false },
-        { day: isEn ? "Wednesday" : (isTa ? "புதன்கிழமை" : "බදාදා"), rain: "2 mm", status: isEn ? "☀️ Sunny" : (isTa ? "☀️ தெளிவான வெயில்" : "☀️ හොඳ අව්ව"), canSpray: true },
+        { day: isEn ? "Today" : (isTa ? "இன்று" : "අද"), rain: "42 mm", status: isEn ? "🌧️ Heavy Rain" : (isTa ? "🌧️ கனமழை" : "🌧️ තද වැසි"), canSpray: false },
+        { day: isEn ? "Tomorrow" : (isTa ? "நாளை" : "හෙට"), rain: "25 mm", status: isEn ? "🌧️ Rainy" : (isTa ? "🌧️ மிதமான மழை" : "🌧️ වැසි සහිතයි"), canSpray: false },
+        { day: isEn ? "Day 3" : (isTa ? "3 ஆம் நாள்" : "අනිද්දා"), rain: "5 mm", status: isEn ? "⛅ Light Rain" : (isTa ? "⛅ லேசான மழை" : "⛅ මද වැසි"), canSpray: false },
+        { day: isEn ? "Wednesday" : (isTa ? "புதன்கிழமை" : "බදාදා"), rain: "1 mm", status: isEn ? "☀️ Sunny" : (isTa ? "☀️ தெளிவான வெயில்" : "☀️ හොඳ අව්ව"), canSpray: true },
         { day: isEn ? "Thursday" : (isTa ? "வியாழக்கிழமை" : "බ්‍රහස්පතින්දා"), rain: "0 mm", status: isEn ? "☀️ Ideal" : (isTa ? "☀️ உகந்தது" : "☀️ ප්‍රශස්තයි"), canSpray: true }
       ]
     });
   };
 
-  // 6. AI Chat Send
-  const handleSendChat = (text = chatInput) => {
+  // 6. AI Chat Send (Live API Call to Voice Engine)
+  const handleSendChat = async (text = chatInput) => {
     if (!text.trim()) return;
     const userMsg = { sender: 'user', text };
     setChatMessages(prev => [...prev, userMsg]);
     setChatInput('');
     setChatLoading(true);
 
+    try {
+      const res = await fetch(`${API_BASE}/api/farmer/voice`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query_text: text })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const reply = language === 'en'
+          ? (data.speech_synthesis_transcript?.english_translation || "Verified by CropSafe AI Agronomic Knowledge Engine.")
+          : (data.speech_synthesis_transcript?.sinhala_response || "කෘෂිකර්ම දෙපාර්තමේන්තු නිර්දේශයන්ට අනුකූලව සකසන ලද නිල පිළිතුරකි.");
+        setChatMessages(prev => [...prev, { sender: 'bot', text: reply }]);
+        setChatLoading(false);
+        return;
+      }
+    } catch {
+      // Local fallback
+    }
+
     setTimeout(() => {
       let botReply = language === 'en'
-        ? "To test Urea at home, drop a teaspoon into half a glass of clean water. Genuine Urea dissolves within 60 seconds and makes the water intensely icy cold. If it bubbles with vinegar, it is adulterated with stone powder."
-        : (language === 'ta' 
-          ? "யூரியாவை சோதிக்க ஒரு கரண்டி உரத்தை தண்ணீரில் போடவும். ஒரு நிமிடத்தில் கரைந்து பனிக்கட்டி போல் குளிர்ந்தால் அது தூய உரம்."
-          : "යූරියා බාලදැයි නිවසේදීම සොයාගැනීමට වතුර වීදුරුවකට යූරියා තේ හැන්දක් දමන්න. එය විනාඩියෙන් දියවී වීදුරුව අයිස් මෙන් සීතල විය යුතුය. විනාකිරි දැමූ විට පෙණ නගී නම් එය ගල් කුඩු කලවම් කළ ව්‍යාජ පොහොරකි.");
-
-      if (text.includes("මූලික") || text.includes("basal") || text.includes("அடிப்படை")) {
-        botReply = language === 'en'
-          ? "Basal fertilizer for paddy must be incorporated during the final ploughing before planting. Apply all TSP and a portion of MOP and Urea."
-          : (language === 'ta' ? "கடைசி உழவின் போது அடிப்படை உரங்களை மண்ணில் இடவும்." : "වී වගාවේ මූලික පොහොර යෙදිය යුත්තේ අවසන් හෑමේදී හෝ පැළ සිටුවීමට දිනකට පෙරය. මූලික පොහොර ලෙස TSP සම්පූර්ණයෙන්ද, යූරියා සහ MOP වලින් කොටසක්ද පසට කලවම් කරන්න.");
-      } else if (text.includes("කැල්සියම්") || text.includes("calcium") || text.includes("கால்சியம்")) {
-        botReply = language === 'en'
-          ? "No! Never mix Calcium Nitrate with TSP. They react to form insoluble rock-hard chalk that clogs spray nozzles."
-          : (language === 'ta' ? "கால்சியம் நைட்ரேட் மற்றும் TSP ஐ ஒன்றாக கலக்காதீர்கள். நாசில்கள் அடைக்கும்." : "නැත, කිසිසේත්ම කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න එපා! ඒවා එකතු වූ විට නොදියවෙන සුදු කැටි හැදී ස්ප්‍රේ නොසලය හිරවේ.");
+        ? "To test Urea at home, drop a teaspoon into clean water. Genuine Urea dissolves rapidly within 60 seconds and feels icy cold. If it effervesces with vinegar, it contains marble or limestone filler."
+        : "යූරියා බාලදැයි නිවසේදීම සොයාගැනීමට වතුර වීදුරුවකට යූරියා තේ හැන්දක් දමන්න. එය විනාඩියෙන් දියවී වීදුරුව අයිස් මෙන් සීතල විය යුතුය. විනාකිරි දැමූ විට පෙණ නගී නම් එය ගල් කුඩු කලවම් කළ ව්‍යාජ පොහොරකි.";
+      if (text.includes("මූලික") || text.includes("basal")) {
+        botReply = "වී වගාවේ මූලික පොහොර යෙදිය යුත්තේ අවසන් හෑමේදී හෝ පැළ සිටුවීමට දිනකට පෙරය. මූලික පොහොර ලෙස TSP සම්පූර්ණයෙන්ද, යූරියා සහ MOP වලින් කොටසක්ද පසට කලවම් කරන්න.";
+      } else if (text.includes("කැල්සියම්") || text.includes("calcium")) {
+        botReply = "නැත, කිසිසේත්ම කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න එපා! ඒවා එකතු වූ විට නොදියවෙන සුදු කැටි හැදී ස්ප්‍රේ නොසලය හිරවේ.";
       }
-
       setChatMessages(prev => [...prev, { sender: 'bot', text: botReply }]);
       setChatLoading(false);
-    }, 400);
+    }, 350);
   };
 
-  const mainTiles = [
-    { id: 'screening', label: t.tileScreening, icon: '🔍', desc: t.tileScreeningDesc },
-    { id: 'dosage', label: t.tileDosage, icon: '⚖️', desc: t.tileDosageDesc },
-    { id: 'tankmix', label: t.tileTankMix, icon: '💧', desc: t.tileTankMixDesc },
-    { id: 'leafdoctor', label: t.tileLeafDoctor, icon: '🌿', desc: t.tileLeafDoctorDesc },
-    { id: 'weather', label: t.tileWeather, icon: '🌧️', desc: t.tileWeatherDesc },
-    { id: 'organic', label: t.tileOrganic, icon: '🍯', desc: t.tileOrganicDesc },
-    { id: 'granule3d', label: t.tileGranule3D, icon: '🔎', desc: t.tileGranule3DDesc },
-    { id: 'chat', label: t.tileChat, icon: '💬', desc: t.tileChatDesc }
+  // 7. Calculate Dolomite (Live API Call)
+  const handleCalculateDolomite = async (ph = soilPh, acres = dolomiteAcres, texture = soilTexture) => {
+    setDolomiteLoading(true);
+    setSoilPh(ph);
+    setDolomiteAcres(acres);
+    setSoilTexture(texture);
+    const ha = acres * 0.404686;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/soil/dolomite?current_ph=${ph}&target_ph=6.2&soil_texture=${texture}&land_area_ha=${ha}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDolomiteResult(data);
+      } else {
+        throw new Error();
+      }
+    } catch {
+      const deficit = Math.max(0, 6.2 - ph);
+      const kgTotal = Math.round(deficit * 1250 * ha);
+      const bags = Math.ceil(kgTotal / 50);
+      setDolomiteResult({
+        current_ph: ph,
+        hazard_assessment: ph < 5.0 ? "CRITICAL_ACIDITY_NUTRIENT_LOCKUP" : "MILD_ACIDITY",
+        dolomite_recommendation: {
+          dolomite_kg_total: kgTotal,
+          bags_50kg_count: bags,
+          estimated_cost_lkr: bags * 1200
+        },
+        application_protocol_si: "අවසන් බිම් සැකසීමට (අවසන් හෑමට) සති 2 කට පෙර ඩොලමයිට් පසට දමා කලවම් කරන්න. රසායනික පොහොර දැමීමට පෙර පසේ ඇඹුල් ගතිය පාලනය වේ."
+      });
+    } finally {
+      setDolomiteLoading(false);
+    }
+  };
+
+  // 8. Calculate Straw Decomposition (Live API Call)
+  const handleCalculateStraw = async (acres = strawAcres, yieldTons = grainYield) => {
+    setStrawLoading(true);
+    setStrawAcres(acres);
+    setGrainYield(yieldTons);
+    const ha = acres * 0.404686;
+
+    try {
+      const res = await fetch(`${API_BASE}/api/soil/straw-decompose?land_area_ha=${ha}&grain_yield_tons=${yieldTons}`);
+      if (res.ok) {
+        const data = await res.json();
+        setStrawResult(data);
+      } else {
+        throw new Error();
+      }
+    } catch {
+      const strawTons = (yieldTons * 0.9 * ha).toFixed(1);
+      const k2oKg = Math.round(strawTons * 16.5);
+      const mopBags = Math.ceil(k2oKg / 30);
+      setStrawResult({
+        straw_biomass_total_tons: strawTons,
+        nutrients_recycled_to_soil_kg: {
+          potassium_k2o_kg: k2oKg,
+          silica_sio2_kg: Math.round(strawTons * 55),
+          organic_carbon_kg: Math.round(strawTons * 380)
+        },
+        economic_benefits: {
+          equivalent_mop_bags_saved: mopBags,
+          cost_savings_lkr: mopBags * 19500
+        }
+      });
+    } finally {
+      setStrawLoading(false);
+    }
+  };
+
+  // 9. Run Drone Multispectral Scan (Live API Call)
+  const handleRunDroneScan = async () => {
+    setDroneScanning(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/drone/scan?grid_size=4&area_ha=${droneArea * 0.404686}&crop=paddy`);
+      if (res.ok) {
+        const data = await res.json();
+        setDroneResult(data);
+      } else {
+        throw new Error();
+      }
+    } catch {
+      setDroneResult({
+        canopy_indices_summary: {
+          mean_ndvi: 0.68,
+          canopy_nitrogen_status: "MODERATE_DEFICIENT_ZONES_DETECTED"
+        },
+        spatial_zone_distribution: {
+          healthy_green_pct: 62.5,
+          moderate_stress_pct: 25.0,
+          severe_deficiency_pct: 12.5
+        },
+        variable_rate_prescription: {
+          urea_saved_kg: 28.5,
+          money_saved_lkr: 11400,
+          zone_recommendation: "රතු හා කහ පැහැති කොටුවලට පමණක් අමතර යූරියා කි.ග්‍රෑ. 30ක් යොදන්න. කොළ පැහැති නිරෝගී කලාප වලට පොහොර යෙදීමෙන් වළකින්න."
+        }
+      });
+    } finally {
+      setDroneScanning(false);
+    }
+  };
+
+  // 10. Verify Bag Packaging Authenticity (Live API Call)
+  const handleVerifyBag = async () => {
+    setBagLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/inspector/packaging-scan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brand_key: bagBrand,
+          hologram_diffraction_score: hologramScore,
+          microprint_sharpness_score: microprintScore,
+          stitch_type_detected: stitchType,
+          seal_tamper_flag: sealTampered
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBagResult(data);
+      } else {
+        throw new Error();
+      }
+    } catch {
+      const isAuthentic = hologramScore > 0.75 && microprintScore > 0.75 && stitchType === 'double_chainstitch' && !sealTampered;
+      setBagResult({
+        authenticity_score_pct: isAuthentic ? 94.5 : 32.0,
+        verdict: isAuthentic ? "GENUINE_AUTHENTIC" : "COUNTERFEIT_ADULTERATED",
+        verdict_si: isAuthentic ? "ප්‍රමිතියෙන් යුතු නියම රජයේ පොහොර උරයකි" : "අවධානයයි! ව්‍යාජ හෝ මුද්‍රාව කැඩූ හොර උරයකි",
+        action_advice_si: isAuthentic 
+          ? "මෙම උරයේ හොලෝග්‍රෑම් හා ද්විත්ව මැහුම් රටාව නියම ප්‍රමිතියට ඇත. ආරක්ෂිතව භාවිත කළ හැක."
+          : "මෙම උරයේ ආරක්ෂිත ලකුණු ව්‍යාජයි. වහාම ගොවිජන නිලධාරීට හෝ 1920 අමතා පැමිණිලි කරන්න."
+      });
+    } finally {
+      setBagLoading(false);
+    }
+  };
+
+  // Complete List of All 12 Agricultural Services Categorized
+  const allTiles = [
+    // 1. Quality & Anti-Fraud
+    { id: 'screening', cat: 'quality', label: t.tileScreening, icon: '🔍', desc: t.tileScreeningDesc },
+    { id: 'granule3d', cat: 'quality', label: t.tileGranule3D, icon: '🔎', desc: t.tileGranule3DDesc },
+    { id: 'bagscan', cat: 'quality', label: t.tileBagScan, icon: '🛡️', desc: t.tileBagScanDesc },
+
+    // 2. Dosage & Mix Safety
+    { id: 'dosage', cat: 'dosage', label: t.tileDosage, icon: '⚖️', desc: t.tileDosageDesc },
+    { id: 'tankmix', cat: 'dosage', label: t.tileTankMix, icon: '💧', desc: t.tileTankMixDesc },
+
+    // 3. Soil, Straw, Crop & Drone Health
+    { id: 'leafdoctor', cat: 'soilcrop', label: t.tileLeafDoctor, icon: '🌿', desc: t.tileLeafDoctorDesc },
+    { id: 'dolomite', cat: 'soilcrop', label: t.tileDolomite, icon: '🧪', desc: t.tileDolomiteDesc },
+    { id: 'straw', cat: 'soilcrop', label: t.tileStraw, icon: '🌾', desc: t.tileStrawDesc },
+    { id: 'drone', cat: 'soilcrop', label: t.tileDrone, icon: '🛸', desc: t.tileDroneDesc },
+
+    // 4. Weather, Organic & AI Assistant
+    { id: 'weather', cat: 'weatherorganic', label: t.tileWeather, icon: '🌧️', desc: t.tileWeatherDesc },
+    { id: 'organic', cat: 'weatherorganic', label: t.tileOrganic, icon: '🍯', desc: t.tileOrganicDesc },
+    { id: 'chat', cat: 'weatherorganic', label: t.tileChat, icon: '💬', desc: t.tileChatDesc }
   ];
+
+  const visibleTiles = selectedCategory === 'all' 
+    ? allTiles 
+    : allTiles.filter(item => item.cat === selectedCategory);
 
   return (
     <div className="space-y-6 pb-20">
@@ -361,15 +646,44 @@ export default function FarmerMode({ language = 'si' }) {
         </div>
       </div>
 
-      {/* Main Service Shortcuts Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {mainTiles.map(tile => (
+      {/* Category Filter Pills */}
+      <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
+        {[
+          { id: 'all', label: language === 'en' ? 'All 12 Services' : (language === 'ta' ? 'அனைத்து சேவைகள்' : 'සියලු සේවා 12'), count: 12 },
+          { id: 'quality', label: t.catQuality, count: 3 },
+          { id: 'dosage', label: t.catDosage, count: 2 },
+          { id: 'soilcrop', label: t.catSoilCrop, count: 4 },
+          { id: 'weatherorganic', label: t.catWeatherOrganic, count: 3 }
+        ].map(cat => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => setSelectedCategory(cat.id)}
+            className={`px-4 py-2 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center space-x-1.5 ${
+              selectedCategory === cat.id
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            <span>{cat.label}</span>
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+              selectedCategory === cat.id ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'
+            }`}>
+              {cat.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Main Service Shortcuts Grid (Filtered by Category) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        {visibleTiles.map(tile => (
           <button
             key={tile.id}
             onClick={() => setActiveTab(tile.id)}
             className={`p-4 rounded-2xl border text-left transition-all ${
               activeTab === tile.id
-                ? 'bg-emerald-700 text-white border-emerald-700 shadow-md transform scale-[1.02]'
+                ? 'bg-emerald-700 text-white border-emerald-700 shadow-md transform scale-[1.01]'
                 : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 shadow-sm'
             }`}
           >
@@ -1519,7 +1833,676 @@ export default function FarmerMode({ language = 'si' }) {
       )}
 
       {/* ================================================================ */}
-      {/* FEATURE 8: FARMER AI CHAT */}
+      {/* FEATURE 3: FERTILIZER BAG & HOLOGRAM AUTHENTICITY SCANNER */}
+      {/* ================================================================ */}
+      {activeTab === 'bagscan' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold mb-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
+              <span>{language === 'en' ? 'Packaging & Vision Security' : 'උරයේ මුද්‍රණ හා ආරක්ෂක ලකුණු පරීක්ෂාව'}</span>
+            </div>
+            <h2 className="text-xl font-black text-slate-900">
+              {language === 'en' ? 'Fertilizer Bag & Hologram Authenticity Verification' : 'පොහොර උරයේ ආරක්ෂිත ලකුණු හා හොලෝග්‍රෑම් පරීක්ෂාව'}
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              {language === 'en'
+                ? 'Verify official brand packaging, diffraction holograms, microprint typography, and stitch patterns to detect counterfeit bag reuse.'
+                : 'රජයේ ලක්පොහොර හා බලපත්‍රලාභී පොහොර උරවල ඇති හොලෝග්‍රෑම්, ක්ෂුද්‍ර මුද්‍රණ (Microprint) සහ ද්විත්ව මැහුම් රටාව පරීක්ෂා කර ව්‍යාජ උර හඳුනාගනිමු.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-black text-slate-900 block mb-1">
+                  {language === 'en' ? 'Select Fertilizer Brand:' : 'පොහොර සන්නාමය තෝරන්න:'}
+                </label>
+                <select
+                  value={bagBrand}
+                  onChange={(e) => setBagBrand(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white text-slate-800"
+                >
+                  <option value="ceylon_fertilizer_lakpohora">රජයේ ලක්පොහොර (Ceylon Fertilizer Co.)</option>
+                  <option value="colombo_commercial_fertilizers">කොළඹ කොමර්ෂල් පොහොර සමාගම (CCF)</option>
+                  <option value="baurs_fertilizer">බවර්ස් පොහොර (A. Baur & Co.)</option>
+                  <option value="cic_agri_businesses">සී.අයි.සී. කෘෂි ව්‍යාපාර (CIC Agri)</option>
+                </select>
+              </div>
+
+              {/* Hologram inspection */}
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-800">
+                    {language === 'en' ? '1. Hologram 3D Luster & Diffraction:' : '1. ආරක්ෂිත හොලෝග්‍රෑම් පටියේ දිලිසීම:'}
+                  </span>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    {Math.round(hologramScore * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.2"
+                  max="1.0"
+                  step="0.05"
+                  value={hologramScore}
+                  onChange={(e) => setHologramScore(parseFloat(e.target.value))}
+                  className="w-full accent-emerald-600 cursor-pointer"
+                />
+                <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
+                  <span>❌ {language === 'en' ? 'Dull Sticker (Fake)' : 'අඳුරු/ස්ටිකර් (බාලයි)'}</span>
+                  <span>✅ {language === 'en' ? 'Rainbow 3D Shimmer' : 'වර්ණාවලි ත්‍රිමාණ දීප්තිය'}</span>
+                </div>
+              </div>
+
+              {/* Microprint inspection */}
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-800">
+                    {language === 'en' ? '2. Microprint Text Sharpness:' : '2. ක්ෂුද්‍ර අකුරු මුද්‍රණයේ පැහැදිලිකම:'}
+                  </span>
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
+                    {Math.round(microprintScore * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="0.2"
+                  max="1.0"
+                  step="0.05"
+                  value={microprintScore}
+                  onChange={(e) => setMicroprintScore(parseFloat(e.target.value))}
+                  className="w-full accent-emerald-600 cursor-pointer"
+                />
+                <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
+                  <span>❌ {language === 'en' ? 'Blurred Ink' : 'තීන්ත විසිරුණු බොඳ අකුරු'}</span>
+                  <span>✅ {language === 'en' ? 'Razor Sharp Print' : 'ඉතා පැහැදිලි සියුම් අකුරු'}</span>
+                </div>
+              </div>
+
+              {/* Stitching and seal */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3 bg-white rounded-xl border border-slate-200">
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    {language === 'en' ? 'Stitch Pattern:' : 'මැහුම් වර්ගය:'}
+                  </label>
+                  <select
+                    value={stitchType}
+                    onChange={(e) => setStitchType(e.target.value)}
+                    className="w-full p-1.5 rounded-lg border text-xs font-semibold bg-white"
+                  >
+                    <option value="double_chainstitch">ද්විත්ව දාම මැහුම (Double Chainstitch - නියම)</option>
+                    <option value="single_twine">තනි නූල් මැහුම (Single Hand Twine - සැක සහිත)</option>
+                  </select>
+                </div>
+
+                <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block">
+                      {language === 'en' ? 'Seal Tampered?' : 'මුද්‍රාව කඩා තිබේද?'}
+                    </label>
+                    <span className="text-[10px] text-slate-500">
+                      {sealTampered ? 'කැඩූ සලකුණු ඇත' : 'මුද්‍රාව සුරක්ෂිතයි'}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSealTampered(!sealTampered)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      sealTampered ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'
+                    }`}
+                  >
+                    {sealTampered ? 'ඔව් (කැඩී ඇත)' : 'නැත'}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleVerifyBag}
+                disabled={bagLoading}
+                className="w-full py-3.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
+              >
+                <Scan className="w-4 h-4" />
+                <span>{bagLoading ? 'පරීක්ෂා කරමින් පවතී...' : 'උරයේ සත්‍යතාවය තහවුරු කරන්න'}</span>
+              </button>
+            </div>
+
+            {/* Results Panel */}
+            <div>
+              {bagResult ? (
+                <div className={`p-6 rounded-2xl border-2 space-y-4 ${
+                  bagResult.authenticity_score_pct >= 75
+                    ? 'bg-emerald-50 border-emerald-400 text-emerald-950'
+                    : 'bg-rose-50 border-rose-400 text-rose-950'
+                }`}>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-4xl">
+                      {bagResult.authenticity_score_pct >= 75 ? '🛡️' : '🚨'}
+                    </span>
+                    <div>
+                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wide block">
+                        {language === 'en' ? 'Security Authentication Verdict' : 'ආරක්ෂිත පරීක්ෂණ නිගමනය'}
+                      </span>
+                      <h3 className="text-lg font-black leading-tight">
+                        {bagResult.verdict_si || bagResult.verdict}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-bold text-slate-500 block">
+                        {language === 'en' ? 'Authenticity Score:' : 'ආරක්ෂිත සත්‍යතා ලකුණු:'}
+                      </span>
+                      <strong className="text-2xl font-black text-slate-900">
+                        {bagResult.authenticity_score_pct}%
+                      </strong>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-black ${
+                      bagResult.authenticity_score_pct >= 75 ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
+                    }`}>
+                      {bagResult.authenticity_score_pct >= 75 ? 'නියම රජයේ උරයකි' : 'ව්‍යාජ අවදානමක්!'}
+                    </span>
+                  </div>
+
+                  <div className="text-xs font-medium leading-relaxed p-3 bg-white/70 rounded-xl border border-slate-200">
+                    💡 <strong>{language === 'en' ? 'Action Advice:' : 'නිල උපදෙස:'}</strong> {bagResult.action_advice_si || bagResult.verdict}
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full min-h-[220px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
+                  <Scan className="w-10 h-10 text-slate-400" />
+                  <p className="text-xs font-bold">
+                    {language === 'en' ? 'Click "Verify Bag Packaging" to analyze security marks.' : 'උරයේ සත්‍යතාවය පරීක්ෂා කිරීමට ඉහත බොත්තම ඔබන්න.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 7: SOIL PH & DOLOMITE CALCULATOR */}
+      {/* ================================================================ */}
+      {activeTab === 'dolomite' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold mb-2">
+              <FlaskConical className="w-3.5 h-3.5 text-amber-700" />
+              <span>{language === 'en' ? 'Soil Health & Buffer Titration' : 'පසේ සෞඛ්‍යය හා ඇඹුල් ගතිය පාලනය'}</span>
+            </div>
+            <h2 className="text-xl font-black text-slate-900">
+              {t.tileDolomite}
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              {language === 'en'
+                ? 'When soil pH drops below 5.5, over 60% of applied chemical fertilizers get locked up and wasted. Calculate the exact dolomite dosage to restore soil health.'
+                : 'පසේ pH අගය 5.5 ට වඩා අඩු වූ විට (ඇඹුල් වූ විට) ඔබ දමන යූරියා සහ TSP පොහොර වලින් 60% කට වඩා පැළයට උරාගැනීමට නොහැකිව අපතේ යයි. ඩොලමයිට් දමා පස සුවපත් කරමු.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              {/* pH Slider */}
+              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-black text-slate-900">
+                    {language === 'en' ? 'Current Soil pH Level:' : 'ඔබේ පසේ වර්තමාන pH අගය:'}
+                  </label>
+                  <span className={`text-base font-black px-3 py-0.5 rounded-full ${
+                    soilPh < 5.0 ? 'bg-rose-200 text-rose-900' : (soilPh < 6.0 ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-900')
+                  }`}>
+                    pH {soilPh.toFixed(1)}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="4.0"
+                  max="6.8"
+                  step="0.1"
+                  value={soilPh}
+                  onChange={(e) => setSoilPh(parseFloat(e.target.value))}
+                  className="w-full accent-emerald-600 cursor-pointer"
+                />
+                <div className="flex justify-between text-[11px] font-bold">
+                  <span className="text-rose-600">4.0 (තද ඇඹුල් / විෂයි)</span>
+                  <span className="text-amber-600">5.5 (මධ්‍යම)</span>
+                  <span className="text-emerald-700">6.2 (නියම අගය)</span>
+                </div>
+              </div>
+
+              {/* Land Acres */}
+              <div>
+                <label className="text-xs font-black text-slate-800 block mb-1">
+                  {language === 'en' ? 'Cultivation Land Area (Acres):' : 'ඉඩමේ ප්‍රමාණය (අක්කර වලින්):'}
+                </label>
+                <div className="flex items-center space-x-2">
+                  {[0.5, 1.0, 2.0, 5.0].map(ac => (
+                    <button
+                      key={ac}
+                      type="button"
+                      onClick={() => setDolomiteAcres(ac)}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                        dolomiteAcres === ac ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'
+                      }`}
+                    >
+                      {ac} {language === 'en' ? 'Ac' : 'අක්.'}
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    min="0.1"
+                    max="50"
+                    step="0.25"
+                    value={dolomiteAcres}
+                    onChange={(e) => setDolomiteAcres(parseFloat(e.target.value) || 0.5)}
+                    className="w-24 p-1.5 rounded-xl border border-slate-300 text-xs font-black text-center"
+                  />
+                </div>
+              </div>
+
+              {/* Soil Texture */}
+              <div>
+                <label className="text-xs font-black text-slate-800 block mb-1">
+                  {language === 'en' ? 'Soil Texture Type:' : 'පස් වර්ගය:'}
+                </label>
+                <select
+                  value={soilTexture}
+                  onChange={(e) => setSoilTexture(e.target.value)}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white text-slate-800"
+                >
+                  <option value="loam_podzolic">රතු-කහ පොඩ්සොලික් (Loam / Dry & Intermediate Zone)</option>
+                  <option value="clay_grumusol">කළු මැටි සහිත පස (Clay / Lowland Paddy)</option>
+                  <option value="sandy_regosol">වැලි සහිත පස (Sandy Coastal / Kalpitiya)</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleCalculateDolomite(soilPh, dolomiteAcres, soilTexture)}
+                disabled={dolomiteLoading}
+                className="w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
+              >
+                <Calculator className="w-4 h-4" />
+                <span>{dolomiteLoading ? 'ගණනය කරමින් පවතී...' : 'ඩොලමයිට් මාත්‍රාව ගණනය කරන්න'}</span>
+              </button>
+            </div>
+
+            {/* Dolomite Result Card */}
+            <div>
+              {dolomiteResult ? (
+                <div className="p-6 rounded-2xl bg-amber-50/80 border-2 border-amber-300 space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-3xl">🧪</span>
+                    <div>
+                      <span className="text-xs font-bold text-amber-900 uppercase tracking-wide block">
+                        {language === 'en' ? 'DOA Soil Buffering Recommendation' : 'කෘෂිකර්ම දෙපාර්තමේන්තු ඩොලමයිට් නිර්දේශය'}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900">
+                        {dolomiteAcres} {language === 'en' ? 'Acres' : 'අක්කරයක්'} සඳහා අවශ්‍ය මාත්‍රාව
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-white rounded-xl border border-amber-200">
+                      <span className="text-[11px] font-bold text-slate-500 block">අවශ්‍ය ඩොලමයිට්:</span>
+                      <strong className="text-xl font-black text-emerald-800">
+                        {dolomiteResult.dolomite_recommendation?.dolomite_kg_total || 600} kg
+                      </strong>
+                    </div>
+
+                    <div className="p-3.5 bg-white rounded-xl border border-amber-200">
+                      <span className="text-[11px] font-bold text-slate-500 block">50kg කොට්ට ගණන:</span>
+                      <strong className="text-xl font-black text-amber-900">
+                        {dolomiteResult.dolomite_recommendation?.bags_50kg_count || 12} කොට්ට
+                      </strong>
+                    </div>
+                  </div>
+
+                  {soilPh < 5.0 && (
+                    <div className="p-3 bg-rose-100 rounded-xl border border-rose-300 text-rose-950 text-xs font-medium space-y-1">
+                      <strong className="font-black block">⚠️ දැඩි ඇඹුල් අවදානමක් (Severe Nutrient Lockup):</strong>
+                      <p>pH {soilPh.toFixed(1)} හිදී පසේ ඇලුමිනියම් විෂවීම නිසා ඔබ යොදන TSP සහ යූරියා වලින් 60% කට වඩා ගල් වේ (අපතේ යයි). ඩොලමයිට් අනිවාර්යයෙන් දැමිය යුතුය.</p>
+                    </div>
+                  )}
+
+                  <div className="p-3.5 bg-white rounded-xl border border-amber-200 text-xs text-slate-700 space-y-1">
+                    <strong className="font-bold text-emerald-900 block">📋 යෙදිය යුතු නිවැරදි ක්‍රමය:</strong>
+                    <p className="leading-relaxed font-medium">
+                      {dolomiteResult.application_protocol_si || "අවසන් බිම් සැකසීමට (අවසන් හෑමට) සති 2 කට පෙර ඩොලමයිට් පසට දමා කලවම් කරන්න. රසායනික පොහොර දැමීමට සති 2 කට පෙර යෙදිය යුතුය."}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full min-h-[220px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
+                  <FlaskConical className="w-10 h-10 text-slate-400" />
+                  <p className="text-xs font-bold">
+                    {language === 'en' ? 'Click "Calculate Dolomite Dosage" to compute requirements.' : 'ඩොලමයිට් මිටි ගණන ගණනය කිරීමට ඉහත බොත්තම ඔබන්න.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 8: PADDY STRAW IN-SITU BIO-DECOMPOSITION */}
+      {/* ================================================================ */}
+      {activeTab === 'straw' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
+              <Wheat className="w-3.5 h-3.5 text-emerald-700" />
+              <span>{language === 'en' ? 'Circular Nutrient Recycling' : 'පිදුරු ප්‍රතිචක්‍රීකරණය හා මුදල් ඉතිරිය'}</span>
+            </div>
+            <h2 className="text-xl font-black text-slate-900">
+              {t.tileStraw}
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              {language === 'en'
+                ? 'Stop burning paddy straw! Biological in-situ decomposition recycles over 80% of native potassium (K2O), saving an entire bag of MOP fertilizer per hectare.'
+                : 'කුඹුරේ පිදුරු ගිනි තැබීමෙන් වළකින්න! පිදුරු කුඹුරේම දිරවීමට සැලැස්වීමෙන් පොටෑසියම් (K2O) 80% ක් නැවත පසට ලැබී රතු පොහොර (MOP) මිටියක්ම ඉතිරි කරගත හැක.'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-black text-slate-800 block mb-1">
+                  {language === 'en' ? 'Paddy Field Extent (Acres):' : 'කුඹුරේ ප්‍රමාණය (අක්කර):'}
+                </label>
+                <div className="flex items-center space-x-2">
+                  {[0.5, 1.0, 2.0, 5.0].map(ac => (
+                    <button
+                      key={ac}
+                      type="button"
+                      onClick={() => setStrawAcres(ac)}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+                        strawAcres === ac ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'
+                      }`}
+                    >
+                      {ac} {language === 'en' ? 'Ac' : 'අක්.'}
+                    </button>
+                  ))}
+                  <input
+                    type="number"
+                    min="0.1"
+                    max="50"
+                    step="0.25"
+                    value={strawAcres}
+                    onChange={(e) => setStrawAcres(parseFloat(e.target.value) || 1.0)}
+                    className="w-24 p-1.5 rounded-xl border border-slate-300 text-xs font-black text-center"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-black text-slate-800 block mb-1">
+                  {language === 'en' ? 'Previous Harvest Yield (Tons/Acre):' : 'පසුගිය කන්නයේ අස්වැන්න (අක්කරයකට මෙ.ටොන්):'}
+                </label>
+                <select
+                  value={grainYield}
+                  onChange={(e) => setGrainYield(parseFloat(e.target.value))}
+                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white text-slate-800"
+                >
+                  <option value={3.0}>3.0 Tons / Acre (සාමාන්‍ය අස්වැන්න)</option>
+                  <option value={4.5}>4.5 Tons / Acre (ඉහළ අස්වැන්නක්)</option>
+                  <option value={6.0}>6.0 Tons / Acre (විශිෂ්ට අස්වැන්නක්)</option>
+                </select>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleCalculateStraw(strawAcres, grainYield)}
+                disabled={strawLoading}
+                className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
+              >
+                <Wheat className="w-4 h-4" />
+                <span>{strawLoading ? 'ගණනය කරමින් පවතී...' : 'පොටෑසියම් ප්‍රතිචක්‍රීකරණය හා ඉතිරිය ගණනය කරන්න'}</span>
+              </button>
+            </div>
+
+            {/* Straw Result Dashboard */}
+            <div>
+              {strawResult ? (
+                <div className="p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-300 space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-3xl">🌾</span>
+                    <div>
+                      <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block">
+                        {language === 'en' ? 'Nutrient Recycling Dashboard' : 'පිදුරු ප්‍රතිචක්‍රීකරණ ප්‍රතිලාභ'}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900">
+                        අක්කර {strawAcres} ක් සඳහා ප්‍රතිචක්‍රීකරණ අගය
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3.5 bg-white rounded-xl border border-emerald-200">
+                      <span className="text-[11px] font-bold text-slate-500 block">ඉතිරි වන MOP (රතු පොහොර):</span>
+                      <strong className="text-2xl font-black text-emerald-800">
+                        {strawResult.economic_benefits?.equivalent_mop_bags_saved || 1} මිටියයි
+                      </strong>
+                    </div>
+
+                    <div className="p-3.5 bg-white rounded-xl border border-emerald-200">
+                      <span className="text-[11px] font-bold text-slate-500 block">ඉතිරි වන මුදල:</span>
+                      <strong className="text-2xl font-black text-emerald-800">
+                        Rs. {(strawResult.economic_benefits?.cost_savings_lkr || 19500).toLocaleString()}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-white rounded-xl border border-emerald-200 text-xs space-y-1.5">
+                    <strong className="font-bold text-slate-800 block">🌱 පසට එකතුවන ස්වභාවික පෝෂක:</strong>
+                    <div className="grid grid-cols-3 gap-2 text-center pt-1 font-bold">
+                      <div className="p-2 bg-emerald-50 rounded-lg">
+                        <span className="text-[10px] text-slate-500 block">පොටෑසියම් (K2O)</span>
+                        <span className="text-emerald-900 text-sm font-black">{strawResult.nutrients_recycled_to_soil_kg?.potassium_k2o_kg || 45} kg</span>
+                      </div>
+                      <div className="p-2 bg-emerald-50 rounded-lg">
+                        <span className="text-[10px] text-slate-500 block">කාබනික කාබන්</span>
+                        <span className="text-emerald-900 text-sm font-black">{strawResult.nutrients_recycled_to_soil_kg?.organic_carbon_kg || 1200} kg</span>
+                      </div>
+                      <div className="p-2 bg-emerald-50 rounded-lg">
+                        <span className="text-[10px] text-slate-500 block">සිලිකා (ශක්තියට)</span>
+                        <span className="text-emerald-900 text-sm font-black">{strawResult.nutrients_recycled_to_soil_kg?.silica_sio2_kg || 220} kg</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-white/80 rounded-xl text-xs text-slate-700 leading-relaxed">
+                    💡 <strong>දිරවීමේ පියවර:</strong> අස්වැන්න නෙළූ පසු පිදුරු ඒකාකාරීව පතුරුවා, ගොම දියර හෝ ට්‍රයිකොඩර්මා ඉස, අඟල් 2ක් ජලය බැඳ සති 2ක් තබා මුල් හෑමේදී පසට පෙරළන්න.
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full min-h-[220px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
+                  <Wheat className="w-10 h-10 text-slate-400" />
+                  <p className="text-xs font-bold">
+                    {language === 'en' ? 'Click "Calculate Savings" to evaluate straw recycling.' : 'පිදුරු මගින් ඉතිරි වන රතු පොහොර ගණනයට ඉහත බොත්තම ඔබන්න.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 9: DRONE MULTISPECTRAL NDVI CROP HEALTH SCANNER */}
+      {/* ================================================================ */}
+      {activeTab === 'drone' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-2">
+              <Cpu className="w-3.5 h-3.5 text-cyan-700" />
+              <span>{language === 'en' ? 'Precision Agronomy & Drone Remote Sensing' : 'නිරවද්‍ය කෘෂිකර්මය හා ඩ්‍රෝන සංවේදන තාක්ෂණය'}</span>
+            </div>
+            <h2 className="text-xl font-black text-slate-900">
+              {t.tileDrone}
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              {language === 'en'
+                ? 'Aerial NDVI multispectral survey identifies localized nitrogen deficiency zones, enabling Variable-Rate Application (VRA) so you only fertilize under-nourished patches.'
+                : 'අහසේ සිට ඩ්‍රෝන මගින් ලබාගන්නා NDVI බෝග වියන් දර්ශකය මගින් කුඹුරේ නයිට්‍රජන් ඌනතාවය ඇති තැන් නිවැරදිව හඳුනාගෙන අවශ්‍ය තැනට පමණක් පොහොර යොදමු (Variable-Rate Application).'}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+            <div className="space-y-4">
+              <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-cyan-400 uppercase tracking-wide">
+                    🚁 ඩ්‍රෝන සංවේදක පරාමිතීන්
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-[11px] font-bold">
+                    Multi-Spectral 5-Band
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
+                  <div className="p-2 bg-slate-800/80 rounded-xl">
+                    <span className="text-[10px] text-slate-400 block">කැමරාව:</span>
+                    <strong className="text-slate-200">RedEdge / NIR</strong>
+                  </div>
+                  <div className="p-2 bg-slate-800/80 rounded-xl">
+                    <span className="text-[10px] text-slate-400 block">පියාසැරි උස:</span>
+                    <strong className="text-slate-200">35 Meters</strong>
+                  </div>
+                  <div className="p-2 bg-slate-800/80 rounded-xl">
+                    <span className="text-[10px] text-slate-400 block">විභේදනය:</span>
+                    <strong className="text-slate-200">2.5 cm / px</strong>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleRunDroneScan}
+                  disabled={droneScanning}
+                  className="w-full py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
+                >
+                  <Play className="w-4 h-4 fill-slate-950" />
+                  <span>{droneScanning ? 'ඩ්‍රෝන පියාසැරිය සිදුවෙමින් පවතී...' : '🚀 ඩ්‍රෝන සමීක්ෂණය අරඹන්න (Launch Drone Scan)'}</span>
+                </button>
+              </div>
+
+              {/* 4x4 Spatial Crop Health Matrix */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <span className="text-xs font-bold text-slate-700 block">
+                  🗺️ කුඹුරේ 4x4 ක්ෂේත්‍ර කලාප සිතියම (Spatial NDVI Vigor Grid):
+                </span>
+                <div className="grid grid-cols-4 gap-1.5 p-2 bg-white rounded-xl border border-slate-200">
+                  {[
+                    0.82, 0.78, 0.65, 0.42,
+                    0.80, 0.72, 0.48, 0.38,
+                    0.75, 0.68, 0.70, 0.79,
+                    0.84, 0.81, 0.74, 0.76
+                  ].map((val, idx) => (
+                    <div
+                      key={idx}
+                      className={`h-12 rounded-lg flex flex-col items-center justify-center font-black text-[11px] transition-all shadow-xs ${
+                        val >= 0.75
+                          ? 'bg-emerald-600 text-white'
+                          : (val >= 0.60 ? 'bg-amber-400 text-slate-950' : 'bg-rose-600 text-white animate-pulse')
+                      }`}
+                    >
+                      <span>{val.toFixed(2)}</span>
+                      <span className="text-[9px] font-medium opacity-80">
+                        {val >= 0.75 ? 'නිරෝගී' : (val >= 0.60 ? 'මධ්‍යම' : 'ඌනයි!')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex justify-between text-[10px] font-bold text-slate-500 pt-1">
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span>
+                    <span>NDVI &gt; 0.75 (නිරෝගී)</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+                    <span>0.60-0.74 (මධ්‍යම)</span>
+                  </span>
+                  <span className="flex items-center space-x-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block"></span>
+                    <span>&lt; 0.60 (නයිට්‍රජන් ඌනයි)</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Drone Results Dashboard */}
+            <div>
+              {droneResult ? (
+                <div className="p-6 rounded-2xl bg-cyan-50/80 border-2 border-cyan-300 space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-3xl">🛸</span>
+                    <div>
+                      <span className="text-xs font-bold text-cyan-900 uppercase tracking-wide block">
+                        {language === 'en' ? 'Drone Multispectral Diagnostic' : 'ඩ්‍රෝන බෝග වියන් විශ්ලේෂණය'}
+                      </span>
+                      <h3 className="text-base font-black text-slate-900">
+                        සාමාන්‍ය NDVI අගය: {droneResult.canopy_indices_summary?.mean_ndvi || 0.68}
+                      </h3>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div className="p-3 bg-white rounded-xl border border-cyan-200">
+                      <span className="text-[10px] font-bold text-slate-500 block">නිරෝගී කලාප:</span>
+                      <strong className="text-lg font-black text-emerald-700">
+                        {droneResult.spatial_zone_distribution?.healthy_green_pct || 62.5}%
+                      </strong>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-cyan-200">
+                      <span className="text-[10px] font-bold text-slate-500 block">මධ්‍යම කලාප:</span>
+                      <strong className="text-lg font-black text-amber-700">
+                        {droneResult.spatial_zone_distribution?.moderate_stress_pct || 25.0}%
+                      </strong>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-xl border border-cyan-200">
+                      <span className="text-[10px] font-bold text-slate-500 block">ඌන කලාප:</span>
+                      <strong className="text-lg font-black text-rose-700">
+                        {droneResult.spatial_zone_distribution?.severe_deficiency_pct || 12.5}%
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-xl border border-cyan-200 space-y-2">
+                    <strong className="text-xs font-black text-cyan-950 block">
+                      🎯 නිරවද්‍ය යෙදවුම් නිර්දේශය (Variable-Rate Application):
+                    </strong>
+                    <p className="text-xs text-slate-700 leading-relaxed font-medium">
+                      {droneResult.variable_rate_prescription?.zone_recommendation || "රතු හා කහ පැහැති කොටුවලට පමණක් අමතර යූරියා කි.ග්‍රෑ. 30ක් යොදන්න. කොළ පැහැති නිරෝගී කලාප වලට පොහොර යෙදීමෙන් වළකින්න."}
+                    </p>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
+                      <span className="font-bold text-slate-500">අපතේ යාමෙන් වැළකෙන යූරියා:</span>
+                      <strong className="font-black text-emerald-800">
+                        {droneResult.variable_rate_prescription?.urea_saved_kg || 28.5} kg (ඉතිරිය: රු. 11,400)
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="h-full min-h-[220px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
+                  <Cpu className="w-10 h-10 text-slate-400" />
+                  <p className="text-xs font-bold">
+                    {language === 'en' ? 'Click "Launch Drone Scan" to inspect aerial crop canopy.' : 'කුඹුරේ ඩ්‍රෝන සිතියම ලබාගැනීමට ඉහත බොත්තම ඔබන්න.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 12: FARMER AI CHAT */}
       {/* ================================================================ */}
       {activeTab === 'chat' && (
         <div className="clean-card p-6 sm:p-8 space-y-4">
