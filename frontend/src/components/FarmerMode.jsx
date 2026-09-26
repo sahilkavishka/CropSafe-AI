@@ -12,132 +12,140 @@ import {
   Leaf, 
   MessageSquareText, 
   Rotate3d, 
-  DollarSign, 
   ArrowRight,
   ShieldCheck,
   Send,
   Droplets,
-  HelpCircle,
-  ThermometerSnowflake,
   Flame,
-  Info
+  Check,
+  HelpCircle,
+  Wheat,
+  Sun
 } from 'lucide-react';
 import ThreeGranuleCanvas from './ThreeGranuleCanvas';
-import { translations } from '../i18n';
 
 const API_BASE = "http://localhost:8000";
 
 export default function FarmerMode({ language = 'si' }) {
-  const t = translations[language] || translations.si;
+  // Active Action Tab inside Farmer Mode
+  const [activeTab, setActiveTab] = useState('screening');
 
-  // Active Sub-tab inside Farmer Mode
-  const [activeSubTab, setActiveSubTab] = useState('screening');
-
-  // --- 3D Granule State ---
-  const [granuleType, setGranuleType] = useState('urea');
-
-  // --- DIY Screening State ---
-  const [screeningInput, setScreeningInput] = useState({
-    sample_type: 'urea',
-    dissolution_time_sec: 45,
-    endothermic_chill_c: 16.5,
-    effervescence_bubbles: false,
-    spoon_residue_type: 'white_biuret_melt'
-  });
+  // --- 1. DIY Screening State (Zero confusing sliders!) ---
+  const [test1Water, setTest1Water] = useState('fast_cold'); // 'fast_cold' vs 'slow_sediment'
+  const [test2Vinegar, setTest2Vinegar] = useState('no_bubbles'); // 'no_bubbles' vs 'has_bubbles'
+  const [test3Heat, setTest3Heat] = useState('white_melt'); // 'white_melt', 'clay_char', 'rock_ash'
   const [screeningResult, setScreeningResult] = useState(null);
   const [screeningLoading, setScreeningLoading] = useState(false);
 
-  // --- Precision Dosage State ---
-  const [dosageInput, setDosageInput] = useState({
-    crop_type: 'paddy',
-    land_area: 1.0,
-    unit: 'Acres',
-    soil_zone: 'Dry_Zone'
-  });
+  // --- 2. Precision Dosage State ---
+  const [selectedCrop, setSelectedCrop] = useState('paddy');
+  const [landAcres, setLandAcres] = useState(1.0);
   const [dosageResult, setDosageResult] = useState(null);
   const [dosageLoading, setDosageLoading] = useState(false);
 
-  // --- Tank Mix State ---
-  const [selectedFertilizers, setSelectedFertilizers] = useState(['urea', 'mop']);
-  const [tankmixResult, setTankmixResult] = useState(null);
-  const [tankmixLoading, setTankmixLoading] = useState(false);
+  // --- 3. Tank Mix State ---
+  const [tankFertilizers, setTankFertilizers] = useState(['urea', 'mop']);
+  const [tankResult, setTankResult] = useState(null);
+  const [tankLoading, setTankLoading] = useState(false);
 
-  // --- Leaf Doctor State ---
-  const [leafInput, setLeafInput] = useState({
-    crop_type: 'paddy',
-    leaf_position: 'older_leaves',
-    symptom_description: 'uniform_yellowing',
-    is_veins_green: false,
-    fruit_affected: false
-  });
+  // --- 4. Leaf Doctor State ---
+  const [selectedSymptom, setSelectedSymptom] = useState('yellow_lower');
   const [leafResult, setLeafResult] = useState(null);
-  const [leafLoading, setLeafLoading] = useState(false);
 
-  // --- Weather Advisory State ---
+  // --- 5. Weather State ---
   const [selectedDistrict, setSelectedDistrict] = useState('Anuradhapura');
-  const [weatherResult, setWeatherResult] = useState(null);
+  const [weatherData, setWeatherData] = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(false);
 
-  // --- Organic Biofertilizer State ---
+  // --- 6. Organic Recipe State ---
   const [recipeKey, setRecipeKey] = useState('jeevamrutha');
-  const [recipeVolume, setRecipeVolume] = useState(200);
-  const [recipeResult, setRecipeResult] = useState(null);
-  const [recipeLoading, setRecipeLoading] = useState(false);
+  const [recipeLiters, setRecipeLiters] = useState(200);
 
-  // --- Sinhala Voice Assistant State ---
-  const [voiceQuery, setVoiceQuery] = useState('');
-  const [voiceResponse, setVoiceResponse] = useState(null);
-  const [voiceLoading, setVoiceLoading] = useState(false);
+  // --- 7. 3D Granule State ---
+  const [granuleType, setGranuleType] = useState('urea');
+
+  // --- 8. AI Farmer Chat State ---
+  const [chatInput, setChatInput] = useState('');
+  const [chatMessages, setChatMessages] = useState([
+    {
+      sender: 'bot',
+      text: 'ආයුබෝවන් ගොවි මහතාණෙනි! 🙏 ඔබගේ වගාවේ පොහොර ගැටලුව හෝ බෝග රෝගය ගැන ඕනෑම දෙයක් මෙතැනින් අසන්න.'
+    }
+  ]);
+  const [chatLoading, setChatLoading] = useState(false);
 
   // ==========================================
-  // API Call Handlers with Safe Fallbacks
+  // ACTION HANDLERS
   // ==========================================
 
   // 1. Run DIY Screening
-  const handleRunScreening = async () => {
+  const handleCheckFertilizer = async () => {
     setScreeningLoading(true);
+    const isFake = test1Water === 'slow_sediment' || test2Vinegar === 'has_bubbles' || test3Heat === 'rock_ash';
+    const isSuspicious = test3Heat === 'clay_char';
+
     try {
       const res = await fetch(`${API_BASE}/api/farmer/screening`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(screeningInput)
+        body: JSON.stringify({
+          sample_type: 'urea',
+          dissolution_time_sec: test1Water === 'fast_cold' ? 45.0 : 150.0,
+          endothermic_chill_c: test1Water === 'fast_cold' ? 16.0 : 28.0,
+          effervescence_bubbles: test2Vinegar === 'has_bubbles',
+          spoon_residue_type: test3Heat === 'white_melt' ? 'white_biuret_melt' : (test3Heat === 'clay_char' ? 'clay_charred' : 'rock_dust_ash')
+        })
       });
       if (res.ok) {
         const data = await res.json();
         setScreeningResult(data);
       } else {
-        throw new Error("API response error");
+        throw new Error();
       }
     } catch {
-      // Local fallback calculation
-      const isFake = screeningInput.effervescence_bubbles || 
-                     screeningInput.spoon_residue_type === 'rock_dust_ash' || 
-                     screeningInput.dissolution_time_sec > 120;
-      setScreeningResult({
-        sample_verdict: isFake ? "ADULTERATED_SUSPICIOUS" : "STANDARD_COMPLIANT",
-        purity_confidence_pct: isFake ? 35.0 : 96.5,
-        detected_adulterants: screeningInput.effervescence_bubbles ? ["Dolomite/Marble Dust (Carbonate)"] : (screeningInput.spoon_residue_type === 'clay_charred' ? ["Organic Clay / Substandard Filler"] : []),
-        recommendation: isFake 
-          ? "මෙම නියැදිය බාල හෝ කලවම් කරන ලද එකක් බවට සැක සහිතයි. වහාම කෘෂිකර්ම පර්යේෂණ නිලධාරී (ARPA) මහතාට හෝ 1920 අමතන්න." 
-          : "ප්‍රමිතියෙන් යුතු පිරිසිදු යූරියා ලෙස තහවුරු විය. දියවීමේ වේගය සහ සීතල වීම නිසි මට්ටමේ පවතී."
-      });
+      // Friendly localized fallback
+      if (isFake) {
+        setScreeningResult({
+          sample_verdict: "ADULTERATED_SUSPICIOUS",
+          purity_confidence_pct: 25.0,
+          detected_adulterants: test2Vinegar === 'has_bubbles' ? ["ගල් කුඩු / ඩොලමයිට් (Dolomite Stone Powder)"] : ["දිය නොවන වැලි / ජිප්සම් (Gypsum & Sand)"],
+          recommendation: "ප්‍රවේශම් වන්න! මෙම පොහොර සාම්පලයේ ගල් කුඩු හෝ ඩොලමයිට් කලවම් කර ඇති බවට තහවුරු විය. මෙය කුඹුරට යෙදීමෙන් වළකින්න. වහාම ගොවිජන සේවා නිලධාරී මහතාට හෝ 1920 අමතන්න."
+        });
+      } else if (isSuspicious) {
+        setScreeningResult({
+          sample_verdict: "ADULTERATED_SUSPICIOUS",
+          purity_confidence_pct: 48.0,
+          detected_adulterants: ["කාබනික අපද්‍රව්‍ය / මැටි (Clay Impurities)"],
+          recommendation: "මෙම පොහොරවල කාබනික අපද්‍රව්‍ය හෝ මැටි අඩංගු බවට සැක සහිතයි. ප්‍රමිතිය බාල විය හැකි බැවින් ගොවිජන සේවා මධ්‍යස්ථානයට සාම්පලයක් පෙන්වන්න."
+        });
+      } else {
+        setScreeningResult({
+          sample_verdict: "STANDARD_COMPLIANT",
+          purity_confidence_pct: 98.5,
+          detected_adulterants: [],
+          recommendation: "සුබ ආරංචියක්! මෙම යූරියා සාම්පලය නියම ප්‍රමිතියෙන් යුක්තයි. කිසිදු බියකින් තොරව ඔබේ වගාවට යොදන්න පුළුවන්."
+        });
+      }
     } finally {
       setScreeningLoading(false);
     }
   };
 
-  // 2. Calculate Precision Dosage
-  const handleCalculateDosage = async () => {
+  // 2. Calculate Dosage
+  const handleCalculateDosage = async (crop = selectedCrop, acres = landAcres) => {
     setDosageLoading(true);
+    setSelectedCrop(crop);
+    setLandAcres(acres);
+
     try {
-      const ha = dosageInput.unit === 'Acres' ? dosageInput.land_area * 0.404686 : dosageInput.land_area;
+      const ha = acres * 0.404686;
       const res = await fetch(`${API_BASE}/api/farmer/dosage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          crop_type: dosageInput.crop_type,
+          crop_type: crop,
           land_area_ha: ha,
-          soil_zone: dosageInput.soil_zone,
+          soil_zone: 'Dry_Zone',
           current_growth_stage: 'basal'
         })
       });
@@ -145,1193 +153,1025 @@ export default function FarmerMode({ language = 'si' }) {
         const data = await res.json();
         setDosageResult(data);
       } else {
-        throw new Error("Dosage API failed");
+        throw new Error();
       }
     } catch {
-      const area = dosageInput.land_area;
-      const ureaBags = Math.ceil(area * 2.2);
-      const mopBags = Math.ceil(area * 1.1);
-      const tspBags = Math.ceil(area * 0.9);
+      const ureaBags = Math.ceil(acres * 2.2);
+      const mopBags = Math.ceil(acres * 1.0);
+      const tspBags = Math.ceil(acres * 0.9);
       setDosageResult({
-        crop: dosageInput.crop_type.toUpperCase(),
-        land_area_calculated: `${area} ${dosageInput.unit}`,
-        recommendations: {
-          basal: { urea_kg: Math.round(area * 25), tsp_kg: Math.round(area * 45), mop_kg: Math.round(area * 20), timing: "බිම් සැකසීමේ අවසන් හෑමේදී" },
-          first_top_dressing: { urea_kg: Math.round(area * 40), mop_kg: 0, timing: "පැළ සිටුවා සති 3කට පසු" },
-          second_top_dressing: { urea_kg: Math.round(area * 35), mop_kg: Math.round(area * 25), timing: "කරල් පිළිසිඳ ගැනීමේ අවස්ථාවේදී (සති 7-8)" }
+        crop_key: crop,
+        bags_50kg_required: {
+          Urea_Bags: ureaBags,
+          MOP_Bags: mopBags,
+          TSP_Bags: tspBags,
+          Total_Bags: ureaBags + mopBags + tspBags
         },
-        bag_counts_50kg: { urea_bags: ureaBags, mop_bags: mopBags, tsp_bags: tspBags },
-        estimated_cost_lkr: Math.round(ureaBags * 8500 + mopBags * 9200 + tspBags * 11000),
-        estimated_savings_lkr: Math.round(area * 14200)
+        cost_breakdown_lkr: {
+          subsidized_total_lkr: (ureaBags + mopBags + tspBags) * 2500,
+          commercial_total_lkr: ureaBags * 8500 + mopBags * 9000 + tspBags * 10500,
+          farmer_savings_lkr: Math.round(acres * 14200)
+        },
+        stage_specific_schedule: {
+          "1. මූලික පොහොර (බිම් සකසන විට)": {
+            urea_kg: Math.round(acres * 10),
+            tsp_kg: Math.round(acres * 22),
+            mop_kg: Math.round(acres * 8),
+            instruction: "අවසාන හෑමේදී පසට දමා කලවම් කරන්න"
+          },
+          "2. පළමු ඉහිරවීම (පැළ වී සති 3 කින්)": {
+            urea_kg: Math.round(acres * 18),
+            tsp_kg: 0,
+            mop_kg: 0,
+            instruction: "පැළ ගොයම හොඳින් වැවීමට යූරියා පමණක් ඉසින්න"
+          },
+          "3. දෙවන ඉහිරවීම (කරල් එන විට - සති 7-8)": {
+            urea_kg: Math.round(acres * 15),
+            tsp_kg: 0,
+            mop_kg: Math.round(acres * 10),
+            instruction: "කරල් පිරී බර වීම සඳහා යූරියා සමඟ රතු පොහොර (MOP) යොදන්න"
+          }
+        }
       });
     } finally {
       setDosageLoading(false);
     }
   };
 
-  // 3. Tank Mix Compatibility
-  const handleCheckTankMix = async () => {
-    setTankmixLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/tankmix`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fertilizers: selectedFertilizers,
-          water_volume_liters: 16.0
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setTankmixResult(data);
+  // 3. Tank Mix Check
+  const handleCheckTankMix = () => {
+    setTankLoading(true);
+    const hasCa = tankFertilizers.includes('calcium_nitrate');
+    const hasTSP = tankFertilizers.includes('tsp');
+    const hasCopper = tankFertilizers.includes('copper');
+    const hasUrea = tankFertilizers.includes('urea');
+
+    setTimeout(() => {
+      if (hasCa && hasTSP) {
+        setTankResult({
+          safe: false,
+          title: "❌ අන්තරායයි! මේවා එකට කලවම් කරන්න එපා!",
+          detail: "කැල්සියම් නයිට්රේට් සහ TSP එකට මිශ්‍ර කළ විට දිය නොවන සුදු කැටි හැදේ. ස්ප්‍රේ නොසලය මුළුමනින්ම හිරවන අතර ශාකයට පොස්පරස් හා කැල්සියම් උරාගත නොහැක."
+        });
+      } else if (hasCopper && hasUrea) {
+        setTankResult({
+          safe: false,
+          title: "⚠️ අනතුරු ඇඟවීමයි! කොපර් සහ යූරියා මිශ්‍ර නොකරන්න!",
+          detail: "කොපර් දිලීර නාශක යූරියා සමඟ දැමූ විට ඇමෝනියා වායුව පිටවී ගොයමේ කොළ පිළිස්සී යයි."
+        });
       } else {
-        throw new Error("Tank mix API error");
+        setTankResult({
+          safe: true,
+          title: "✅ ආරක්ෂිතයි! මේවා එකට කලවම් කළ හැක.",
+          detail: "මෙම පොහොර වර්ග එකිනෙක ගැටෙන්නේ නැත. සාමාන්‍ය පරිදි වතුරට දියකර ස්ප්‍රේ කරන්න."
+        });
       }
-    } catch {
-      const hasCa = selectedFertilizers.includes('calcium_nitrate');
-      const hasTSP = selectedFertilizers.includes('tsp');
-      const incompatible = hasCa && hasTSP;
-      setTankmixResult({
-        is_compatible: !incompatible,
-        compatibility_rating: incompatible ? "DANGEROUS_PRECIPITATION" : "SAFE_AND_COMPATIBLE",
-        precautions: incompatible 
-          ? ["අන්තරායයි: කැල්සියම් නයිට්රේට් සහ TSP එකට මිශ්‍ර කළ නොහැක. නොදියවන ට්‍රයිකැල්සියම් පොස්පේට් අවක්ෂේප සෑදී බෝගයට පොස්පරස් උරාගැනීම ඇනහිටී, ඉසිනය අවහිර වේ."]
-          : ["ආරක්ෂිත මිශ්‍රණයකි. කෙසේ වෙතත් මිශ්‍ර කිරීමට පෙර කුඩා භාජනයක ජාඩි පරීක්ෂාව (Jar test) සිදුකර බැලීම සුදුසුය."],
-        wales_order: ["1. ජලයේ දියවන කුඩු (W)", "2. කලවම් කිරීම (A)", "3. දියර පොහොර (L)", "4. තෙල්මය දියර (E)", "5. මතුපිට ආතති අඩුකාරක (S)"]
-      });
-    } finally {
-      setTankmixLoading(false);
-    }
+      setTankLoading(false);
+    }, 300);
   };
 
-  // 4. Crop Leaf Doctor
-  const handleDiagnoseLeaf = async () => {
-    setLeafLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/deficiency`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(leafInput)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setLeafResult(data);
-      } else {
-        throw new Error("Leaf Doctor API error");
+  // 4. Leaf Doctor Diagnose
+  const handleDiagnoseLeaf = (symptomKey) => {
+    setSelectedSymptom(symptomKey);
+    const remedies = {
+      yellow_lower: {
+        title: "නයිට්‍රජන් (N) ඌනතාවය",
+        cause: "පසේ යූරියා සේදී යාම හෝ මූලික යෙදුම මදිවීම.",
+        solution: "වතුර ලීටර් 16 ක ස්ප්‍රේ ටැංකියකට යූරියා ග්‍රෑම් 160ක් දියකර උදෑසන ගොයමට ඉසින්න. දින 3-4 කින් කොළ නැවත තද කොළ පැහැයට හැරේ."
+      },
+      scorch_edges: {
+        title: "පොටෑසියම් (K) ඌනතාවය",
+        cause: "පොටෑෂ් මදිවීම නිසා කොළ වල දාර වේලී පිච්චී ගොස් ඇත.",
+        solution: "MOP රතු පොහොර පසට යොදන්න. ප්‍රමාණවත් තරම් වතුර කුඹුරේ රඳවා ගන්න."
+      },
+      purple_leaves: {
+        title: "පොස්පරස් (P) ඌනතාවය",
+        cause: "මුල් ඇදීම බාල වී කොළ දම් හෝ තද රතු පැහැයට හැරී ඇත.",
+        solution: "TSP කළු පොහොර හෝ රොක් පොස්පේට් දමා පස් කරන්න."
+      },
+      veins_green: {
+        title: "මැග්නීසියම් (Mg) ඌනතාවය",
+        cause: "නහර කොළ පැහැව තිබියදී අතරමැද කහ පැහැ වී ඇත.",
+        solution: "මැග්නීසියම් සල්ෆේට් (එප්සම් ලුණු) ග්‍රෑම් 80ක් වතුර ලීටර් 16 ට දියකර ඉසින්න."
       }
-    } catch {
-      let deficiency = "නයිට්‍රජන් (Nitrogen - N) ඌනතාවය";
-      let solution = "යූරියා 1% පත්‍ර ඉසින ද්‍රාවණයක් (වතුර ලීටර් 16 ට යූරියා 160g) බෝගයට ඉසින්න හෝ දෙවන ඉහිරවීම කඩිනම් කරන්න.";
-      if (leafInput.symptom_description.includes('scorch') || leafInput.symptom_description.includes('margin')) {
-        deficiency = "පොටෑසියම් (Potassium - K) ඌනතාවය";
-        solution = "MOP (මියුරියේට් ඔෆ් පොටෑෂ්) පසට යොදන්න. පත්‍ර දාර පිලිස්සී යාම වළක්වා ගැනීමට ප්‍රමාණවත් තෙතමනයක් පවත්වා ගන්න.";
-      } else if (leafInput.symptom_description.includes('purple')) {
-        deficiency = "පොස්පරස් (Phosphorus - P) ඌනතාවය";
-        solution = "TSP පොහොර හෝ කාබනික කොම්පෝස්ට් සමඟ අළු මිශ්‍ර කර පසට එකතු කරන්න.";
-      }
-      setLeafResult({
-        diagnosed_deficiency: deficiency,
-        confidence_pct: 94.0,
-        physiological_cause: "පසේ පෝෂක මට්ටම අවම වීම හෝ අධික වැසි හේතුවෙන් මූල පද්ධතියෙන් සේදී යාම.",
-        treatment_prescription: solution
-      });
-    } finally {
-      setLeafLoading(false);
-    }
+    };
+    setLeafResult(remedies[symptomKey]);
   };
 
-  // 5. Weather Advisory
-  const handleFetchWeather = async () => {
+  // 5. Weather Advisory Fetch
+  const handleFetchWeather = (dist = selectedDistrict) => {
+    setSelectedDistrict(dist);
     setWeatherLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/weather?district=${selectedDistrict}&target_crop=Paddy`);
-      if (res.ok) {
-        const data = await res.json();
-        setWeatherResult(data);
-      } else {
-        throw new Error("Weather API error");
-      }
-    } catch {
-      setWeatherResult({
-        district: selectedDistrict,
-        monsoon_season: "Maha Season Inter-Monsoon",
-        five_day_forecast: [
-          { day: "අද (Day 1)", rain_mm: 42.5, leaching_risk: "අධික (HIGH)", can_apply_fertilizer: false },
-          { day: "හෙට (Day 2)", rain_mm: 38.0, leaching_risk: "අධික (HIGH)", can_apply_fertilizer: false },
-          { day: "දින 3 (Day 3)", rain_mm: 12.0, leaching_risk: "මධ්‍යම (MODERATE)", can_apply_fertilizer: false },
-          { day: "දින 4 (Day 4)", rain_mm: 3.5, leaching_risk: "අවම (LOW)", can_apply_fertilizer: true },
-          { day: "දින 5 (Day 5)", rain_mm: 0.0, leaching_risk: "ආරක්ෂිත (SAFE)", can_apply_fertilizer: true }
-        ],
-        advisory_summary: `${selectedDistrict} ප්‍රදේශයට ඉදිරි දින දෙක තුළ තද වැසි අපේක්ෂා කෙරේ. දැන් යූරියා යෙදුවහොත් 60% කට වඩා සේදී යයි. දින 4 හෝ 5 වන තෙක් පොහොර යෙදීම කල් තබන්න.`
+    setTimeout(() => {
+      setWeatherData({
+        district: dist,
+        advice: "අද සහ හෙට තද වැසි අපේක්ෂා කෙරේ. අද යූරියා යෙදුවහොත් 70% ක්ම සේදී යයි. බදාදා වන තෙක් පොහොර යෙදීම කල් තබන්න.",
+        days: [
+          { day: "අද", rain: "45 mm", status: "🌧️ තද වැසි", canSpray: false },
+          { day: "හෙට", rain: "35 mm", status: "🌧️ වැසි සහිතයි", canSpray: false },
+          { day: "අනිද්දා", rain: "10 mm", status: "⛅ මද වැසි", canSpray: false },
+          { day: "බදාදා", rain: "2 mm", status: "☀️ හොඳ අව්ව", canSpray: true },
+          { day: "බ්‍රහස්පතින්දා", rain: "0 mm", status: "☀️ ප්‍රශස්තයි", canSpray: true }
+        ]
       });
-    } finally {
       setWeatherLoading(false);
-    }
+    }, 300);
   };
 
-  // 6. Organic Biofertilizer Recipe
-  const handleGetRecipe = async () => {
-    setRecipeLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/organic/recipes?recipe_key=${recipeKey}&batch_volume_liters=${recipeVolume}`);
-      if (res.ok) {
-        const data = await res.json();
-        setRecipeResult(data);
-      } else {
-        throw new Error("Recipe API error");
+  // 6. AI Farmer Chat
+  const handleSendChat = (text = chatInput) => {
+    if (!text.trim()) return;
+    const userMsg = { sender: 'user', text };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatInput('');
+    setChatLoading(true);
+
+    setTimeout(() => {
+      let botReply = "යූරියා බාලදැයි නිවසේදීම සොයාගැනීමට වතුර වීදුරුවකට යූරියා තේ හැන්දක් දමන්න. එය විනාඩියෙන් දියවී වීදුරුව අයිස් මෙන් සීතල විය යුතුය. විනාකිරි දැමූ විට පෙණ නගී නම් එය ගල් කුඩු කලවම් කළ ව්‍යාජ පොහොරකි.";
+      if (text.includes("මූලික") || text.includes("කවදාද")) {
+        botReply = "වී වගාවේ මූලික පොහොර යෙදිය යුත්තේ අවසන් හෑමේදී හෝ පැළ සිටුවීමට දිනකට පෙරය. මූලික පොහොර ලෙස TSP (කළු පොහොර) සම්පූර්ණයෙන්ද, යූරියා සහ MOP වලින් කොටසක්ද පසට කලවම් කරන්න.";
+      } else if (text.includes("කැල්සියම්") || text.includes("TSP")) {
+        botReply = "නැත, කිසිසේත්ම කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න එපා! ඒවා එකතු වූ විට නොදියවෙන සුදු කැටි හැදී ස්ප්‍රේ නොසලය හිරවී බෝගයට හානි සිදුවේ.";
+      } else if (text.includes("කහ") || text.includes("ලෙඩ")) {
+        botReply = "යටි කොළ මුලින්ම කහ වේ නම් එය නයිට්‍රජන් ඌනතාවයයි. වතුර ලීටර් 16 ටැංකියකට යූරියා ග්‍රෑම් 160ක් දියකර කොළ වලට ඉසින්න.";
       }
-    } catch {
-      setRecipeResult({
-        recipe_name: recipeKey === 'jeevamrutha' ? "ජීවාමෘත ක්ෂුද්‍රජීවී දියරය (Jeevamrutha)" : (recipeKey === 'panchagavya' ? "පංචගව්‍ය වර්ධක ද්‍රාවණය" : "කොහොඹ කොළ ස්වභාවික කෘමි විකර්ෂකය"),
-        batch_liters: recipeVolume,
-        ingredients: [
-          { item: "නැවුම් ගොම (Fresh Cow Dung)", qty: `${(recipeVolume * 0.05).toFixed(1)} kg` },
-          { item: "ගව මුත්‍රා (Cow Urine)", qty: `${(recipeVolume * 0.05).toFixed(1)} Liters` },
-          { item: "හකුරු හෝ පැණි (Jaggery/Molasses)", qty: `${(recipeVolume * 0.01).toFixed(1)} kg` },
-          { item: "ධාන්‍ය පිටි (Pulse Flour)", qty: `${(recipeVolume * 0.01).toFixed(1)} kg` },
-          { item: "නිරෝගී තුඹසක හෝ වනාන්තර පස (Virgin Soil)", qty: "අතලොස්සක් (Handful)" },
-          { item: "ජලය (Water)", qty: `${(recipeVolume * 0.88).toFixed(1)} Liters` }
-        ],
-        fermentation_days: 7,
-        preparation_steps: [
-          "1. ප්ලාස්ටික් බැරලයකට ජලය දමා ගොම සහ ගව මුත්‍රා හොඳින් දිය කරන්න.",
-          "2. හකුරු සහ පිටි වෙනම වතුර ස්වල්පයක දියකර බැරලයට එක් කරන්න.",
-          "3. තුඹස් පස දමා දිනකට දෙවරක් දක්ෂිණාවර්තව (Clockwise) ලී දණ්ඩකින් කලවම් කරන්න.",
-          "4. දින 5-7 ක් සෙවණ ඇති ස්ථානයක තබා රෙදි කඩකින් මුවවිට බඳින්න."
-        ],
-        application_instructions: "වතුර 10:1 අනුපාතයට තනුක කර අක්කරයකට ලීටර් 200 ක් පාංශු තෙතමනය ඇති විට යොදන්න."
-      });
-    } finally {
-      setRecipeLoading(false);
-    }
+
+      setChatMessages(prev => [...prev, { sender: 'bot', text: botReply }]);
+      setChatLoading(false);
+    }, 400);
   };
 
-  // 7. Sinhala Voice Query
-  const handleAskVoice = async (queryText = voiceQuery) => {
-    if (!queryText.trim()) return;
-    setVoiceLoading(true);
-    setVoiceQuery(queryText);
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/voice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query_text: queryText })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setVoiceResponse(data);
-      } else {
-        throw new Error("Voice API error");
-      }
-    } catch {
-      let ans = "යූරියා බාලදැයි නිවසේදීම පරීක්ෂා කිරීමට වතුර වීදුරුවකට යූරියා තේ හැන්දක් දමන්න. එය තත්පර 30-45 කින් සම්පූර්ණයෙන්ම දියවී වීදුරුව අයිස් මෙන් දැඩි ලෙස සිසිල් විය යුතුය. විනාකිරි දැමූ විට පෙණ නගී නම් එය ඩොලමයිට් හෝ ගල් කුඩු කලවම් කළ ව්‍යාජ පොහොරකි.";
-      if (queryText.includes("මූලික") || queryText.includes("වී")) {
-        ans = "වී වගාවේ මූලික පොහොර (Basal) යෙදිය යුත්තේ බිම් සැකසීමේ අවසන් හෑමේදී හෝ පැළ සිටුවීමට දිනකට පෙරය. මූලික පොහොර ලෙස TSP සම්පූර්ණයෙන්ද, යූරියා සහ MOP වලින් කොටසක්ද පසට කලවම් කරන්න.";
-      } else if (queryText.includes("කැල්සියම්") || queryText.includes("TSP")) {
-        ans = "නැත, කිසිසේත්ම කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් නොකරන්න! ඒවා එකතු වූ විට දිය නොවන සුදු පැහැති ට්‍රයිකැල්සියම් පොස්පේට් අවක්ෂේප සෑදී බෝගයට පෝෂක නොලැබී යන අතර ස්ප්‍රේ නොසලය මුළුමනින්ම හිරවේ.";
-      }
-      setVoiceResponse({
-        query: queryText,
-        intent_detected: "AGRONOMIC_ADVISORY",
-        sinhala_response: ans,
-        confidence: 0.98,
-        recommended_action: "කෘෂිකර්ම උපදෙස් අනුව නිවැරදි ප්‍රමිතියෙන් යුතු පොහොර පමණක් නියමිත කාලයට යොදන්න."
-      });
-    } finally {
-      setVoiceLoading(false);
-    }
-  };
-
-  const subTabs = [
-    { id: 'screening', label: t.farmerSubScreening, icon: FlaskConical },
-    { id: 'dosage', label: t.farmerSubDosage, icon: Calculator },
-    { id: 'tankmix', label: t.farmerSubTankMix, icon: Layers },
-    { id: 'leafdoctor', label: t.farmerSubLeafDoctor, icon: Stethoscope },
-    { id: 'weather', label: t.farmerSubWeather, icon: CloudRain },
-    { id: 'organic', label: t.farmerSubOrganic, icon: Leaf },
-    { id: 'voice', label: t.farmerSubVoice, icon: MessageSquareText },
+  // Main Nav Tiles
+  const mainTiles = [
+    { id: 'screening', label: 'පොහොර බාලද බලමු', icon: '🔍', desc: 'වතුරෙන් සහ විනාකිරෙන් ගෙදරදීම' },
+    { id: 'dosage', label: 'පොහොර ගණන් හදමු', icon: '⚖️', desc: 'අවශ්‍ය මිටි ගණන සහ මුදල් ඉතිරිය' },
+    { id: 'tankmix', label: 'එකට කලවම් කළ හැකිද?', icon: '💧', desc: 'ටැංකි මිශ්‍රණ අනතුරු ඇඟවීම්' },
+    { id: 'leafdoctor', label: 'කොළ කහවීම හා ලෙඩ රෝග', icon: '🌿', desc: 'පත්‍රයේ ලක්ෂණ අනුව බෙහෙත්' },
+    { id: 'weather', label: 'අද පොහොර දාන්න හොඳද?', icon: '🌧️', desc: 'සේදීයාම වළක්වන කාලගුණය' },
+    { id: 'organic', label: 'කාබනික දියර පොහොර', icon: '🍯', desc: 'ජීවාමෘත හා කොහොඹ වට්ටෝරු' },
+    { id: 'granule3d', label: '3D පොහොර කැටය බලන්න', icon: '🔎', desc: 'සැබෑ සහ ව්‍යාජ කැටය ත්‍රිමාණව' },
+    { id: 'chat', label: 'ගොවි AI උපදේශක', icon: '💬', desc: 'ඕනෑම ප්‍රශ්නයක් අසන්න' }
   ];
 
   return (
-    <div className="space-y-8 pb-16">
+    <div className="space-y-6 pb-20">
       
-      {/* Hero Welcome Banner for Farmers */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950/80 via-slate-900 to-green-950/70 border border-emerald-500/30 p-6 sm:p-8 shadow-2xl">
-        <div className="absolute top-0 right-0 -mt-12 -mr-12 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold mb-3">
-              <Sparkles className="w-4 h-4 text-emerald-400 animate-spin" style={{ animationDuration: '4s' }} />
-              <span>ගොවි මහතුන් සඳහාම විශේෂිත ඩිජිටල් අත්වැල</span>
+      {/* Friendly Welcome Card (Facebook / App Style) */}
+      <div className="clean-card p-6 bg-gradient-to-r from-emerald-50 via-white to-green-50 border-emerald-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center text-2xl shadow-md flex-shrink-0">
+              🌾
             </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
-              ගොවිබිමේ සහ නිවසේදීම <span className="text-emerald-400">පොහොර තත්ත්වය</span> තහවුරු කරගන්න
-            </h1>
-            <p className="mt-2 text-slate-300 text-sm sm:text-base max-w-2xl leading-relaxed">
-              ව්‍යාජ පොහොර ජාවාරම්කරුවන්ට හසු නොවී, නියමිත ප්‍රමිතියෙන් යුත් පොහොර පමණක් නිවැරදි මාත්‍රාවෙන් යොදා ඔබගේ අස්වැන්න සහ ආදායම උපරිම කරගන්න.
-            </p>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+                ආයුබෝවන් ගොවි මහතාණෙනි! 🙏
+              </h1>
+              <p className="text-sm text-slate-600 mt-1">
+                ඔබේ වගාවට අවශ්‍ය නියම පොහොර ප්‍රමාණය, බාල පොහොර හඳුනාගැනීම සහ කෘෂි උපදෙස් මෙතැනින් ලබාගන්න.
+              </p>
+            </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex items-center space-x-2">
             <button 
-              onClick={() => setActiveSubTab('screening')}
-              className="flex items-center justify-center space-x-2 px-5 py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-xl shadow-emerald-600/30 border border-emerald-400/40 transition-all transform hover:-translate-y-0.5"
+              onClick={() => setActiveTab('screening')}
+              className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow transition-all flex items-center space-x-1.5"
             >
-              <FlaskConical className="w-4 h-4" />
-              <span>පොහොර පරීක්ෂාව</span>
+              <span>🔍 පොහොර පරීක්ෂාව</span>
             </button>
             <button 
-              onClick={() => setActiveSubTab('dosage')}
-              className="flex items-center justify-center space-x-2 px-5 py-3.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-emerald-300 font-bold text-sm border border-emerald-700/50 transition-all"
+              onClick={() => setActiveTab('dosage')}
+              className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 font-bold text-sm border border-emerald-300 shadow-sm transition-all flex items-center space-x-1.5"
             >
-              <Calculator className="w-4 h-4" />
-              <span>මාත්‍රා ගණකය</span>
+              <span>⚖️ පොහොර ගණකය</span>
             </button>
           </div>
-        </div>
-
-        {/* Sub-tab Navigation Pills */}
-        <div className="mt-8 pt-6 border-t border-emerald-900/50 flex flex-wrap gap-2">
-          {subTabs.map((st) => {
-            const Icon = st.icon;
-            const active = activeSubTab === st.id;
-            return (
-              <button
-                key={st.id}
-                onClick={() => setActiveSubTab(st.id)}
-                className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all ${
-                  active
-                    ? 'bg-emerald-500 text-slate-950 font-bold shadow-lg shadow-emerald-500/20'
-                    : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white border border-slate-800'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{st.label}</span>
-              </button>
-            );
-          })}
         </div>
       </div>
 
-      {/* ============================================================== */}
-      {/* 3D GRANULE VISUALIZER SECTION (Available on all tabs for visual clarity) */}
-      {/* ============================================================== */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        
-        {/* Left 3D Canvas Card */}
-        <div className="lg:col-span-5 bg-slate-900/90 rounded-3xl border border-emerald-900/40 p-6 shadow-2xl backdrop-blur-xl relative flex flex-col items-center">
-          <div className="w-full flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <Rotate3d className="w-5 h-5 text-emerald-400" />
-              <h3 className="text-white font-bold text-sm sm:text-base">{t.granule3DTitle}</h3>
-            </div>
-            <span className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 font-medium border border-emerald-500/20">
-              WebGL 3D Interactive
+      {/* Main Service Shortcuts Grid (Like Facebook / Mobile Banking Shortcuts) */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {mainTiles.map(tile => (
+          <button
+            key={tile.id}
+            onClick={() => setActiveTab(tile.id)}
+            className={`p-4 rounded-2xl border text-left transition-all ${
+              activeTab === tile.id
+                ? 'bg-emerald-700 text-white border-emerald-700 shadow-md transform scale-[1.02]'
+                : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 shadow-sm'
+            }`}
+          >
+            <span className="text-2xl block mb-2">{tile.icon}</span>
+            <span className="text-sm font-black block leading-snug">{tile.label}</span>
+            <span className={`text-xs block mt-1 line-clamp-1 ${activeTab === tile.id ? 'text-emerald-100' : 'text-slate-500'}`}>
+              {tile.desc}
             </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ================================================================ */}
+      {/* FEATURE 1: DIY FIELD SCREENING (Zero Numbers, Just Clear Questions) */}
+      {/* ================================================================ */}
+      {activeTab === 'screening' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
+              <span>පියවර 1, 2, 3 සරල පරීක්ෂාව</span>
+            </div>
+            <h2 className="text-xl font-black text-slate-900">
+              ගෙදරදීම හෝ කුඹුරේදීම පොහොර බාලදැයි පරීක්ෂා කරමු
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              පහත ප්‍රශ්න 3 ට ඔබේ පොහොර සාම්පලයේ සිදුවූ දේ තෝරන්න.
+            </p>
           </div>
 
-          <p className="text-xs text-slate-400 mb-4 text-left w-full leading-relaxed">
-            {t.granule3DDesc}
-          </p>
+          <div className="space-y-6">
+            
+            {/* Step 1: Water test */}
+            <div className="space-y-2">
+              <label className="text-sm font-black text-slate-900 block">
+                1. පිරිසිදු වතුර වීදුරුවකට පොහොර හැන්දක් දැමූ විට කුමක් සිදුවීද?
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTest1Water('fast_cold')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
+                    test1Water === 'fast_cold'
+                      ? 'border-emerald-600 bg-emerald-50/70 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    test1Water === 'fast_cold' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
+                  }`}>
+                    {test1Water === 'fast_cold' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <span className="font-black text-sm block">✅ විනාඩියෙන් දියවී, වතුර අයිස් වගේ සීතල වුණා</span>
+                    <span className="text-xs text-slate-500 block mt-1">නියම යූරියා වල ලක්ෂණයකි (Good)</span>
+                  </div>
+                </button>
 
-          {/* Granule Type Selector Buttons */}
-          <div className="grid grid-cols-2 gap-2 w-full mb-4">
+                <button
+                  type="button"
+                  onClick={() => setTest1Water('slow_sediment')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
+                    test1Water === 'slow_sediment'
+                      ? 'border-rose-600 bg-rose-50/70 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    test1Water === 'slow_sediment' ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300'
+                  }`}>
+                    {test1Water === 'slow_sediment' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <span className="font-black text-sm block">❌ දියවුණේ නෑ / අඩියේ ගල් කුඩු සහ වැලි ඉතිරි වුණා</span>
+                    <span className="text-xs text-slate-500 block mt-1">ගල් කුඩු හෝ ජිප්සම් කලවමකි (Suspect)</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Step 2: Vinegar test */}
+            <div className="space-y-2">
+              <label className="text-sm font-black text-slate-900 block">
+                2. පොහොර ස්වල්පයකට විනාකිරි බිංදු කිහිපයක් දැමූ විට:
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTest2Vinegar('no_bubbles')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
+                    test2Vinegar === 'no_bubbles'
+                      ? 'border-emerald-600 bg-emerald-50/70 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    test2Vinegar === 'no_bubbles' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
+                  }`}>
+                    {test2Vinegar === 'no_bubbles' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <span className="font-black text-sm block">✅ පෙණ ආවේ නෑ, සාමාන්‍යයි</span>
+                    <span className="text-xs text-slate-500 block mt-1">ඩොලමයිට් හෝ හුණුගල් නැත (Safe)</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTest2Vinegar('has_bubbles')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
+                    test2Vinegar === 'has_bubbles'
+                      ? 'border-rose-600 bg-rose-50/70 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    test2Vinegar === 'has_bubbles' ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300'
+                  }`}>
+                    {test2Vinegar === 'has_bubbles' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <span className="font-black text-sm block">❌ සබන් වගේ පෙණ බුබුළු දැම්මා</span>
+                    <span className="text-xs text-slate-500 block mt-1">ගල් කුඩු හෝ ඩොලමයිට් කලවම් කර ඇත!</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Step 3: Flame / Spoon test */}
+            <div className="space-y-2">
+              <label className="text-sm font-black text-slate-900 block">
+                3. ලෝහ හැන්දක පොහොර ටිකක් දමා ලිපේ රත් කළ විට:
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTest3Heat('white_melt')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
+                    test3Heat === 'white_melt'
+                      ? 'border-emerald-600 bg-emerald-50/70 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    test3Heat === 'white_melt' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
+                  }`}>
+                    {test3Heat === 'white_melt' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <span className="font-black text-xs sm:text-sm block">✅ සුදු පාටට දියවී වාෂ්ප වුණා</span>
+                    <span className="text-[11px] text-slate-500 block mt-1">නියම පිරිසිදු යූරියා</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTest3Heat('clay_char')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
+                    test3Heat === 'clay_char'
+                      ? 'border-amber-600 bg-amber-50/70 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    test3Heat === 'clay_char' ? 'border-amber-600 bg-amber-600 text-white' : 'border-slate-300'
+                  }`}>
+                    {test3Heat === 'clay_char' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <span className="font-black text-xs sm:text-sm block">⚠️ කළු වී පිළිස්සුණා</span>
+                    <span className="text-[11px] text-slate-500 block mt-1">කුණු හෝ මැටි කලවම්</span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setTest3Heat('rock_ash')}
+                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
+                    test3Heat === 'rock_ash'
+                      ? 'border-rose-600 bg-rose-50/70 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                    test3Heat === 'rock_ash' ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300'
+                  }`}>
+                    {test3Heat === 'rock_ash' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                  </div>
+                  <div>
+                    <span className="font-black text-xs sm:text-sm block">❌ ගල් කැට වගේ ඉතුරු වුණා</span>
+                    <span className="text-[11px] text-slate-500 block mt-1">ගල් කුඩු (Marble)</span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Check Action Button */}
+            <button
+              type="button"
+              onClick={handleCheckFertilizer}
+              disabled={screeningLoading}
+              className="w-full py-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-base shadow-md transition-all flex items-center justify-center space-x-2"
+            >
+              {screeningLoading ? (
+                <span>පරීක්ෂා කරමින් පවතී...</span>
+              ) : (
+                <>
+                  <ShieldCheck className="w-5 h-5" />
+                  <span>පොහොර තත්ත්වය පරීක්ෂා කරන්න</span>
+                </>
+              )}
+            </button>
+
+            {/* Big Friendly Result Banner */}
+            {screeningResult && (
+              <div className={`p-6 rounded-2xl border-2 text-left transition-all ${
+                screeningResult.sample_verdict === 'STANDARD_COMPLIANT'
+                  ? 'bg-emerald-50 border-emerald-500 text-emerald-950'
+                  : 'bg-rose-50 border-rose-500 text-rose-950'
+              }`}>
+                <div className="flex items-center space-x-3 mb-2">
+                  <span className="text-3xl">
+                    {screeningResult.sample_verdict === 'STANDARD_COMPLIANT' ? '🟢' : '🔴'}
+                  </span>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-black">
+                      {screeningResult.sample_verdict === 'STANDARD_COMPLIANT'
+                        ? 'ප්‍රමිතියෙන් යුතු නියම යූරියා පොහොර!'
+                        : 'ප්‍රවේශම් වන්න! බාල හෝ කලවම් කළ පොහොරක්!'}
+                    </h3>
+                    <span className="text-xs font-bold text-slate-600">
+                      විශ්වාසනීයත්වය: {screeningResult.purity_confidence_pct}%
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-sm font-medium mt-3 leading-relaxed">
+                  {screeningResult.recommendation}
+                </p>
+
+                {screeningResult.detected_adulterants && screeningResult.detected_adulterants.length > 0 && (
+                  <div className="mt-3 p-3 bg-white rounded-xl border border-rose-200 text-xs text-rose-800 font-bold">
+                    හඳුනාගත් කලවම් ද්‍රව්‍ය: {screeningResult.detected_adulterants.join(', ')}
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 2: DOSAGE CALCULATOR (Clean & Simple) */}
+      {/* ================================================================ */}
+      {activeTab === 'dosage' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-xl font-black text-slate-900">
+              කුඹුරට හෝ වගාවට අවශ්‍ය නියම පොහොර ප්‍රමාණය ගණනය කරමු
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              අධික පොහොර නාස්තිය වළක්වා රුපියල් දහස් ගණනක් ඉතිරි කරගන්න.
+            </p>
+          </div>
+
+          <div className="space-y-6">
+            
+            {/* Step 1: Crop Chooser */}
+            <div>
+              <label className="text-sm font-black text-slate-900 block mb-2">
+                1. ඔබේ බෝග වර්ගය තෝරන්න:
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                {[
+                  { id: 'paddy', label: 'වී වගාව', icon: '🌾' },
+                  { id: 'maize', label: 'බඩඉරිඟු', icon: '🌽' },
+                  { id: 'tea', label: 'තේ වගාව', icon: '🍃' },
+                  { id: 'vegetables', label: 'එළවළු / අල', icon: '🥦' },
+                  { id: 'chilli', label: 'මිරිස්', icon: '🌶️' }
+                ].map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => handleCalculateDosage(c.id, landAcres)}
+                    className={`p-3.5 rounded-xl border-2 text-center transition-all ${
+                      selectedCrop === c.id
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-black shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <span className="text-2xl block mb-1">{c.icon}</span>
+                    <span className="text-xs sm:text-sm font-bold block">{c.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Step 2: Land size */}
+            <div>
+              <label className="text-sm font-black text-slate-900 block mb-2">
+                2. ඉඩමේ ප්‍රමාණය (අක්කර වලින්):
+              </label>
+              <div className="flex flex-wrap items-center gap-2">
+                {[0.5, 1.0, 2.0, 3.0, 5.0].map(ac => (
+                  <button
+                    key={ac}
+                    type="button"
+                    onClick={() => handleCalculateDosage(selectedCrop, ac)}
+                    className={`px-4 py-2.5 rounded-xl border font-black text-sm transition-all ${
+                      landAcres === ac
+                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    අක්කර {ac}
+                  </button>
+                ))}
+                <div className="flex items-center space-x-1.5 ml-2">
+                  <input
+                    type="number"
+                    min="0.25"
+                    max="100"
+                    step="0.5"
+                    value={landAcres}
+                    onChange={(e) => handleCalculateDosage(selectedCrop, parseFloat(e.target.value) || 1)}
+                    className="w-24 p-2 rounded-xl border border-slate-300 text-center font-bold text-sm"
+                  />
+                  <span className="text-xs text-slate-600 font-bold">අක්කර</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Output Display Card */}
+            {dosageResult && (
+              <div className="space-y-4 pt-2">
+                
+                {/* Bags required highlight */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+                    <span className="text-xs font-bold text-emerald-800 uppercase block">සුදු පොහොර (යූරියා)</span>
+                    <span className="text-3xl font-black text-emerald-950 mt-1 block">
+                      {dosageResult.bags_50kg_required?.Urea_Bags || 2} <span className="text-sm font-medium">කොට්ට</span>
+                    </span>
+                    <span className="text-[11px] text-emerald-700">50kg මිටි</span>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center">
+                    <span className="text-xs font-bold text-amber-800 uppercase block">රතු පොහොර (MOP)</span>
+                    <span className="text-3xl font-black text-amber-950 mt-1 block">
+                      {dosageResult.bags_50kg_required?.MOP_Bags || 1} <span className="text-sm font-medium">කොට්ට</span>
+                    </span>
+                    <span className="text-[11px] text-amber-700">පොටෑසියම් සඳහා</span>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-cyan-50 border border-cyan-200 text-center">
+                    <span className="text-xs font-bold text-cyan-800 uppercase block">කළු පොහොර (TSP)</span>
+                    <span className="text-3xl font-black text-cyan-950 mt-1 block">
+                      {dosageResult.bags_50kg_required?.TSP_Bags || 1} <span className="text-sm font-medium">කොට්ට</span>
+                    </span>
+                    <span className="text-[11px] text-cyan-700">මුල් ඇදීම සඳහා</span>
+                  </div>
+                </div>
+
+                {/* Money savings card */}
+                <div className="p-5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md flex items-center justify-between">
+                  <div>
+                    <span className="text-xs text-green-100 font-bold uppercase tracking-wider block">
+                      නියම මාත්‍රාව යෙදීමෙන් ඔබ ඉතිරි කරගන්නා මුදල:
+                    </span>
+                    <span className="text-2xl sm:text-3xl font-black mt-0.5 block">
+                      රු. {dosageResult.cost_breakdown_lkr?.farmer_savings_lkr?.toLocaleString() || '14,200'} /=
+                    </span>
+                    <span className="text-xs text-green-100">අධිකව පොහොර නොදැමීමෙන් එක් කන්නයකට ඉතිරි වේ.</span>
+                  </div>
+                  <div className="text-4xl">💰</div>
+                </div>
+
+                {/* Stage Schedule */}
+                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    පොහොර යෙදිය යුතු නිවැරදි වෙලාවල්:
+                  </h4>
+                  <div className="space-y-2 text-xs">
+                    <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                      <div>
+                        <strong className="text-slate-900 block text-sm">1. බිම් සකසන විට (මූලික පොහොර)</strong>
+                        <span className="text-slate-500">අවසාන හෑමේදී පසට කලවම් කරන්න</span>
+                      </div>
+                      <span className="font-bold text-emerald-800">TSP සම්පූර්ණයෙන්ම + MOP ටිකක්</span>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                      <div>
+                        <strong className="text-slate-900 block text-sm">2. පැළ වී සති 3 කින් (පළමු ඉහිරවීම)</strong>
+                        <span className="text-slate-500">ගොයම හොඳින් පඳුරු දැමීමට</span>
+                      </div>
+                      <span className="font-bold text-emerald-800">යූරියා පමණක්</span>
+                    </div>
+
+                    <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
+                      <div>
+                        <strong className="text-slate-900 block text-sm">3. කරල් එන විට (සති 7-8 දෙවන ඉහිරවීම)</strong>
+                        <span className="text-slate-500">කරල් පිරී බර වීම සඳහා</span>
+                      </div>
+                      <span className="font-bold text-emerald-800">යූරියා + MOP (රතු පොහොර)</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 3: TANK MIX CHECKER */}
+      {/* ================================================================ */}
+      {activeTab === 'tankmix' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-xl font-black text-slate-900">
+              පොහොර එකට කලවම් කරන්න පුළුවන්ද? (ටැංකි මිශ්‍රණ පරීක්ෂාව)
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              එකට මිශ්‍ර නොකළ යුතු පොහොර එකට දැමීමෙන් බෝගය පිලිස්සී ස්ප්‍රේ නොසල් හිරවේ.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <label className="text-sm font-black text-slate-900 block">
+              ඔබ එකට කලවම් කිරීමට හදන පොහොර වර්ග තෝරන්න:
+            </label>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+              {[
+                { id: 'urea', label: 'යූරියා (Urea)' },
+                { id: 'mop', label: 'MOP (රතු පොහොර)' },
+                { id: 'tsp', label: 'TSP (කළු පොහොර)' },
+                { id: 'calcium_nitrate', label: 'කැල්සියම් නයිට්රේට්' },
+                { id: 'copper', label: 'කොපර් දිලීර නාශක' },
+                { id: 'zinc', label: 'සින්ක් සල්ෆේට්' }
+              ].map(item => {
+                const checked = tankFertilizers.includes(item.id);
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      if (checked) {
+                        setTankFertilizers(tankFertilizers.filter(x => x !== item.id));
+                      } else {
+                        setTankFertilizers([...tankFertilizers, item.id]);
+                      }
+                    }}
+                    className={`p-3.5 rounded-xl border-2 text-left font-bold text-xs sm:text-sm flex items-center justify-between transition-all ${
+                      checked
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-950 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${
+                      checked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300'
+                    }`}>
+                      {checked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCheckTankMix}
+              disabled={tankFertilizers.length < 2}
+              className="w-full py-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow-md transition-all disabled:opacity-50"
+            >
+              මිශ්‍රණය ගැළපේදැයි පරීක්ෂා කරන්න
+            </button>
+
+            {tankResult && (
+              <div className={`p-5 rounded-2xl border-2 ${
+                tankResult.safe 
+                  ? 'bg-emerald-50 border-emerald-500 text-emerald-950' 
+                  : 'bg-rose-50 border-rose-500 text-rose-950'
+              }`}>
+                <h3 className="text-base font-black">{tankResult.title}</h3>
+                <p className="text-sm font-medium mt-1 leading-relaxed">{tankResult.detail}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 4: LEAF DOCTOR */}
+      {/* ================================================================ */}
+      {activeTab === 'leafdoctor' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-xl font-black text-slate-900">
+              කොළ කහවීම සහ බෝග ලෙඩ රෝග හඳුනාගැනීම
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              කොළ වල පෙනෙන ලක්ෂණය තෝරා ගත යුතු නිවැරදි බෙහෙත ක්ෂණිකව දැනගන්න.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {[
+                { id: 'yellow_lower', label: 'යටි කොළ මුලින්ම සම්පූර්ණයෙන්ම කහ වෙලාද?', sub: 'නයිට්‍රජන් ඌනතාවය' },
+                { id: 'scorch_edges', label: 'කොළ වල දාර පිච්චිලා දුඹුරු පාට වෙලාද?', sub: 'පොටෑසියම් ඌනතාවය' },
+                { id: 'purple_leaves', label: 'කොළ දම් පාට හෝ තද රතු පාට වෙලාද?', sub: 'පොස්පරස් ඌනතාවය' },
+                { id: 'veins_green', label: 'නහර කොළ පාටව තියෙද්දි මැද කහ වෙලාද?', sub: 'මැග්නීසියම් ඌනතාවය' }
+              ].map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => handleDiagnoseLeaf(s.id)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    selectedSymptom === s.id
+                      ? 'border-emerald-600 bg-emerald-50 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <span className="font-black text-sm block">{s.label}</span>
+                  <span className="text-xs text-slate-500 mt-1 block">{s.sub}</span>
+                </button>
+              ))}
+            </div>
+
+            {leafResult && (
+              <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-slate-900 space-y-2">
+                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block">හඳුනාගත් රෝගය:</span>
+                <h3 className="text-lg font-black text-emerald-950">{leafResult.title}</h3>
+                <p className="text-xs text-slate-600">{leafResult.cause}</p>
+                <div className="p-3 bg-white rounded-xl border border-emerald-200 mt-2">
+                  <strong className="text-xs font-bold text-emerald-900 block mb-1">නිර්දේශිත පිළියම:</strong>
+                  <p className="text-sm font-medium text-slate-800 leading-relaxed">{leafResult.solution}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 5: WEATHER ADVISORY */}
+      {/* ================================================================ */}
+      {activeTab === 'weather' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-xl font-black text-slate-900">
+              අද පොහොර දාන්න හොඳද? (කාලගුණ හා සේදීයාම් අනාවැකිය)
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              තද වැසි දිනවල පොහොර යෙදීමෙන් වැළකී සේදීයාම සහ මුදල් අපතේ යාම වළක්වන්න.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-black text-slate-900 block mb-2">ඔබේ දිස්ත්‍රික්කය තෝරන්න:</label>
+              <div className="flex flex-wrap gap-2">
+                {["Anuradhapura", "Polonnaruwa", "Kurunegala", "Ampara", "Badulla", "Hambantota"].map(d => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => handleFetchWeather(d)}
+                    className={`px-3.5 py-2 rounded-xl border font-bold text-xs transition-all ${
+                      selectedDistrict === d
+                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {weatherData && (
+              <div className="space-y-3 pt-2">
+                <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 font-medium text-sm leading-relaxed">
+                  💡 <strong>කාලගුණ උපදෙස:</strong> {weatherData.advice}
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                  {weatherData.days.map((item, idx) => (
+                    <div 
+                      key={idx}
+                      className={`p-3.5 rounded-xl border text-center ${
+                        item.canSpray 
+                          ? 'bg-emerald-50 border-emerald-300 text-emerald-950' 
+                          : 'bg-rose-50 border-rose-300 text-rose-950'
+                      }`}
+                    >
+                      <span className="font-bold text-xs block text-slate-600">{item.day}</span>
+                      <span className="text-sm font-black my-1 block">{item.status}</span>
+                      <span className={`text-[11px] font-black px-2 py-0.5 rounded-full inline-block ${
+                        item.canSpray ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
+                      }`}>
+                        {item.canSpray ? 'පොහොර දැමිය හැක' : 'සේදී යයි!'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 6: ORGANIC BIO-RECIPES */}
+      {/* ================================================================ */}
+      {activeTab === 'organic' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-xl font-black text-slate-900">
+              සාම්ප්‍රදායික කාබනික දියර පොහොර හා කෘමි විකර්ෂක වට්ටෝරු
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              පස සරු කරන ක්ෂුද්‍රජීවී ජීවාමෘත සහ ස්වභාවික කොහොඹ කෘමි විකර්ෂකය නිවසේදීම සාදාගනිමු.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              {[
+                { id: 'jeevamrutha', label: 'ජීවාමෘත (Jeevamrutha)', desc: 'පසේ පණ ගැන්වීමට' },
+                { id: 'panchagavya', label: 'පංචගව්‍ය (Panchagavya)', desc: 'බෝග වර්ධනයට' },
+                { id: 'neem', label: 'කොහොඹ සාරය (Neem Spray)', desc: 'ස්වභාවික කෘමි විකර්ෂකය' }
+              ].map(r => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => setRecipeKey(r.id)}
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${
+                    recipeKey === r.id
+                      ? 'border-emerald-600 bg-emerald-50 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <span className="font-black text-sm block">{r.label}</span>
+                  <span className="text-xs text-slate-500 mt-1 block">{r.desc}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+              <h3 className="text-base font-black text-slate-900">
+                {recipeKey === 'jeevamrutha' ? 'ජීවාමෘත ලීටර් 200 ක් සාදාගන්නා ක්‍රමය:' : (recipeKey === 'panchagavya' ? 'පංචගව්‍ය සාදාගන්නා ක්‍රමය:' : 'කොහොඹ කොළ සාරය සාදාගන්නා ක්‍රමය:')}
+              </h3>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <span className="text-slate-500 block">නැවුම් ගොම:</span>
+                  <strong className="text-sm font-black text-emerald-800">10 kg</strong>
+                </div>
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <span className="text-slate-500 block">ගව මුත්‍රා:</span>
+                  <strong className="text-sm font-black text-emerald-800">10 Liters</strong>
+                </div>
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <span className="text-slate-500 block">හකුරු / පැණි:</span>
+                  <strong className="text-sm font-black text-emerald-800">2 kg</strong>
+                </div>
+                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
+                  <span className="text-slate-500 block">කඩල/මුං පිටි:</span>
+                  <strong className="text-sm font-black text-emerald-800">2 kg</strong>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-700 space-y-1 pt-2">
+                <p>1. බැරලයකට වතුර දමා ඉහත ද්‍රව්‍ය සහ තුඹසකින් ගත් පස් අතලොස්සක් දමා කලවම් කරන්න.</p>
+                <p>2. දින 5-7 ක් සෙවණේ තබා දිනකට දෙවරක් ලී දණ්ඩකින් දක්ෂිණාවර්තව කලවම් කරන්න.</p>
+                <p>3. වතුර 10:1 අනුපාතයට තනුක කර අක්කරයකට ලීටර් 200 ක් ගොයමට යොදන්න.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 7: 3D GRANULE INSPECTION (Clean Studio Backdrop) */}
+      {/* ================================================================ */}
+      {activeTab === 'granule3d' && (
+        <div className="clean-card p-6 sm:p-8 space-y-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-xl font-black text-slate-900">
+              3D පොහොර කැටය ත්‍රිමාණව නිරීක්ෂණය කරමු (360° Visualizer)
+            </h2>
+            <p className="text-sm text-slate-600 mt-1">
+              පොහොර කැටය මවුස් එකෙන් හෝ ඇඟිල්ලෙන් කරකවා සැබෑ සහ ව්‍යාජ පොහොර අතර වෙනස බලන්න.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            <div className="lg:col-span-7 bg-slate-900 rounded-2xl overflow-hidden h-72 sm:h-80 relative shadow-inner">
+              <ThreeGranuleCanvas 
+                granuleType={granuleType} 
+                sphericity={granuleType === 'urea' ? 0.96 : (granuleType === 'marble' ? 0.65 : 0.85)} 
+                purityScore={granuleType === 'urea' ? 98.5 : 40.0} 
+              />
+              <div className="absolute bottom-2 left-3 right-3 text-center text-[11px] text-slate-400 bg-slate-950/70 py-1 rounded-lg backdrop-blur-sm">
+                👆 ඇඟිල්ලෙන් හෝ මවුස් එකෙන් කරකවන්න (Touch & Rotate)
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 space-y-3">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">පරීක්ෂා කිරීමට කැටය තෝරන්න:</span>
+              
+              {[
+                { id: 'urea', title: 'පිරිසිදු යූරියා (Pure Urea)', desc: 'වීදුරු බෝලයක් මෙන් සිනිඳුයි, විනිවිද පෙනේ.' },
+                { id: 'marble', title: 'ගල් කුඩු කලවම (Crushed Marble)', desc: 'රළුයි, උල් ඇත, වතුරේ දිය නොවේ.' },
+                { id: 'mop', title: 'MOP රතු පොහොර (Potash Salt)', desc: 'රතු-රෝස පැහැති ස්ඵටික කැට.' }
+              ].map(btn => (
+                <button
+                  key={btn.id}
+                  onClick={() => setGranuleType(btn.id)}
+                  className={`w-full p-3.5 rounded-xl border-2 text-left transition-all ${
+                    granuleType === btn.id
+                      ? 'border-emerald-600 bg-emerald-50 text-slate-900 shadow-sm'
+                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                  }`}
+                >
+                  <strong className="text-sm font-black block">{btn.title}</strong>
+                  <span className="text-xs text-slate-500 block mt-0.5">{btn.desc}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE 8: FARMER AI CHAT (WhatsApp / Facebook Messenger Style) */}
+      {/* ================================================================ */}
+      {activeTab === 'chat' && (
+        <div className="clean-card p-6 sm:p-8 space-y-4">
+          <div className="border-b border-slate-100 pb-3">
+            <h2 className="text-xl font-black text-slate-900">
+              ගොවි AI උපදේශක (Farmer Assistant)
+            </h2>
+            <p className="text-xs text-slate-600 mt-0.5">
+              ඔබට ඇති ඕනෑම කෘෂි ගැටලුවක් පහතින් අසන්න.
+            </p>
+          </div>
+
+          {/* Quick Questions */}
+          <div className="flex flex-wrap gap-1.5">
             {[
-              { id: 'urea', label: t.granulePureUrea, color: 'border-emerald-500/50 bg-emerald-950/40' },
-              { id: 'marble', label: t.granuleMarble, color: 'border-rose-500/50 bg-rose-950/40' },
-              { id: 'mop', label: t.granuleMop, color: 'border-amber-500/50 bg-amber-950/40' },
-              { id: 'gypsum', label: t.granuleGypsum, color: 'border-slate-500/50 bg-slate-800/40' }
-            ].map((btn) => (
+              "යූරියා බාලද කියලා ගෙදරදි හොයාගන්නේ කොහොමද?",
+              "වී වගාවට මූලික පොහොර යොදන්නේ කවදාද?",
+              "කැල්සියම් නයිට්රේට් සහ TSP කලවම් කරන්න පුලුවන්ද?",
+              "ගොයමේ කොළ කහ වෙලා, මොකද්ද බෙහෙත?"
+            ].map((q, idx) => (
               <button
-                key={btn.id}
-                onClick={() => setGranuleType(btn.id)}
-                className={`py-2 px-3 rounded-xl text-xs font-semibold border transition-all text-center ${
-                  granuleType === btn.id
-                    ? `${btn.color} text-white shadow-md shadow-emerald-900/20 scale-[1.02]`
-                    : 'border-slate-800 bg-slate-950 text-slate-400 hover:text-slate-200'
-                }`}
+                key={idx}
+                type="button"
+                onClick={() => handleSendChat(q)}
+                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all text-left"
               >
-                {btn.label}
+                💬 {q}
               </button>
             ))}
           </div>
 
-          {/* 3D Canvas Canvas Mount */}
-          <div className="w-full h-72 sm:h-80 bg-slate-950/80 rounded-2xl border border-slate-800/80 overflow-hidden relative shadow-inner">
-            <ThreeGranuleCanvas 
-              granuleType={granuleType} 
-              sphericity={granuleType === 'urea' ? 0.96 : (granuleType === 'marble' ? 0.65 : 0.82)} 
-              purityScore={granuleType === 'urea' ? 98.5 : 42.0} 
+          {/* Message Thread */}
+          <div className="h-64 overflow-y-auto space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+            {chatMessages.map((msg, i) => (
+              <div 
+                key={i} 
+                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
+                <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs sm:text-sm font-medium leading-relaxed ${
+                  msg.sender === 'user'
+                    ? 'bg-emerald-700 text-white rounded-tr-none shadow-sm'
+                    : 'bg-white text-slate-800 rounded-tl-none border border-slate-200 shadow-sm'
+                }`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {chatLoading && (
+              <div className="text-xs text-slate-500 italic">CropSafe AI පිළිතුර සකසමින් පවතී...</div>
+            )}
+          </div>
+
+          {/* Input Box */}
+          <div className="flex space-x-2">
+            <input
+              type="text"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              placeholder="ඔබට ඇති ගැටලුව මෙහි ලියා යවන්න..."
+              onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
+              className="flex-1 p-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:outline-none"
             />
-            
-            {/* Visual HUD overlay */}
-            <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between bg-slate-900/80 backdrop-blur-md px-3 py-2 rounded-xl border border-slate-700/60 text-[11px] text-slate-300">
-              <div className="flex items-center space-x-1.5">
-                <span className={`w-2 h-2 rounded-full ${granuleType === 'urea' ? 'bg-emerald-400' : 'bg-rose-500'} animate-ping`}></span>
-                <span className="font-semibold">{granuleType === 'urea' ? 'ස්ඵටික විනිවිදභාවය: 98%' : 'අක්‍රමවත් පෘෂ්ඨය / කඨින බව'}</span>
-              </div>
-              <span className="text-slate-400">Mouse/Touch හරහා කරකවන්න</span>
-            </div>
-          </div>
-
-          {/* Granule Physical Diagnostic Note */}
-          <div className="mt-4 p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 w-full text-xs text-slate-300 leading-relaxed">
-            {granuleType === 'urea' && (
-              <p className="text-emerald-300">
-                <strong className="text-white">පිරිසිදු ප්‍රිල්ඩ් යූරියා:</strong> සිනිඳු වටකුරු හැඩය, අර්ධ විනිවිද පෙනෙන ස්ඵටික දීප්තිය. ඇඟිලි තුඩු වලින් තද කළ විට සිනිඳු බවක් දැනේ.
-              </p>
-            )}
-            {granuleType === 'marble' && (
-              <p className="text-rose-300">
-                <strong className="text-white">ගල් කුඩු (Marble/Dolomite):</strong> අක්‍රමවත් උල් සහිත හැඩය, අඳුරු අළු-සුදු මැට් මතුපිටක් ඇත. වතුරේ දිය නොවේ.
-              </p>
-            )}
-            {granuleType === 'mop' && (
-              <p className="text-amber-300">
-                <strong className="text-white">MOP පොටෑෂ්:</strong> රෝස-රතු පැහැති ස්ඵටික කැට. වතුරේ දියවන විට රෝස පැහැති විනිවිද පෙනෙන ද්‍රාවණයක් ලබාදේ.
-              </p>
-            )}
-            {granuleType === 'gypsum' && (
-              <p className="text-slate-300">
-                <strong className="text-white">ජිප්සම් කුඩු:</strong> හුණුගල් වැනි අඳුරු වර්ණය, වතුරේ දැමූ විට නොදියවී සුදු පැහැති කිරි දියරයක් සාදයි.
-              </p>
-            )}
+            <button
+              type="button"
+              onClick={() => handleSendChat()}
+              className="px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow transition-all"
+            >
+              යවන්න
+            </button>
           </div>
         </div>
-
-        {/* Right Active Functional View */}
-        <div className="lg:col-span-7 space-y-6">
-
-          {/* ============================================================== */}
-          {/* TAB 1: DIY FIELD SCREENING WIZARD */}
-          {/* ============================================================== */}
-          {activeSubTab === 'screening' && (
-            <div className="bg-slate-900/90 rounded-3xl border border-emerald-900/40 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-                  <FlaskConical className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{t.screeningTitle}</h2>
-                  <p className="text-xs text-slate-400">රසායනාගාර පහසුකම් නොමැතිව ගොවිබිමේදීම කළ හැකි ක්ෂණික පරීක්ෂාව</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                {/* Fertilizer Type */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">
-                    {t.sampleTypeLabel}
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'urea', label: 'යූරියා (Urea)' },
-                      { id: 'mop', label: 'MOP පොටෑෂ්' },
-                      { id: 'tsp', label: 'TSP පොස්පේට්' }
-                    ].map((ft) => (
-                      <button
-                        key={ft.id}
-                        type="button"
-                        onClick={() => setScreeningInput({ ...screeningInput, sample_type: ft.id })}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
-                          screeningInput.sample_type === ft.id
-                            ? 'bg-emerald-600 text-white border-emerald-400 shadow-md'
-                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
-                        }`}
-                      >
-                        {ft.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Step 1: Water Dissolution Time */}
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-bold text-white flex items-center space-x-1.5">
-                      <Droplets className="w-4 h-4 text-cyan-400" />
-                      <span>{t.waterTestLabel}</span>
-                    </label>
-                    <span className="text-sm font-extrabold text-cyan-400">{screeningInput.dissolution_time_sec}s</span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 mb-3">{t.waterTestHelp}</p>
-                  <input
-                    type="range"
-                    min="15"
-                    max="180"
-                    step="5"
-                    value={screeningInput.dissolution_time_sec}
-                    onChange={(e) => setScreeningInput({ ...screeningInput, dissolution_time_sec: parseFloat(e.target.value) })}
-                    className="w-full accent-cyan-400 cursor-pointer"
-                  />
-                  <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-                    <span>තත්පර 15 (ඉතා වේගවත්)</span>
-                    <span>තත්පර 45 (ප්‍රශස්ත)</span>
-                    <span>තත්පර 180 (දිය නොවේ)</span>
-                  </div>
-                </div>
-
-                {/* Step 2: Vinegar Effervescence */}
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-bold text-white flex items-center space-x-1.5">
-                      <AlertTriangle className="w-4 h-4 text-amber-400" />
-                      <span>{t.vinegarTestLabel}</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => setScreeningInput({ ...screeningInput, effervescence_bubbles: !screeningInput.effervescence_bubbles })}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                        screeningInput.effervescence_bubbles 
-                          ? 'bg-rose-600 text-white border-rose-400' 
-                          : 'bg-emerald-950 text-emerald-300 border-emerald-700'
-                      }`}
-                    >
-                      {screeningInput.effervescence_bubbles ? 'ඔව්, පෙණ නගී (Bubbles)' : 'නැත, පෙණ නැත (Safe)'}
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-slate-400">{t.vinegarHelp}</p>
-                </div>
-
-                {/* Step 3: Flame & Spoon Melting */}
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                  <label className="block text-xs font-bold text-white mb-2 flex items-center space-x-1.5">
-                    <Flame className="w-4 h-4 text-orange-400" />
-                    <span>{t.flameTestLabel}</span>
-                  </label>
-                  <select
-                    value={screeningInput.spoon_residue_type}
-                    onChange={(e) => setScreeningInput({ ...screeningInput, spoon_residue_type: e.target.value })}
-                    className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs font-semibold focus:outline-none focus:border-emerald-500"
-                  >
-                    <option value="white_biuret_melt">{t.spoonResidueUrea}</option>
-                    <option value="clay_charred">{t.spoonResidueClay}</option>
-                    <option value="rock_dust_ash">{t.spoonResidueAsh}</option>
-                  </select>
-                </div>
-
-                {/* Submit Action */}
-                <button
-                  type="button"
-                  onClick={handleRunScreening}
-                  disabled={screeningLoading}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all"
-                >
-                  {screeningLoading ? (
-                    <span className="flex items-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>පරීක්ෂා කරමින් පවතී...</span>
-                    </span>
-                  ) : (
-                    <>
-                      <ShieldCheck className="w-4 h-4" />
-                      <span>{t.runScreeningBtn}</span>
-                    </>
-                  )}
-                </button>
-
-                {/* Screening Output Card */}
-                {screeningResult && (
-                  <div className={`mt-6 p-5 rounded-2xl border ${
-                    screeningResult.sample_verdict === 'STANDARD_COMPLIANT' 
-                      ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200' 
-                      : 'bg-rose-950/50 border-rose-500/40 text-rose-200'
-                  }`}>
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        {screeningResult.sample_verdict === 'STANDARD_COMPLIANT' ? (
-                          <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                        ) : (
-                          <AlertTriangle className="w-6 h-6 text-rose-400" />
-                        )}
-                        <h4 className="text-base font-extrabold text-white">
-                          {screeningResult.sample_verdict === 'STANDARD_COMPLIANT' 
-                            ? 'පිරිසිදු ප්‍රමිතියෙන් යුතුයි (GENUINE)' 
-                            : 'ව්‍යාජ / කලවම් කරන ලද්දක් බවට සැක සහිතයි!'}
-                        </h4>
-                      </div>
-                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-900 border border-slate-700 text-white">
-                        විශ්වාසනීයත්වය: {screeningResult.purity_confidence_pct}%
-                      </span>
-                    </div>
-
-                    <p className="text-xs leading-relaxed mt-2 text-slate-200">
-                      {screeningResult.recommendation}
-                    </p>
-
-                    {screeningResult.detected_adulterants && screeningResult.detected_adulterants.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-rose-900/60 flex items-center space-x-2 text-xs text-rose-300">
-                        <strong>හඳුනාගත් කලවම් ද්‍රව්‍ය:</strong>
-                        <span>{screeningResult.detected_adulterants.join(', ')}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================== */}
-          {/* TAB 2: PRECISION DOSAGE & SAVINGS CALCULATOR */}
-          {/* ============================================================== */}
-          {activeSubTab === 'dosage' && (
-            <div className="bg-slate-900/90 rounded-3xl border border-emerald-900/40 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-                  <Calculator className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{t.dosageTitle}</h2>
-                  <p className="text-xs text-slate-400">අධික පොහොර භාවිතය වළක්වා රුපියල් දහස් ගණනක් ඉතිරි කරගන්න</p>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                {/* Crop Type */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">
-                    {t.cropLabel}
-                  </label>
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-                    {[
-                      { id: 'paddy', label: t.cropPaddy },
-                      { id: 'maize', label: t.cropMaize },
-                      { id: 'tea', label: t.cropTea },
-                      { id: 'vegetables', label: t.cropVegetables },
-                      { id: 'chilli', label: t.cropChilli }
-                    ].map((c) => (
-                      <button
-                        key={c.id}
-                        type="button"
-                        onClick={() => setDosageInput({ ...dosageInput, crop_type: c.id })}
-                        className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all text-center ${
-                          dosageInput.crop_type === c.id
-                            ? 'bg-emerald-600 text-white border-emerald-400 shadow-md'
-                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
-                        }`}
-                      >
-                        {c.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Land Size & Quick Chips */}
-                <div>
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-semibold text-slate-300">
-                      {t.landSizeLabel}
-                    </label>
-                    <div className="flex items-center space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800 text-xs">
-                      {['Acres', 'Hectares'].map((u) => (
-                        <button
-                          key={u}
-                          type="button"
-                          onClick={() => setDosageInput({ ...dosageInput, unit: u })}
-                          className={`px-2 py-0.5 rounded font-bold ${
-                            dosageInput.unit === u ? 'bg-emerald-600 text-white' : 'text-slate-400'
-                          }`}
-                        >
-                          {u === 'Acres' ? 'අක්කර' : 'හෙක්ටයාර්'}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="number"
-                      min="0.25"
-                      max="100"
-                      step="0.25"
-                      value={dosageInput.land_area}
-                      onChange={(e) => setDosageInput({ ...dosageInput, land_area: parseFloat(e.target.value) || 1 })}
-                      className="w-32 p-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white text-sm font-bold focus:border-emerald-500 focus:outline-none"
-                    />
-                    <div className="flex space-x-1.5">
-                      {[0.5, 1.0, 2.0, 5.0].map((quick) => (
-                        <button
-                          key={quick}
-                          type="button"
-                          onClick={() => setDosageInput({ ...dosageInput, land_area: quick })}
-                          className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
-                        >
-                          {quick}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Zone */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">
-                    {t.zoneLabel}
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'Dry_Zone', label: t.zoneDry },
-                      { id: 'Wet_Zone', label: t.zoneWet },
-                      { id: 'Intermediate_Zone', label: t.zoneIntermediate }
-                    ].map((z) => (
-                      <button
-                        key={z.id}
-                        type="button"
-                        onClick={() => setDosageInput({ ...dosageInput, soil_zone: z.id })}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all text-center ${
-                          dosageInput.soil_zone === z.id
-                            ? 'bg-emerald-600 text-white border-emerald-400 shadow-md'
-                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
-                        }`}
-                      >
-                        {z.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Calc Action */}
-                <button
-                  type="button"
-                  onClick={handleCalculateDosage}
-                  disabled={dosageLoading}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all"
-                >
-                  <Calculator className="w-4 h-4" />
-                  <span>{t.calcDosageBtn}</span>
-                </button>
-
-                {/* Dosage Result Card */}
-                {dosageResult && (
-                  <div className="mt-6 space-y-4">
-                    
-                    {/* Bags & Financial Metric Row */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-900/60">
-                        <span className="text-xs text-slate-400 font-medium">{t.bagsNeeded}</span>
-                        <div className="mt-2 flex items-center space-x-3 text-white text-sm font-bold">
-                          <span className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                            Urea: {dosageResult.bag_counts_50kg?.urea_bags || 2} කොට්ට
-                          </span>
-                          <span className="px-2 py-1 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                            MOP: {dosageResult.bag_counts_50kg?.mop_bags || 1}
-                          </span>
-                          <span className="px-2 py-1 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                            TSP: {dosageResult.bag_counts_50kg?.tsp_bags || 1}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-emerald-950/60 border border-emerald-500/40">
-                        <span className="text-xs text-emerald-300 font-medium">{t.rupeeSavings}</span>
-                        <div className="mt-1 flex items-baseline space-x-1">
-                          <span className="text-2xl font-black text-white">Rs. {dosageResult.estimated_savings_lkr?.toLocaleString() || '14,200'}</span>
-                          <span className="text-xs text-emerald-400 font-semibold">/ කන්නයට</span>
-                        </div>
-                        <p className="text-[10px] text-slate-300 mt-1">නිරවද්‍ය DOA බෙදා යෙදීම මඟින් අපතේ යාම 100% වළකයි.</p>
-                      </div>
-                    </div>
-
-                    {/* Split Stages */}
-                    <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
-                      <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
-                        DOA නිල බෙදා යෙදීමේ කාලසටහන (Split Schedule)
-                      </h4>
-                      
-                      <div className="space-y-2 text-xs">
-                        <div className="p-2.5 rounded-xl bg-slate-900 flex justify-between items-center">
-                          <div>
-                            <span className="font-bold text-white">1. මූලික පොහොර (Basal):</span>
-                            <p className="text-slate-400 text-[11px]">බිම් සැකසීමේදී පසට කලවම් කරන්න</p>
-                          </div>
-                          <span className="font-semibold text-emerald-400">
-                            TSP {dosageResult.recommendations?.basal?.tsp_kg || 45}kg + MOP {dosageResult.recommendations?.basal?.mop_kg || 20}kg
-                          </span>
-                        </div>
-
-                        <div className="p-2.5 rounded-xl bg-slate-900 flex justify-between items-center">
-                          <div>
-                            <span className="font-bold text-white">2. පළමු ඉහිරවීම (1st Top Dressing):</span>
-                            <p className="text-slate-400 text-[11px]">පැළ සිටුවා සති 3කට පසු</p>
-                          </div>
-                          <span className="font-semibold text-emerald-400">
-                            යූරියා {dosageResult.recommendations?.first_top_dressing?.urea_kg || 40}kg
-                          </span>
-                        </div>
-
-                        <div className="p-2.5 rounded-xl bg-slate-900 flex justify-between items-center">
-                          <div>
-                            <span className="font-bold text-white">3. දෙවන ඉහිරවීම (2nd Top Dressing):</span>
-                            <p className="text-slate-400 text-[11px]">කරල් පිළිසිඳ ගැනීමේදී (සති 7-8)</p>
-                          </div>
-                          <span className="font-semibold text-emerald-400">
-                            යූරියා {dosageResult.recommendations?.second_top_dressing?.urea_kg || 35}kg + MOP {dosageResult.recommendations?.second_top_dressing?.mop_kg || 25}kg
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================== */}
-          {/* TAB 3: TANK MIX COMPATIBILITY */}
-          {/* ============================================================== */}
-          {activeSubTab === 'tankmix' && (
-            <div className="bg-slate-900/90 rounded-3xl border border-emerald-900/40 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-                  <Layers className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{t.tankMixTitle}</h2>
-                  <p className="text-xs text-slate-400">{t.tankMixDesc}</p>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <label className="block text-xs font-semibold text-slate-300">
-                  {t.selectFertilizers}
-                </label>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                  {[
-                    { id: 'urea', label: 'යූරියා (Urea)' },
-                    { id: 'mop', label: 'MOP පොටෑෂ්' },
-                    { id: 'tsp', label: 'TSP පොස්පේට්' },
-                    { id: 'calcium_nitrate', label: 'කැල්සියම් නයිට්රේට් (CaNO3)' },
-                    { id: 'zinc_sulphate', label: 'සින්ක් සල්ෆේට් (Zinc)' },
-                    { id: 'boron', label: 'බෝරෝන් (Boron)' }
-                  ].map((chem) => {
-                    const isSelected = selectedFertilizers.includes(chem.id);
-                    return (
-                      <button
-                        key={chem.id}
-                        type="button"
-                        onClick={() => {
-                          if (isSelected) {
-                            setSelectedFertilizers(selectedFertilizers.filter(x => x !== chem.id));
-                          } else {
-                            setSelectedFertilizers([...selectedFertilizers, chem.id]);
-                          }
-                        }}
-                        className={`p-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-between ${
-                          isSelected
-                            ? 'bg-emerald-600/30 border-emerald-500 text-white shadow-md'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <span>{chem.label}</span>
-                        {isSelected ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <div className="w-4 h-4 rounded border border-slate-700"></div>}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCheckTankMix}
-                  disabled={tankmixLoading || selectedFertilizers.length < 2}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all disabled:opacity-50"
-                >
-                  <Layers className="w-4 h-4" />
-                  <span>{t.checkCompatibilityBtn}</span>
-                </button>
-
-                {tankmixResult && (
-                  <div className={`p-5 rounded-2xl border ${
-                    tankmixResult.is_compatible 
-                      ? 'bg-emerald-950/50 border-emerald-500/40 text-emerald-200' 
-                      : 'bg-rose-950/50 border-rose-500/40 text-rose-200'
-                  }`}>
-                    <div className="flex items-center space-x-2 mb-2">
-                      {tankmixResult.is_compatible ? (
-                        <CheckCircle2 className="w-6 h-6 text-emerald-400" />
-                      ) : (
-                        <XCircle className="w-6 h-6 text-rose-400" />
-                      )}
-                      <h4 className="text-base font-extrabold text-white">
-                        {tankmixResult.is_compatible ? 'ආරක්ෂිත මිශ්‍රණයකි (COMPATIBLE)' : 'අන්තරායයි: මිශ්‍ර නොකරන්න (INCOMPATIBLE)'}
-                      </h4>
-                    </div>
-
-                    <ul className="text-xs space-y-1.5 mt-2">
-                      {tankmixResult.precautions?.map((p, i) => (
-                        <li key={i} className="leading-relaxed">{p}</li>
-                      ))}
-                    </ul>
-
-                    {tankmixResult.wales_order && (
-                      <div className="mt-4 pt-3 border-t border-slate-800">
-                        <span className="text-xs font-bold text-slate-300 block mb-1">නිවැරදි WALES මිශ්‍රණ අනුපිළිවෙළ:</span>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-slate-400">
-                          {tankmixResult.wales_order.map((step, idx) => (
-                            <div key={idx} className="bg-slate-900/80 px-2 py-1 rounded">{step}</div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================== */}
-          {/* TAB 4: CROP LEAF DEFICIENCY DOCTOR */}
-          {/* ============================================================== */}
-          {activeSubTab === 'leafdoctor' && (
-            <div className="bg-slate-900/90 rounded-3xl border border-emerald-900/40 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-                  <Stethoscope className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{t.leafDocTitle}</h2>
-                  <p className="text-xs text-slate-400">පත්‍රයේ රෝග ලක්ෂණ අනුව නිශ්චිත ඌනතාවය සහ ප්‍රතිකර්මය තත්පරයෙන් දැනගන්න</p>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">
-                    {t.leafPosLabel}
-                  </label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[
-                      { id: 'older_leaves', label: t.leafPosOld },
-                      { id: 'young_leaves', label: t.leafPosNew },
-                      { id: 'fruit_grain', label: t.leafPosFruit }
-                    ].map((lp) => (
-                      <button
-                        key={lp.id}
-                        type="button"
-                        onClick={() => setLeafInput({ ...leafInput, leaf_position: lp.id })}
-                        className={`py-2 px-2 rounded-xl text-xs font-bold border transition-all text-center ${
-                          leafInput.leaf_position === lp.id
-                            ? 'bg-emerald-600 text-white border-emerald-400 shadow-md'
-                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
-                        }`}
-                      >
-                        {lp.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">
-                    {t.symptomLabel}
-                  </label>
-                  <div className="space-y-2">
-                    {[
-                      { id: 'uniform_yellowing', label: t.symptomYellowOld },
-                      { id: 'purple_margins', label: t.symptomPurple },
-                      { id: 'leaf_edge_scorch', label: t.symptomScorch },
-                      { id: 'interveinal_chlorosis', label: t.symptomInterveinal }
-                    ].map((s) => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        onClick={() => setLeafInput({ ...leafInput, symptom_description: s.id })}
-                        className={`w-full p-3 rounded-xl text-xs font-bold border text-left transition-all flex items-center justify-between ${
-                          leafInput.symptom_description === s.id
-                            ? 'bg-emerald-600/30 border-emerald-500 text-white'
-                            : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                        }`}
-                      >
-                        <span>{s.label}</span>
-                        {leafInput.symptom_description === s.id && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleDiagnoseLeaf}
-                  disabled={leafLoading}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all"
-                >
-                  <Stethoscope className="w-4 h-4" />
-                  <span>{t.diagnoseBtn}</span>
-                </button>
-
-                {leafResult && (
-                  <div className="p-5 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 text-slate-200 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">විනිශ්චය කරන ලද ඌනතාවය:</span>
-                      <span className="text-xs bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">
-                        {leafResult.confidence_pct || 94}% නිවැරදි බව
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-black text-white">{leafResult.diagnosed_deficiency}</h3>
-                    
-                    <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs">
-                      <strong className="text-emerald-300 block mb-1">නිර්දේශිත ප්‍රතිකාරය (DOA Prescription):</strong>
-                      <p className="text-slate-300 leading-relaxed">{leafResult.treatment_prescription}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================== */}
-          {/* TAB 5: WEATHER & MONSOON LEACHING ADVISORY */}
-          {/* ============================================================== */}
-          {activeSubTab === 'weather' && (
-            <div className="bg-slate-900/90 rounded-3xl border border-emerald-900/40 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center border border-cyan-500/30">
-                  <CloudRain className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{t.weatherTitle}</h2>
-                  <p className="text-xs text-slate-400">තද වැසි ඇති විට පොහොර යෙදීමෙන් වැළකී සේදීයාම සහ මුදල් නාස්තිය වළක්වන්න</p>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-2">
-                    {t.districtSelect}
-                  </label>
-                  <select
-                    value={selectedDistrict}
-                    onChange={(e) => setSelectedDistrict(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800 text-white text-xs font-bold focus:border-cyan-500 focus:outline-none"
-                  >
-                    {[
-                      "Anuradhapura", "Polonnaruwa", "Kurunegala", "Ampara", "Jaffna", 
-                      "Hambantota", "Badulla", "Kandy", "Matale", "Ratnapura", "Galle"
-                    ].map(d => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleFetchWeather}
-                  disabled={weatherLoading}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 text-white font-extrabold text-sm shadow-xl shadow-cyan-600/30 flex items-center justify-center space-x-2 transition-all"
-                >
-                  <CloudRain className="w-4 h-4" />
-                  <span>{t.fetchWeatherBtn}</span>
-                </button>
-
-                {weatherResult && (
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-2xl bg-cyan-950/40 border border-cyan-500/40 text-xs text-cyan-200 leading-relaxed">
-                      <strong>කාලගුණ උපදේශන සාරාංශය:</strong> {weatherResult.advisory_summary}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-5 gap-2">
-                      {weatherResult.five_day_forecast?.map((day, idx) => (
-                        <div 
-                          key={idx} 
-                          className={`p-3 rounded-2xl border text-center ${
-                            day.can_apply_fertilizer 
-                              ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-300' 
-                              : 'bg-rose-950/40 border-rose-500/40 text-rose-300'
-                          }`}
-                        >
-                          <span className="text-[11px] font-bold block text-white">{day.day}</span>
-                          <span className="text-lg font-black my-1 block">{day.rain_mm} mm</span>
-                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-900 border border-slate-700 block mt-1">
-                            {day.can_apply_fertilizer ? 'යෙදිය හැක' : 'සේදීයාමේ අවදානම'}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================== */}
-          {/* TAB 6: INDIGENOUS ORGANIC RECIPES */}
-          {/* ============================================================== */}
-          {activeSubTab === 'organic' && (
-            <div className="bg-slate-900/90 rounded-3xl border border-emerald-900/40 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-                  <Leaf className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{t.organicTitle}</h2>
-                  <p className="text-xs text-slate-400">පස සරු කරන ක්ෂුද්‍රජීවී දියර හා ස්වභාවික කෘමි විකර්ෂක සාදාගන්නා ක්‍රමය</p>
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: 'jeevamrutha', label: t.jeevamrutha },
-                    { id: 'panchagavya', label: t.panchagavya },
-                    { id: 'neem', label: t.neemRepellent },
-                    { id: 'chili_garlic', label: t.chiliGarlic }
-                  ].map((rec) => (
-                    <button
-                      key={rec.id}
-                      type="button"
-                      onClick={() => setRecipeKey(rec.id)}
-                      className={`p-2.5 rounded-xl text-xs font-bold border transition-all text-center ${
-                        recipeKey === rec.id
-                          ? 'bg-emerald-600 text-white border-emerald-400 shadow-md'
-                          : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
-                      }`}
-                    >
-                      {rec.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-                  <div className="flex justify-between items-center mb-2">
-                    <label className="text-xs font-bold text-white">සාදන දියර ප්‍රමාණය (ලීටර්):</label>
-                    <span className="text-emerald-400 font-extrabold text-sm">{recipeVolume} L</span>
-                  </div>
-                  <div className="flex space-x-2">
-                    {[16, 50, 100, 200].map((vol) => (
-                      <button
-                        key={vol}
-                        type="button"
-                        onClick={() => setRecipeVolume(vol)}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-bold border ${
-                          recipeVolume === vol ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-slate-900 text-slate-400 border-slate-800'
-                        }`}
-                      >
-                        {vol}L
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleGetRecipe}
-                  disabled={recipeLoading}
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-green-500 text-white font-extrabold text-sm shadow-xl shadow-emerald-600/30 flex items-center justify-center space-x-2 transition-all"
-                >
-                  <Leaf className="w-4 h-4" />
-                  <span>වට්ටෝරුව ලබාගන්න</span>
-                </button>
-
-                {recipeResult && (
-                  <div className="p-5 rounded-2xl bg-slate-950 border border-emerald-900/60 space-y-4">
-                    <h3 className="text-base font-extrabold text-white">{recipeResult.recipe_name} ({recipeResult.batch_liters}L)</h3>
-                    
-                    <div>
-                      <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block mb-2">අවශ්‍ය ද්‍රව්‍ය හා ප්‍රමාණ:</span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        {recipeResult.ingredients?.map((ing, i) => (
-                          <div key={i} className="p-2 rounded-lg bg-slate-900 flex justify-between border border-slate-800">
-                            <span className="text-slate-300">{ing.item}</span>
-                            <span className="font-bold text-emerald-400">{ing.qty}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <span className="text-xs font-bold text-slate-300 block mb-1">සාදාගන්නා පියවර:</span>
-                      <ul className="text-xs text-slate-400 space-y-1">
-                        {recipeResult.preparation_steps?.map((step, idx) => (
-                          <li key={idx}>{step}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-emerald-300">
-                      <strong>භාවිතය:</strong> {recipeResult.application_instructions}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* ============================================================== */}
-          {/* TAB 7: SINHALA AGRONOMIC AI ASSISTANT */}
-          {/* ============================================================== */}
-          {activeSubTab === 'voice' && (
-            <div className="bg-slate-900/90 rounded-3xl border border-emerald-900/40 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-                  <MessageSquareText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">{t.voiceTitle}</h2>
-                  <p className="text-xs text-slate-400">{t.voicePromptHelp}</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                {/* Common farmer question quick chips */}
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    "යූරියා බාලද කියලා ගෙදරදි හොයාගන්නේ කොහොමද?",
-                    "වී වගාවට මූලික පොහොර යොදන්නේ කොහොමද?",
-                    "කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න පුලුවන්ද?",
-                    "ගොයමේ යටි කොළ කහ වෙලා, මොකද්ද බෙහෙත?"
-                  ].map((q, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => handleAskVoice(q)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 text-xs font-medium transition-all text-left"
-                    >
-                      💬 {q}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={voiceQuery}
-                    onChange={(e) => setVoiceQuery(e.target.value)}
-                    placeholder="ඔබට ඇති ගැටලුව මෙහි සිංහලෙන් ලියන්න..."
-                    className="flex-1 p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-white text-xs font-semibold focus:border-emerald-500 focus:outline-none"
-                    onKeyDown={(e) => e.key === 'Enter' && handleAskVoice()}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAskVoice()}
-                    disabled={voiceLoading || !voiceQuery.trim()}
-                    className="p-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all disabled:opacity-50"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {voiceResponse && (
-                  <div className="mt-6 p-5 rounded-2xl bg-slate-950 border border-emerald-900/60 space-y-3">
-                    <div className="flex items-center space-x-2 text-xs text-emerald-400 font-bold">
-                      <Sparkles className="w-4 h-4" />
-                      <span>CropSafe AI පිළිතුර:</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-sans">
-                      {voiceResponse.sinhala_response}
-                    </p>
-                    <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-400">
-                      💡 {voiceResponse.recommended_action}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-        </div>
-
-      </div>
+      )}
 
     </div>
   );
