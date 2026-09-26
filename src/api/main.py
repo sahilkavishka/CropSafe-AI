@@ -49,6 +49,7 @@ from src.models.paddy_straw_decomposition_engine import PaddyStrawDecompositionE
 from src.models.ellangawa_cascade_eutrophication_model import EllangawaCascadeEutrophicationEngine
 from src.models.fertilizer_carbon_lca_footprint import FertilizerCarbonLCAFootprintEngine
 from src.models.agrarian_micro_credit_scorecard import AgrarianMicroCreditScorecardEngine
+from src.models.whistleblower_incident_engine import WhistleblowerIncidentEngine
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -89,6 +90,7 @@ straw_engine = PaddyStrawDecompositionEngine()
 ellangawa_engine = EllangawaCascadeEutrophicationEngine()
 carbon_engine = FertilizerCarbonLCAFootprintEngine()
 credit_scorecard = AgrarianMicroCreditScorecardEngine()
+whistleblower_engine = WhistleblowerIncidentEngine()
 
 # Load Machine Learning Model Zoo
 try:
@@ -158,6 +160,30 @@ class PackagingScanRequest(BaseModel):
 
 class LabClassifyRequest(BaseModel):
     features: Dict[str, float]
+
+class CreditRequest(BaseModel):
+    farmer_nic: str = "198512345678"
+    farmer_name: str = "K. M. Bandara"
+    land_area_ha: float = 1.0
+    crop_type: str = "paddy"
+    land_tenure: str = "swarnabhoomi_permit"
+    irrigation_source: str = "major_irrigation_canal"
+    farming_experience_years: int = 15
+    historical_yield_avg_tons_ha: float = 4.5
+    existing_seasonal_debt_lkr: float = 25000.0
+    expected_crop_price_per_kg_lkr: float = 120.0
+    has_aaib_crop_insurance: bool = True
+
+class WhistleblowerRequest(BaseModel):
+    dealer_name: str = "Commercial Dealer"
+    location: str = "Dambulla Town, Matale District"
+    incident_type: str = "PRICE_GOUGING"  # 'PRICE_GOUGING', 'ADULTERATION', 'HOARDING'
+    fertilizer_type: str = "Urea"
+    batch_no: str = "BATCH-NOT-SPECIFIED"
+    gazetted_mrp: float = 2500.0
+    charged_price: float = 3800.0
+    narrative: str = "Dealer charged excessive price above maximum retail price and refused official receipt."
+    evidence_files: List[str] = ["receipt_photo.jpg"]
 
 # -------------------------------------------------------------
 # Endpoints
@@ -261,6 +287,38 @@ def get_organic_recipes(recipe_key: str = "jeevamrutha", batch_volume_liters: fl
     if recipe_key.lower() in ["neem", "chili_garlic", "gliricidia", "papaya_leaf", "ginger_turmeric"]:
         return botanical_pest_engine.formulate_repellent(pest_type=recipe_key, spray_tank_capacity_l=batch_volume_liters)
     return biofertilizer_engine.formulate_recipe(formulation_type=recipe_key, target_liters=batch_volume_liters)
+
+@app.post("/api/farmer/credit")
+def evaluate_farmer_credit(req: CreditRequest):
+    """Agrarian micro-credit scorecard, default risk probability, and fertilizer credit limit."""
+    return credit_scorecard.evaluate_credit_application(
+        farmer_nic=req.farmer_nic,
+        farmer_name=req.farmer_name,
+        land_area_ha=req.land_area_ha,
+        crop_type=req.crop_type,
+        land_tenure=req.land_tenure,
+        irrigation_source=req.irrigation_source,
+        farming_experience_years=req.farming_experience_years,
+        historical_yield_avg_tons_ha=req.historical_yield_avg_tons_ha,
+        existing_seasonal_debt_lkr=req.existing_seasonal_debt_lkr,
+        expected_crop_price_per_kg_lkr=req.expected_crop_price_per_kg_lkr,
+        has_aaib_crop_insurance=req.has_aaib_crop_insurance
+    )
+
+@app.post("/api/farmer/whistleblower")
+def submit_whistleblower_complaint(req: WhistleblowerRequest):
+    """Anonymous whistleblower incident filing under CAA Act No. 9 of 2003 and Fertilizer Act No. 68 of 1988."""
+    return whistleblower_engine.file_anonymous_complaint({
+        "dealer_name": req.dealer_name,
+        "location": req.location,
+        "incident_type": req.incident_type,
+        "fertilizer_type": req.fertilizer_type,
+        "batch_no": req.batch_no,
+        "gazetted_mrp": req.gazetted_mrp,
+        "charged_price": req.charged_price,
+        "narrative": req.narrative,
+        "evidence_files": req.evidence_files
+    })
 
 @app.get("/api/inspector/warehouse-twin")
 def get_warehouse_telemetry():
