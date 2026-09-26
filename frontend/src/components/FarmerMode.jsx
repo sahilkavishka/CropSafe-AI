@@ -59,6 +59,7 @@ export default function FarmerMode({ language = 'si' }) {
   const [weatherData, setWeatherData] = useState(null);
 
   // --- 6. Organic Recipe State ---
+  const [organicAcres, setOrganicAcres] = useState(1.0);
   const [recipeKey, setRecipeKey] = useState('jeevamrutha');
 
   // --- 7. 3D Granule State ---
@@ -986,73 +987,482 @@ export default function FarmerMode({ language = 'si' }) {
       {/* ================================================================ */}
       {/* FEATURE 6: ORGANIC BIO-RECIPES */}
       {/* ================================================================ */}
-      {activeTab === 'organic' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-xl font-black text-slate-900">
-              {t.organicHeader}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.organicHelp}
-            </p>
-          </div>
+      {activeTab === 'organic' && (() => {
+        const organicRecipesData = {
+          jeevamrutha: {
+            id: 'jeevamrutha',
+            title: t.recJeevTitle,
+            subtitle: t.recJeevDesc,
+            icon: '🌱',
+            baseVolumePerAcre: 200,
+            savingsPerAcre: 14500,
+            dilutionPerTank: language === 'en' 
+              ? "For soil drenching: fill knapsack directly with strained broth. For foliar spraying: mix 1.5L strained Jeevamrutha with 14.5L clean water per 16L tank (10% foliar dilution)."
+              : (language === 'ta' 
+                  ? "மண்ணில் ஊற்ற: வடிகட்டிய திரவத்தை நேரடியாக 16L தெளிப்பானில் ஊற்றவும். இலைகளில் தெளிக்க: 1.5L கரைசலை 14.5L தண்ணீரில் கலக்கவும் (10% வீதம்)."
+                  : "පසට යෙදීමට නම්: පෙරාගත් ජීවාමෘත කෙලින්ම ලීටර් 16 ටැංකියට පුරවා මුලට වත්කරන්න. පත්‍ර මතට ස්ප්‍රේ කිරීමට නම්: ජීවාමෘත 1.5L ක් වතුර 14.5L සමග කලවම් කරන්න (10% තනුක කිරීම)."),
+            bestTiming: language === 'en'
+              ? "Early morning (6:30 AM - 8:30 AM) or evening (4:30 PM - 6:30 PM) during moist soil conditions. Avoid direct blazing mid-day sunlight."
+              : (language === 'ta'
+                  ? "அதிகாலை (காலை 6:30 - 8:30) அல்லது மாலை (4:30 - 6:30) வேளையில் மண் ஈரப்பதமாக இருக்கும் போது இடவும். நண்பகல் வெயிலை தவிர்க்கவும்."
+                  : "උදෑසන 6:30 - 8:30 හෝ සවස 4:30 - 6:30 හිරු රශ්මිය අඩු, පස තෙතමනය සහිත අවස්ථාවේදී. දහවල් තද අව්වේ යෙදීමෙන් වළකින්න."),
+            ingredients: [
+              { 
+                name: language === 'en' ? 'Fresh Cow Dung' : (language === 'ta' ? 'புதிய மாட்டு சாணம்' : 'නැවුම් එළගොම'),
+                amount: `${(10 * organicAcres).toFixed(1)} kg`,
+                note: language === 'en' ? 'From indigenous or local cattle' : (language === 'ta' ? 'நாட்டு மாட்டு சாணம் சிறந்தது' : 'දේශීය එළදෙනුන්ගේ වඩාත් සුදුසුයි')
+              },
+              { 
+                name: language === 'en' ? 'Fresh Cow Urine' : (language === 'ta' ? 'மாட்டு கோமியம்' : 'ගව මුත්‍රා'),
+                amount: `${(10 * organicAcres).toFixed(1)} L`,
+                note: language === 'en' ? 'Rich in organic nitrogen & hormones' : (language === 'ta' ? 'தழைச்சத்து மற்றும் வளர்ச்சி ஊக்கிகள்' : 'නයිට්‍රජන් හා ශාක හෝමෝන බහුලයි')
+              },
+              { 
+                name: language === 'en' ? 'Jaggery / Black Treacle' : (language === 'ta' ? 'நாட்டு சர்க்கரை / வெல்லம்' : 'හකුරු / උක් පැණි'),
+                amount: `${(2 * organicAcres).toFixed(1)} kg`,
+                note: language === 'en' ? 'Fermentation fuel for microbes' : (language === 'ta' ? 'நுண்ணுயிர் பெருக்கத்திற்கான ஆற்றல்' : 'ක්ෂුද්‍රජීවීන් ගුණනය වීමේ ශක්ති ප්‍රභවය')
+              },
+              { 
+                name: language === 'en' ? 'Pulse Flour (Gram / Chickpea)' : (language === 'ta' ? 'பயறு மாவு (கடலை மாவு)' : 'මුං/කඩල/උඳු පිටි'),
+                amount: `${(2 * organicAcres).toFixed(1)} kg`,
+                note: language === 'en' ? 'Microbial protein nutrient source' : (language === 'ta' ? 'நுண்ணுயிர்களுக்கான புரத உணவு' : 'ක්ෂුද්‍රජීවී ප්‍රෝටීන් ආහාරය')
+              },
+              { 
+                name: language === 'en' ? 'Living Ant-hill / Forest Soil' : (language === 'ta' ? 'புற்று மண் / நச்சு இல்லாத காட்டு மண்' : 'තුඹසකින් ගත් පස්'),
+                amount: `${(0.5 * organicAcres).toFixed(1)} kg`,
+                note: language === 'en' ? 'Inoculant containing millions of live soil bacteria' : (language === 'ta' ? 'மண் நுண்ணுயிர் மூலம்' : 'මිලියන ගණනක් හිතකර බැක්ටීරියා බීජාණු')
+              },
+              { 
+                name: language === 'en' ? 'Clean Water' : (language === 'ta' ? 'சுத்தமான தண்ணீர்' : 'පිරිසිදු ජලය'),
+                amount: `${Math.round(200 * organicAcres)} L`,
+                note: language === 'en' ? 'Chlorine-free well or canal water' : (language === 'ta' ? 'குளோரின் இல்லாத நீர்' : 'ක්ලෝරීන් රහිත ළිං හෝ ඇළ වතුර')
+              }
+            ],
+            steps: language === 'en' ? [
+              "Take a 200L clean barrel, add water, then dissolve fresh cow dung, urine, jaggery, pulse flour and ant-hill soil thoroughly.",
+              "Place the barrel in shade covered with a gunny bag. Stir clockwise with a wooden pole for 2 minutes, twice daily for 5-7 days.",
+              "Strain through a fine mosquito net before filling sprayers. Apply 200L per acre onto moist soil every 14 days."
+            ] : (language === 'ta' ? [
+              "ஒரு பிளாஸ்டிக் பீப்பாயில் தண்ணீரை ஊற்றி, மாட்டு சாணம், கோமியம், வெல்லம், பயறு மாவு மற்றும் புற்று மண்ணை நன்கு கலக்கவும்.",
+              "பீப்பாயை நிழலில் வைத்து சாக்கு பையால் மூடவும். தினமும் காலையும் மாலையும் ஒரு மரக்குச்சியால் வலஞ்சுழியாக கலக்கி விடவும். 5-7 நாட்களில் தயாராகும்.",
+              "தெளிப்பானில் ஊற்றுவதற்கு முன் மெல்லிய துணியால் வடிகட்டவும். ஏக்கருக்கு 200L வீதம் 14 நாட்களுக்கு ஒருமுறை பயிர்களுக்கு இடவும்."
+            ] : [
+              "ප්ලාස්ටික් බැරලයකට ජලය දමා, නැවුම් ගොම, ගව මුත්‍රා, හකුරු, පිටි සහ තුඹස් පස් දමා ලී දණ්ඩකින් හොඳින් කලවම් කරන්න.",
+              "හිරු එළිය නොවැටෙන සෙවණක තබා ගෝනියකින් මුඛය වසන්න. දින 5-7 ක් යනතුරු දිනපතා උදේ-හවස දක්ෂිණාවර්තව (දකුණතට) විනාඩි 2 බැගින් කලවම් කරන්න.",
+              "දින 7 කට පසු හොඳින් පැසී ඇති අතර, ස්ප්‍රේ යන්ත්‍රයට දැමීමට පෙර සියුම් දැලකින් පෙරා ගන්න. දින 14 කට වරක් ගොයමට යොදන්න."
+            ])
+          },
 
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {[
-                { id: 'jeevamrutha', label: t.recJeevTitle, desc: t.recJeevDesc },
-                { id: 'panchagavya', label: t.recPanchTitle, desc: t.recPanchDesc },
-                { id: 'neem', label: t.recNeemTitle, desc: t.recNeemDesc }
-              ].map(r => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => setRecipeKey(r.id)}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
-                    recipeKey === r.id
-                      ? 'border-emerald-600 bg-emerald-50 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <span className="font-black text-sm block">{r.label}</span>
-                  <span className="text-xs text-slate-500 mt-1 block">{r.desc}</span>
-                </button>
-              ))}
+          panchagavya: {
+            id: 'panchagavya',
+            title: t.recPanchTitle,
+            subtitle: t.recPanchDesc,
+            icon: '🥛',
+            baseVolumePerAcre: 200,
+            savingsPerAcre: 16500,
+            dilutionPerTank: language === 'en'
+              ? "Mix 500ml concentrated Panchagavya with 15.5L water per 16L knapsack sprayer tank (3% solution). Each acre requires ~13 sprayer tanks."
+              : (language === 'ta'
+                  ? "16L தெளிப்பான் தொட்டிக்கு 500ml பஞ்சகவ்யா கரைசலுடன் 15.5L தண்ணீர் சேர்க்கவும் (3% வீதம்). ஏக்கருக்கு 13 டேங்குகள் தேவை."
+                  : "ලීටර් 16 ස්ප්‍රේ ටැංකියකට සාන්ද්‍ර පංචගව්‍ය මිලිලීටර් 500 ක් දමා වතුර ලීටර් 15.5 ක් පුරවන්න (3% සාන්ද්‍රණය). අක්කරයකට ටැංකි 13ක් පමණ අවශ්‍ය වේ."),
+            bestTiming: language === 'en'
+              ? "Early morning or late evening. Most effective during vegetative branching, pre-flowering and grain-filling stages."
+              : (language === 'ta'
+                  ? "அதிகாலை அல்லது மாலையில் தெளிக்கவும். கிளைகள் வளரும் பருவம், பூ பூக்கும் முன் தெளிப்பது மிகச் சிறந்தது."
+                  : "උදෑසන හෝ සවස. පැළ වර්ධන අවධිය, මල් පිපීමට සතියකට පෙර සහ කරල්/ගෙඩි පැසෙන අවධියේදී යෙදීම අතිශයින් ඵලදායී වේ."),
+            ingredients: [
+              { 
+                name: language === 'en' ? 'Panchagavya Concentrate Stock' : (language === 'ta' ? 'தேவையான பஞ்சகவ்யா சாறு' : 'අවශ්‍ය සාන්ද්‍ර පංචගව්‍ය ද්‍රාවණය'),
+                amount: `${(6 * organicAcres).toFixed(1)} L`,
+                note: language === 'en' ? 'Stock required for 3% field dilution' : (language === 'ta' ? 'செறிவூட்டப்பட்ட திரவம்' : '3% තනුක කර යෙදීමට අවශ්‍ය සම්පූර්ණ තොගය')
+              },
+              { 
+                name: language === 'en' ? 'Fresh Cow Dung' : (language === 'ta' ? 'பசுஞ்சாணம்' : 'නැවුම් එළගොම'),
+                amount: `${(2.5 * organicAcres).toFixed(1)} kg`,
+                note: language === 'en' ? 'Beneficial microbial foundation' : (language === 'ta' ? 'நுண்ணுயிர் பெருக்கத்திற்கு' : 'හිතකර ක්ෂුද්‍රජීවීන්')
+              },
+              { 
+                name: language === 'en' ? 'Pure Cow Ghee' : (language === 'ta' ? 'பசு நெய்' : 'පිරිසිදු ගව ගිතෙල්'),
+                amount: `${Math.round(350 * organicAcres)} g`,
+                note: language === 'en' ? 'Fermentation matrix and vitamins' : (language === 'ta' ? 'நொதித்தலை தூண்டும்' : 'පැසවීමේදී විටමින් හා මේද අම්ල සපයයි')
+              },
+              { 
+                name: language === 'en' ? 'Fresh Cow Milk' : (language === 'ta' ? 'பசும்பால்' : 'නැවුම් එළකිරි'),
+                amount: `${(1.0 * organicAcres).toFixed(1)} L`,
+                note: language === 'en' ? 'Bio-calcium and amino acids' : (language === 'ta' ? 'அமினோ அமிலங்கள்' : 'ස්වභාවික කැල්සියම් හා ඇමයිනෝ අම්ල')
+              },
+              { 
+                name: language === 'en' ? 'Cow Curd (Yogurt)' : (language === 'ta' ? 'பசுந்தயிர்' : 'එළකිරි මුදවාපු කිරි'),
+                amount: `${Math.round(700 * organicAcres)} ml`,
+                note: language === 'en' ? 'Lactobacillus probiotic cultures' : (language === 'ta' ? 'லாக்டோபாகிலஸ் பாக்டீரியா' : 'ලැක්ටොබැසිලස් හිතකර බැක්ටීරියා')
+              },
+              { 
+                name: language === 'en' ? 'Tender Coconut Water & Bananas' : (language === 'ta' ? 'இளநீர் மற்றும் வாழைப்பழம்' : 'තැඹිලි වතුර සහ ඉදුණු කෙසෙල්'),
+                amount: `${(1.0 * organicAcres).toFixed(1)} L + ${Math.round(4 * organicAcres)} pcs`,
+                note: language === 'en' ? 'Potassium, cytokinin & auxin plant growth hormones' : (language === 'ta' ? 'பொட்டாசியம் மற்றும் வளர்ச்சி ஊக்கிகள்' : 'පොටෑසියම්, සයිටොකයිනින් හෝමෝන වර්ධකය')
+              }
+            ],
+            steps: language === 'en' ? [
+              "Mix fresh cow dung and cow ghee thoroughly in a wide-mouthed clay or plastic pot. Keep for 3 days, stirring twice daily.",
+              "On day 4, add cow urine, milk, curd, tender coconut water, jaggery and mashed ripe bananas. Mix well.",
+              "Keep covered in shade for 15-20 days, stirring twice daily. Strain through fine mesh and dilute 500ml per 16L sprayer."
+            ] : (language === 'ta' ? [
+              "மாட்டு சாணத்தையும் நெய்யையும் ஒரு பாத்திரத்தில் பிசைந்து 3 நாட்கள் வைக்கவும். தினமும் இருவேளை கிளறவும்.",
+              "4வது நாளில் கோமியம், பால், தயிர், இளநீர், வெல்லம் மற்றும் பிசைந்த வாழைப்பழங்களை சேர்த்து கலக்கவும்.",
+              "15-20 நாட்கள் நிழலில் வைக்கவும். தினமும் இருவேளை கிளறி, பின் வடிகட்டி 16L டேங்குக்கு 500ml வீதம் தெளிக்கவும்."
+            ] : [
+              "මුලින්ම නැවුම් ගොම සහ ගිතෙල් ප්ලාස්ටික් බඳුනක දමා අතින් හොඳින් කලවම් කර දින 3ක් තබන්න (දිනපතා උදේ-හවස කලවම් කරන්න).",
+              "4 වන දින එළකිරි, මුදවාපු කිරි, ගව මුත්‍රා, තැඹිලි වතුර, හකුරු සහ පොඩිකරගත් ඉදුණු කෙසෙල් එකතු කර හොඳින් දියකරන්න.",
+              "දින 15-20 ක් සෙවණේ තබා දිනපතා දෙවරක් කලවම් කරන්න. ඉන්පසු පෙරාගෙන ස්ප්‍රේ ටැංකියකට 500ml බැගින් දමා වතුර පුරවා ස්ප්‍රේ කරන්න."
+            ])
+          },
+
+          neem: {
+            id: 'neem',
+            title: t.recNeemTitle,
+            subtitle: t.recNeemDesc,
+            icon: '🌿',
+            baseVolumePerAcre: 50,
+            savingsPerAcre: 9200,
+            dilutionPerTank: language === 'en'
+              ? "Pour strained extract into 16L knapsack sprayer. Each 16L tank covers ~1/3 of an acre. Ensure nozzle sprays a fine mist covering underside of leaves."
+              : (language === 'ta'
+                  ? "வடிகட்டிய சாற்றை 16L தெளிப்பானில் ஊற்றி நன்றாக இலைகளின் மேல் மற்றும் கீழ்ப்பகுதியில் படும்படி தெளிக்கவும்."
+                  : "ලීටර් 16 ටැංකියකට පෙරාගත් සාරය දමා සියුම් මීදුමක් (fine mist) ලෙස කොළවල යටි පැත්තටත් හොඳින් වදින සේ ස්ප්‍රේ කරන්න."),
+            bestTiming: language === 'en'
+              ? "Late afternoon (after 4:30 PM). Active Azadirachtin degrades rapidly under harsh mid-day ultraviolet solar radiation."
+              : (language === 'ta'
+                  ? "மாலை 4:30 மணிக்கு மேல் தெளிக்கவும். கடுமையான வெயிலில் வேப்ப எண்ணெயின் வீரியம் குறையும்."
+                  : "සවස 4:30 න් පසු. දහවල් දැඩි හිරු එළියේ පාරජම්බුල කිරණ නිසා කොහොඹ වල ඇති Azadirachtin කෘමි නාශක ගුණය විනාශ වීම වළක්වා ගැනීමට."),
+            ingredients: [
+              { 
+                name: language === 'en' ? 'Crushed Neem Seeds / Leaves' : (language === 'ta' ? 'வேப்பங்கொட்டை / வேப்பிலை' : 'තලාගත් කොහොඹ ඇට හෝ කොළ'),
+                amount: `${(2.5 * organicAcres).toFixed(1)} kg`,
+                note: language === 'en' ? 'Botanical Azadirachtin repels 200+ pest species' : (language === 'ta' ? 'அசாடிராக்டின் நிறைந்த இயற்கை மருந்து' : 'Azadirachtin අඩංගු ස්වභාවික කෘමි විකර්ෂකය')
+              },
+              { 
+                name: language === 'en' ? 'Bar Soap Solution (Sticker)' : (language === 'ta' ? 'சோப் கரைசல்' : 'කැට සබන් දියරය'),
+                amount: `${Math.round(50 * organicAcres)} g`,
+                note: language === 'en' ? 'Wetting agent & sticker for waxy leaf surfaces' : (language === 'ta' ? 'இலைகளில் ஒட்டுவதற்கு' : 'කොළවල රැඳී තැබීමට සහ ඉටි තට්ටුව බිඳීමට (Sticker)')
+              },
+              { 
+                name: language === 'en' ? 'Clean Water' : (language === 'ta' ? 'சுத்தமான தண்ணீர்' : 'පිරිසිදු ජලය'),
+                amount: `${Math.round(50 * organicAcres)} L`,
+                note: language === 'en' ? 'Final diluted spraying volume' : (language === 'ta' ? 'கரைசலுக்கு' : 'සාරය පෙරා ගැනීම සඳහා')
+              }
+            ],
+            steps: language === 'en' ? [
+              "Pound dried neem seeds or fresh mature neem leaves into a coarse paste.",
+              "Tie into a porous cloth pouch and immerse in 10L water overnight (12-14 hrs). Squeeze pouch repeatedly until dark extract is obtained.",
+              "Add dissolved bar soap, dilute with water to make 50L per acre, filter through fine mesh, and spray covering both leaf sides immediately."
+            ] : (language === 'ta' ? [
+              "வேப்பங்கொட்டைகளை இடித்து அல்லது வேப்பிலையை அரைத்து விழுதாக்கவும்.",
+              "ஒரு துணியில் கட்டி 10 லிட்டர் தண்ணீரில் இரவு முழுவதும் ஊற வைக்கவும். காலையில் சாற்றை நன்கு பிழிந்து எடுக்கவும்.",
+              "சோப்பு கரைசலை சேர்த்து 50 லிட்டராக நீர்த்து, வடிகட்டி மாலையில் பயிர்களின் இலைகளின் இருபுறமும் படும்படி தெளிக்கவும்."
+            ] : [
+              "වියළි කොහොඹ ඇට කුඩු කරගන්න, හෝ නැවුම් කොහොඹ කොළ වංගෙඩියක දමා හොඳින් කොටා ගන්න.",
+              "සිහින් රෙදි කඩක පොට්ටනියක් බැඳ වතුර ලීටර් 10 ක බහා මුළු රැයක් (පැය 12ක්) පෙඟෙන්න තබන්න. උදෑසන පොට්ටනිය කිහිපවරක් මිරිකා සාරය වතුරට ගන්න.",
+              "දියකරගත් සබන් වතුර එකතු කර සම්පූර්ණ පරිමාව ලීටර් 50 දක්වා ජලයෙන් වැඩි කර, පෙරාගෙන සවසට කොළවල දෙපැත්තම තෙමෙන සේ ස්ප්‍රේ කරන්න."
+            ])
+          },
+
+          chili_garlic: {
+            id: 'chili_garlic',
+            title: t.recChiliTitle,
+            subtitle: t.recChiliDesc,
+            icon: '🌶️',
+            baseVolumePerAcre: 50,
+            savingsPerAcre: 10500,
+            dilutionPerTank: language === 'en'
+              ? "Add ~1.5L of strained stock solution into each 16L knapsack tank and fill remaining 14.5L with clean water (1:10 dilution)."
+              : (language === 'ta'
+                  ? "16L தெளிப்பான் தொட்டிக்கு 1.5L சாற்றை ஊற்றி மீதமுள்ள 14.5L தண்ணீரை நிரப்பவும்."
+                  : "ලීටර් 16 ටැංකියකට පෙරාගත් සාරය ලීටර් 1.5 ක් දමා ඉතිරි ලීටර් 14.5 ට වතුර පුරවන්න (1:10 අනුපාතය)."),
+            bestTiming: language === 'en'
+              ? "Early morning or late afternoon. Spray immediately upon first sign of thrips, mites, or leaf curling."
+              : (language === 'ta'
+                  ? "அதிகாலை அல்லது மாலையில் தெளிக்கவும். இலை சுருட்டை மற்றும் பூச்சிகள் தென்பட்டவுடன் தெளிக்கவும்."
+                  : "උදෑසන හෝ සවස. කොළ කොඩවීම, මයිටාවන්, කීඩෑවන් හෝ පැළ මැක්කන් දුටු වහාම යොදන්න."),
+            ingredients: [
+              { 
+                name: language === 'en' ? 'Hot Green Chillies (Nai Miris)' : (language === 'ta' ? 'காரமான பச்சை மிளகாய்' : 'සැර අමු මිරිස් / නයි මිරිස්'),
+                amount: `${Math.round(500 * organicAcres)} g`,
+                note: language === 'en' ? 'Capsaicin repels chewing and sucking insects' : (language === 'ta' ? 'பூச்சிகளை விரட்டும் காரத்தன்மை' : 'කැප්සයිසින් සාරය කෘමීන්ගේ ස්නායු පද්ධතියට බලපායි')
+              },
+              { 
+                name: language === 'en' ? 'Garlic Cloves' : (language === 'ta' ? 'பூண்டு' : 'සුදුලූනු බික්'),
+                amount: `${Math.round(500 * organicAcres)} g`,
+                note: language === 'en' ? 'Allicin compound acts as strong natural deterrent' : (language === 'ta' ? 'பூஞ்சை மற்றும் பூச்சி எதிர்ப்பு' : 'ඇලිසින් සල්ෆර් සංයෝගය කෘමි හා දිලීර නාශකයකි')
+              },
+              { 
+                name: language === 'en' ? 'Fresh Ginger' : (language === 'ta' ? 'இஞ்சி' : 'අමු ඉඟුරු'),
+                amount: `${Math.round(500 * organicAcres)} g`,
+                note: language === 'en' ? 'Strong pungent aroma repellent' : (language === 'ta' ? 'பூச்சி விரட்டி' : 'ජින්ජරෝල් තද විකර්ෂකයකි')
+              },
+              { 
+                name: language === 'en' ? 'Mild Soap Solution (Sticker)' : (language === 'ta' ? 'சோப் கரைசல்' : 'කැට සබන් දියරය'),
+                amount: `${Math.round(50 * organicAcres)} g`,
+                note: language === 'en' ? 'Ensures adhesion to foliage' : (language === 'ta' ? 'இலைகளில் ஒட்டுவதற்கு' : 'කොළ මත රැඳී සිටීම තහවුරු කරයි')
+              },
+              { 
+                name: language === 'en' ? 'Clean Water' : (language === 'ta' ? 'சுத்தமான தண்ணீர்' : 'පිරිසිදු ජලය'),
+                amount: `${Math.round(50 * organicAcres)} L`,
+                note: language === 'en' ? 'Final spray volume' : (language === 'ta' ? 'மொத்த தெளிக்கும் நீர்' : 'තනුක කර ස්ප්‍රේ කිරීමට අවශ්‍ය මුළු ජලය')
+              }
+            ],
+            steps: language === 'en' ? [
+              "Grind green chillies, garlic, and ginger separately with a little water into fine pastes.",
+              "Mix all three pastes together in 5L of water and let steep for 24 hours.",
+              "Strain carefully through a fine muslin cloth, add dissolved soap, and dilute into 50L total spray solution. Spray onto affected crops."
+            ] : (language === 'ta' ? [
+              "பச்சை மிளகாய், பூண்டு, இஞ்சி ஆகியவற்றை சிறிதளவு தண்ணீர் சேர்த்து தனித்தனியாக அரைக்கவும்.",
+              "மூன்றையும் 5 லிட்டர் நீரில் ஒன்றாக கலந்து 24 மணி நேரம் ஊற வைக்கவும்.",
+              "மெல்லிய துணியில் வடிகட்டி, சோப்பு கரைசலை சேர்த்து 50 லிட்டராக நீர்த்து தெளிக்கவும்."
+            ] : [
+              "අමු මිරිස්, සුදුලූනු සහ ඉඟුරු වතුර ස්වල්පයක් දමා වෙන වෙනම හොඳින් අඹරාගන්න හෝ බ්ලෙන්ඩර් කරන්න.",
+              "මෙම පල්ප තුනම එකට එකතු කර වතුර ලීටර් 5 ක දියකර පැය 24 ක් වසා තබන්න.",
+              "සියුම් රෙදි කඩකින් පෙරා, සබන් දියරය කලවම් කර, මුළු පරිමාව ලීටර් 50 දක්වා ජලයෙන් තනුක කර වගාවට ස්ප්‍රේ කරන්න."
+            ])
+          }
+        };
+
+        const currentRecipe = organicRecipesData[recipeKey] || organicRecipesData.jeevamrutha;
+        const totalSprayLiters = Math.round(currentRecipe.baseVolumePerAcre * organicAcres);
+        const totalTanks = Math.ceil(totalSprayLiters / 16);
+        const totalSavings = Math.round(currentRecipe.savingsPerAcre * organicAcres);
+
+        return (
+          <div className="clean-card p-6 sm:p-8 space-y-6">
+            <div className="border-b border-slate-100 pb-4">
+              <h2 className="text-xl font-black text-slate-900">
+                {t.organicHeader}
+              </h2>
+              <p className="text-sm text-slate-600 mt-1">
+                {t.organicHelp}
+              </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
-              <h3 className="text-base font-black text-slate-900">
-                {recipeKey === 'jeevamrutha' ? (language === 'en' ? 'Jeevamrutha 200L Preparation Formulation:' : 'ජීවාමෘත ලීටර් 200 ක් සාදාගන්නා ක්‍රමය:') : (recipeKey === 'panchagavya' ? 'Panchagavya Preparation:' : 'Neem Leaf Extract Spray:')}
-              </h3>
+            {/* STEP 1: Land Area Extent Selector */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <label className="text-sm font-black text-emerald-950 flex items-center space-x-2">
+                  <span>📍</span>
+                  <span>{t.organicLandSizeLabel}</span>
+                </label>
+                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
+                  {organicAcres} {language === 'en' ? 'Acres' : (language === 'ta' ? 'ஏக்கர்' : 'අක්කර')}
+                </span>
+              </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-500 block">{language === 'en' ? 'Cow Dung:' : 'නැවුම් ගොම:'}</span>
-                  <strong className="text-sm font-black text-emerald-800">10 kg</strong>
+              {/* Quick Select Chips */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {[
+                  { val: 0.25, label: language === 'en' ? '1/4 Acre' : (language === 'ta' ? '1/4 ஏக்கர்' : 'අක්කර 1/4 (පාත්ති)') },
+                  { val: 0.5, label: language === 'en' ? '1/2 Acre' : (language === 'ta' ? '1/2 ஏக்கர்' : 'අක්කර 1/2') },
+                  { val: 1.0, label: language === 'en' ? '1 Acre' : (language === 'ta' ? '1 ஏக்கர்' : 'අක්කර 1') },
+                  { val: 2.0, label: language === 'en' ? '2 Acres' : (language === 'ta' ? '2 ஏக்கர்' : 'අක්කර 2') },
+                  { val: 5.0, label: language === 'en' ? '5 Acres' : (language === 'ta' ? '5 ஏக்கர்' : 'අක්කර 5') }
+                ].map(chip => (
+                  <button
+                    key={chip.val}
+                    type="button"
+                    onClick={() => setOrganicAcres(chip.val)}
+                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all ${
+                      organicAcres === chip.val
+                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:border-emerald-400'
+                    }`}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Custom Number Input */}
+              <div className="flex items-center space-x-3 pt-1">
+                <span className="text-xs font-bold text-slate-600">
+                  {language === 'en' ? 'Or enter custom acres:' : (language === 'ta' ? 'அல்லது ஏக்கரை உள்ளிடவும்:' : 'හෝ අක්කර ගණන ඇතුළත් කරන්න:')}
+                </span>
+                <div className="relative w-32">
+                  <input
+                    type="number"
+                    min="0.1"
+                    max="50"
+                    step="0.25"
+                    value={organicAcres}
+                    onChange={(e) => setOrganicAcres(Math.max(0.1, parseFloat(e.target.value) || 0.1))}
+                    className="w-full py-1.5 px-3 rounded-xl border border-slate-300 bg-white font-black text-slate-900 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                  <span className="absolute right-3 top-2 text-[11px] font-bold text-slate-400 pointer-events-none">
+                    {language === 'en' ? 'ac' : 'අක්.'}
+                  </span>
                 </div>
-                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-500 block">{language === 'en' ? 'Cow Urine:' : 'ගව මුත්‍රා:'}</span>
-                  <strong className="text-sm font-black text-emerald-800">10 Liters</strong>
+              </div>
+            </div>
+
+            {/* STEP 2: Recipe Selector */}
+            <div className="space-y-2">
+              <label className="text-sm font-black text-slate-900 block">
+                {t.organicSelectRecipeLabel}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                {[
+                  { id: 'jeevamrutha', label: t.recJeevTitle, desc: t.recJeevDesc, icon: '🌱' },
+                  { id: 'panchagavya', label: t.recPanchTitle, desc: t.recPanchDesc, icon: '🥛' },
+                  { id: 'neem', label: t.recNeemTitle, desc: t.recNeemDesc, icon: '🌿' },
+                  { id: 'chili_garlic', label: t.recChiliTitle, desc: t.recChiliDesc, icon: '🌶️' }
+                ].map(r => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => setRecipeKey(r.id)}
+                    className={`p-3.5 rounded-xl border-2 text-left transition-all ${
+                      recipeKey === r.id
+                        ? 'border-emerald-600 bg-emerald-50 text-slate-900 shadow-sm'
+                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xl">{r.icon}</span>
+                      <span className="font-black text-sm block">{r.label}</span>
+                    </div>
+                    <span className="text-[11px] text-slate-500 mt-1 block leading-tight">{r.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* STEP 3: KPI Metrics Banner for Selected Land Extent */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Metric 1: Total Liquid */}
+              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-slate-900">
+                <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wide block">
+                  {t.totalLiquidNeeded}
+                </span>
+                <div className="text-2xl font-black text-blue-950 mt-1">
+                  {totalSprayLiters} <span className="text-sm font-bold text-slate-600">Liters (ලීටර්)</span>
                 </div>
-                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-500 block">{language === 'en' ? 'Jaggery / Molasses:' : 'හකුරු / පැණි:'}</span>
-                  <strong className="text-sm font-black text-emerald-800">2 kg</strong>
+                <span className="text-[11px] text-blue-600 font-medium block mt-1">
+                  {language === 'en' ? `Scaled for ${organicAcres} acres` : `අක්කර ${organicAcres} ක බිම් ප්‍රමාණය සඳහා`}
+                </span>
+              </div>
+
+              {/* Metric 2: Knapsack Sprayer Tanks */}
+              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-slate-900">
+                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wide block">
+                  {t.sprayerTanksNeeded}
+                </span>
+                <div className="text-2xl font-black text-amber-950 mt-1">
+                  {totalTanks} <span className="text-sm font-bold text-slate-600">{language === 'en' ? 'Tanks' : 'ටැංකි'}</span>
                 </div>
-                <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-500 block">{language === 'en' ? 'Pulse Flour:' : 'කඩල/මුං පිටි:'}</span>
-                  <strong className="text-sm font-black text-emerald-800">2 kg</strong>
+                <span className="text-[11px] text-amber-700 font-medium block mt-1">
+                  {language === 'en' ? 'Standard 16-liter knapsack sprayers' : 'ලීටර් 16 සම්මත ස්ප්‍රේ ටැංකි'}
+                </span>
+              </div>
+
+              {/* Metric 3: Estimated Rupee Savings */}
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-slate-900">
+                <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wide block">
+                  {language === 'en' ? 'Estimated Rupee Savings' : 'ඉතිරි වන මුදල (රුපියල්)'}
+                </span>
+                <div className="text-2xl font-black text-emerald-950 mt-1">
+                  Rs. {totalSavings.toLocaleString()}
+                </div>
+                <span className="text-[11px] text-emerald-700 font-medium block mt-1">
+                  {language === 'en' ? 'Saved vs synthetic chemicals' : 'රසායනික පොහොර/බෙහෙත් ඉතිරිය'}
+                </span>
+              </div>
+            </div>
+
+            {/* STEP 4: Dynamic Scaled Ingredients Cards */}
+            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-200 pb-3">
+                <h3 className="text-base font-black text-slate-900 flex items-center space-x-2">
+                  <span>{currentRecipe.icon}</span>
+                  <span>{currentRecipe.title}</span>
+                  <span className="text-xs font-bold text-slate-500 font-normal">
+                    — {t.scaledForLand} ({organicAcres} {language === 'en' ? 'Acres' : 'අක්කර'})
+                  </span>
+                </h3>
+                <span className="text-[11px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full inline-block">
+                  🌿 100% {language === 'en' ? 'Chemical Free' : 'ස්වභාවිකයි'}
+                </span>
+              </div>
+
+              {/* Ingredients Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {currentRecipe.ingredients.map((ing, idx) => (
+                  <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs">
+                    <div>
+                      <span className="text-xs font-bold text-slate-700 block leading-tight">{ing.name}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">{ing.note}</span>
+                    </div>
+                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">
+                        {language === 'en' ? 'Quantity' : 'ප්‍රමාණය'}:
+                      </span>
+                      <strong className="text-sm sm:text-base font-black text-emerald-800">
+                        {ing.amount}
+                      </strong>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Tank Mixing & Application Timing Rules */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="p-3.5 bg-blue-50/80 rounded-xl border border-blue-200 text-xs text-blue-950 space-y-1">
+                  <strong className="font-black text-blue-900 flex items-center space-x-1.5">
+                    <span>🎯</span>
+                    <span>{t.tankDilutionRule}</span>
+                  </strong>
+                  <p className="leading-relaxed font-medium text-slate-700">{currentRecipe.dilutionPerTank}</p>
+                </div>
+
+                <div className="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-1">
+                  <strong className="font-black text-amber-900 flex items-center space-x-1.5">
+                    <span>⏰</span>
+                    <span>{t.bestTimingRule}</span>
+                  </strong>
+                  <p className="leading-relaxed font-medium text-slate-700">{currentRecipe.bestTiming}</p>
                 </div>
               </div>
 
-              <div className="text-xs text-slate-700 space-y-1 pt-2">
-                <p>1. {language === 'en' ? 'Mix fresh cow dung, urine, jaggery, flour, and a handful of fertile virgin soil into 200L water.' : 'බැරලයකට වතුර දමා ඉහත ද්‍රව්‍ය සහ තුඹසකින් ගත් පස් අතලොස්සක් දමා කලවම් කරන්න.'}</p>
-                <p>2. {language === 'en' ? 'Keep in shade for 5-7 days and stir clockwise twice daily with a wooden stick.' : 'දින 5-7 ක් සෙවණේ තබා දිනකට දෙවරක් ලී දණ්ඩකින් දක්ෂිණාවර්තව කලවම් කරන්න.'}</p>
-                <p>3. {language === 'en' ? 'Dilute 10:1 with water and apply 200L per acre during moist soil conditions.' : 'වතුර 10:1 අනුපාතයට තනුක කර අක්කරයකට ලීටර් 200 ක් ගොයමට යොදන්න.'}</p>
+              {/* Preparation Steps */}
+              <div className="pt-2 border-t border-slate-200 space-y-2">
+                <span className="text-xs font-black text-slate-900 uppercase tracking-wide block">
+                  {language === 'en' ? 'Preparation & Fermentation Process:' : (language === 'ta' ? 'செய்முறை மற்றும் நொதித்தல் விதம்:' : 'සාදාගන්නා සහ පැසවීමේ පියවර:')}
+                </span>
+                <div className="space-y-1.5">
+                  {currentRecipe.steps.map((step, sIdx) => (
+                    <div key={sIdx} className="flex items-start space-x-2 text-xs text-slate-700 font-medium">
+                      <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-900 font-black text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        {sIdx + 1}
+                      </span>
+                      <p className="leading-relaxed">{step}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* DOA Certification Badge */}
+              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs flex items-center space-x-3">
+                <span className="text-2xl">🌱</span>
+                <div>
+                  <strong className="font-black block">
+                    {language === 'en' ? 'Sri Lanka DOA GAP Certified Organic Protocol' : 'ශ්‍රී ලංකා කෘෂිකර්ම දෙපාර්තමේන්තුවේ GAP කාබනික නිර්දේශය'}
+                  </strong>
+                  <span className="text-[11px] text-emerald-800 font-medium">
+                    {language === 'en' 
+                      ? 'Complies with SLS 1672 organic agriculture standards. Eliminates soil toxicity and restores native earthworms.' 
+                      : 'මෙම කාබනික වට්ටෝරු භාවිතයෙන් රසායනික විස ඉවත් වී පසේ ක්ෂුද්‍රජීවීන් හා ගැඩවිලුන් නැවත බෝවේ. පාංශු සාරවත්භාවය දිගුකාලීනව රැකෙයි.'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ================================================================ */}
       {/* FEATURE 7: 3D GRANULE INSPECTION */}

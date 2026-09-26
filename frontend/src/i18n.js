@@ -137,13 +137,23 @@ export const translations = {
 
     // Organic
     organicHeader: "සාම්ප්‍රදායික කාබනික දියර පොහොර හා කෘමි විකර්ෂක වට්ටෝරු",
-    organicHelp: "පස සරු කරන ක්ෂුද්‍රජීවී ජීවාමෘත සහ ස්වභාවික කොහොඹ කෘමි විකර්ෂකය නිවසේදීම සාදාගනිමු.",
+    organicHelp: "ඔබගේ වගාවේ ප්‍රමාණයට (අක්කර ගණනට) අවශ්‍ය නියම අමුද්‍රව්‍ය ප්‍රමාණ සහ ස්ප්‍රේ ටැංකි ගණන මෙතැනින් ගණනය කරගන්න.",
+    organicLandSizeLabel: "1. ඔබේ වගාවේ ප්‍රමාණය (ඉඩම):",
+    organicSelectRecipeLabel: "2. අවශ්‍ය කාබනික වට්ටෝරුව තෝරන්න:",
     recJeevTitle: "ජීවාමෘත (Jeevamrutha)",
     recJeevDesc: "පසේ ක්ෂුද්‍රජීවීන් පණ ගැන්වීමට",
     recPanchTitle: "පංචගව්‍ය (Panchagavya)",
     recPanchDesc: "බෝග වර්ධනය වේගවත් කිරීමට",
     recNeemTitle: "කොහොඹ සාරය (Neem Spray)",
     recNeemDesc: "ස්වභාවික කෘමි විකර්ෂකය",
+    recChiliTitle: "මිරිස්-සුදුලූනු සාරය",
+    recChiliDesc: "දළඹුවන් හා මයිටාවන් පලවා හැරීමට",
+    scaledForLand: "ඔබගේ ඉඩමට අවශ්‍ය නියම ප්‍රමාණයන්:",
+    totalLiquidNeeded: "අවශ්‍ය සම්පූර්ණ දියර ප්‍රමාණය",
+    sprayerTanksNeeded: "ලීටර් 16 ස්ප්‍රේ ටැංකි ගණන",
+    tankDilutionRule: "ස්ප්‍රේ ටැංකියකට දමන නියම මාත්‍රාව:",
+    bestTimingRule: "යෙදිය යුතු සුදුසුම වේලාව:",
+    organicSavingsBanner: "රසායනික පොහොර හා කෘමිනාශක වෙනුවට භාවිතයෙන් ඉතිරි වන මුදල:",
 
     // 3D Granule
     granule3DHeader: "3D පොහොර කැටය ත්‍රිමාණව නිරීක්ෂණය කරමු (360° Visualizer)",
@@ -301,13 +311,23 @@ export const translations = {
 
     // Organic
     organicHeader: "Traditional Organic Liquid Biofertilizers & Pest Repellents",
-    organicHelp: "Prepare microbial Jeevamrutha and natural Neem pest repellent easily at home.",
+    organicHelp: "Calculate exact ingredients and sprayer tanks required specifically scaled for your cultivation land extent.",
+    organicLandSizeLabel: "1. Select Cultivation Area:",
+    organicSelectRecipeLabel: "2. Select Organic Recipe:",
     recJeevTitle: "Jeevamrutha",
     recJeevDesc: "To activate soil microbiology",
     recPanchTitle: "Panchagavya",
     recPanchDesc: "To boost vigorous crop growth",
     recNeemTitle: "Neem Leaf Spray",
     recNeemDesc: "Natural botanical pest repellent",
+    recChiliTitle: "Chilli-Garlic-Ginger Spray",
+    recChiliDesc: "To deter leaf caterpillars & mites",
+    scaledForLand: "Exact Quantities for Your Land Extent:",
+    totalLiquidNeeded: "Total Liquid Required",
+    sprayerTanksNeeded: "16L Sprayer Tanks Needed",
+    tankDilutionRule: "Knapsack Sprayer Mixing Ratio:",
+    bestTimingRule: "Best Time to Apply:",
+    organicSavingsBanner: "Estimated financial savings by replacing synthetic chemicals:",
 
     // 3D Granule
     granule3DHeader: "Inspect 3D Fertilizer Granule (360° Visualizer)",
@@ -465,13 +485,23 @@ export const translations = {
 
     // Organic
     organicHeader: "பாரம்பரிய இயற்கை திரவ உரங்கள் மற்றும் பூச்சி விரட்டிகள்",
-    organicHelp: "மண்ணை வளப்படுத்தும் ஜீவாமிருதம் மற்றும் இயற்கை வேப்பிலை பூச்சி விரட்டியை வீட்டிலேயே தயாரிப்போம்.",
+    organicHelp: "உங்கள் சாகுபடி நிலத்தின் அளவுக்கு ஏற்ப தேவையான சரியான இயற்கை உர அளவுகள் மற்றும் தெளிப்பான் தொட்டிகளை கணக்கிடுங்கள்.",
+    organicLandSizeLabel: "1. சாகுபடி நிலத்தின் பரப்பளவு:",
+    organicSelectRecipeLabel: "2. தேவையான இயற்கை உர செய்முறையை தேர்வு செய்க:",
     recJeevTitle: "ஜீவாமிருதம் (Jeevamrutha)",
     recJeevDesc: "மண் நுண்ணுயிரிகளை பெருக்க",
     recPanchTitle: "பஞ்சகவ்யா (Panchagavya)",
     recPanchDesc: "பயிர் வளர்ச்சியை விரைவுபடுத்த",
     recNeemTitle: "வேப்பிலை கரைசல் (Neem Spray)",
     recNeemDesc: "இயற்கை பூச்சி விரட்டி",
+    recChiliTitle: "மிளகாய்-பூண்டு கரைசல்",
+    recChiliDesc: "புழுக்கள் மற்றும் பூச்சிகளை விரட்ட",
+    scaledForLand: "உங்கள் நிலத்திற்கு தேவையான துல்லியமான அளவுகள்:",
+    totalLiquidNeeded: "தேவையான மொத்த திரவ அளவு",
+    sprayerTanksNeeded: "தேவையான 16L தெளிப்பான் தொட்டிகள்",
+    tankDilutionRule: "ஸ்ப்ரே டேங்கில் கலக்கும் சரியான அளவு:",
+    bestTimingRule: "தெளிக்க வேண்டிய சிறந்த நேரம்:",
+    organicSavingsBanner: "ரசாயன உரங்களை தவிர்ப்பதன் மூலம் சேமிக்கப்படும் தொகை:",
 
     // 3D Granule
     granule3DHeader: "3D உர மணி ஆய்வு (360° Visualizer)",
