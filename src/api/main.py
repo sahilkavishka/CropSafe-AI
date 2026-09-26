@@ -52,6 +52,7 @@ from src.models.agrarian_micro_credit_scorecard import AgrarianMicroCreditScorec
 from src.models.whistleblower_incident_engine import WhistleblowerIncidentEngine
 from src.models.asc_subsidy_ewallet_ledger import ASCSubsidyEWalletLedger
 from src.models.soil_salinity_reclamation_engine import SoilSalinityReclamationEngine
+from src.models.fertilizer_price_forecaster import price_forecasting_engine
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -212,6 +213,15 @@ class SalinityReclamationRequest(BaseModel):
     esp_pct: float = 12.0
     ec_water_ds_m: float = 0.8
     land_area_ha: float = 1.0
+
+class PriceForecastRequest(BaseModel):
+    fertilizer_type: str = "urea"
+    forecast_horizon_months: int = 3
+    usd_lkr_rate: float = 305.0
+    global_energy_change_pct: float = 8.5
+    freight_surcharge_pct: float = 12.0
+    season: str = "Maha"
+
 
 # -------------------------------------------------------------
 # Endpoints
@@ -495,6 +505,38 @@ def classify_sample(req: LabClassifyRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Inference error: {str(e)}")
 
+@app.post("/api/market/price-forecast")
+def forecast_fertilizer_price(req: PriceForecastRequest):
+    """Predicts commodity retail prices, trends, and optimal purchasing windows based on macro econometric drivers."""
+    return price_forecasting_engine.forecast_price(
+        fertilizer_type=req.fertilizer_type,
+        forecast_horizon_months=req.forecast_horizon_months,
+        usd_lkr_rate=req.usd_lkr_rate,
+        global_energy_change_pct=req.global_energy_change_pct,
+        freight_surcharge_pct=req.freight_surcharge_pct,
+        season=req.season
+    )
+
+@app.get("/api/market/price-forecast")
+def get_fertilizer_price_forecast(
+    fertilizer_type: str = "urea",
+    forecast_horizon_months: int = 3,
+    usd_lkr_rate: float = 305.0,
+    global_energy_change_pct: float = 8.5,
+    freight_surcharge_pct: float = 12.0,
+    season: str = "Maha"
+):
+    """GET endpoint for easy query param access to fertilizer price forecasting."""
+    return price_forecasting_engine.forecast_price(
+        fertilizer_type=fertilizer_type,
+        forecast_horizon_months=forecast_horizon_months,
+        usd_lkr_rate=usd_lkr_rate,
+        global_energy_change_pct=global_energy_change_pct,
+        freight_surcharge_pct=freight_surcharge_pct,
+        season=season
+    )
+
 if __name__ == "__main__":
+
     import uvicorn
     uvicorn.run("src.api.main:app", host="0.0.0.0", port=8000, reload=True)
