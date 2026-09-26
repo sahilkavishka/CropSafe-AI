@@ -51,6 +51,7 @@ from src.models.fertilizer_carbon_lca_footprint import FertilizerCarbonLCAFootpr
 from src.models.agrarian_micro_credit_scorecard import AgrarianMicroCreditScorecardEngine
 from src.models.whistleblower_incident_engine import WhistleblowerIncidentEngine
 from src.models.asc_subsidy_ewallet_ledger import ASCSubsidyEWalletLedger
+from src.models.soil_salinity_reclamation_engine import SoilSalinityReclamationEngine
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -93,6 +94,7 @@ carbon_engine = FertilizerCarbonLCAFootprintEngine()
 credit_scorecard = AgrarianMicroCreditScorecardEngine()
 whistleblower_engine = WhistleblowerIncidentEngine()
 subsidy_ledger = ASCSubsidyEWalletLedger()
+salinity_engine = SoilSalinityReclamationEngine()
 
 # Load Machine Learning Model Zoo
 try:
@@ -202,6 +204,13 @@ class CarbonFootprintRequest(BaseModel):
     mop_kg: float = 50.0
     compost_kg: float = 250.0
     biochar_kg: float = 50.0
+    land_area_ha: float = 1.0
+
+class SalinityReclamationRequest(BaseModel):
+    ec_e_ds_m: float = 6.5
+    soil_ph: float = 7.8
+    esp_pct: float = 12.0
+    ec_water_ds_m: float = 0.8
     land_area_ha: float = 1.0
 
 # -------------------------------------------------------------
@@ -428,6 +437,22 @@ def assess_ellangawa_eutrophication(tank_name: str = "Thirappane Maha Wewa", has
         has_kattakaduwa_buffer=has_buffer,
         has_perahana_reed_bed=has_buffer
     )
+
+@app.post("/api/soil/salinity")
+def reclaim_saline_soil(req: SalinityReclamationRequest):
+    """Diagnoses soil salinity/sodicity and calculates leaching water and gypsum requirement."""
+    return salinity_engine.diagnose_and_prescribe(
+        ec_e_ds_m=req.ec_e_ds_m,
+        soil_ph=req.soil_ph,
+        esp_pct=req.esp_pct,
+        ec_water_ds_m=req.ec_water_ds_m,
+        land_area_ha=req.land_area_ha
+    )
+
+@app.get("/api/farmer/pest-repellent")
+def get_botanical_repellent(pest_key: str = "Paddy_Brown_Planthopper", water_liters: float = 100.0):
+    """Calculates indigenous herbal repellent and organic spray recipe scaled to target water volume."""
+    return botanical_pest_engine.formulate_botanical_spray(target_pest_key=pest_key, target_water_liters=water_liters)
 
 @app.post("/api/lab/classify")
 def classify_sample(req: LabClassifyRequest):
