@@ -9,24 +9,39 @@ import {
   Rotate3d, 
   Radio, 
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  Truck,
+  Layers,
+  Gauge,
+  Power,
+  RefreshCw,
+  Clock,
+  ArrowRight
 } from 'lucide-react';
 import ThreeWarehouseCanvas from './ThreeWarehouseCanvas';
 
 const API_BASE = "http://localhost:8000";
 
 export default function WarehouseMode({ language = 'si' }) {
+  // Trilingual Text Helper
+  const tr = (si, en, ta) => {
+    if (language === 'ta') return ta || en || si;
+    if (language === 'en') return en || si;
+    return si;
+  };
+
   const [humidity, setHumidity] = useState(68.5);
   const [temp, setTemp] = useState(29.8);
   const [fanActive, setFanActive] = useState(false);
+  const [ammoniaPpm, setAmmoniaPpm] = useState(6.2);
   const [telemetry, setTelemetry] = useState(null);
+  const [selectedBay, setSelectedBay] = useState('bay_a');
 
   useEffect(() => {
     fetch(`${API_BASE}/api/inspector/warehouse-twin`)
       .then(res => res.json())
       .then(data => setTelemetry(data))
       .catch(() => {
-        // Fallback default
         setTelemetry({
           warehouse_id: "WH-AP-01",
           name: "Anuradhapura Central Depot",
@@ -37,169 +52,339 @@ export default function WarehouseMode({ language = 'si' }) {
       });
   }, []);
 
+  // When ventilation fan is toggled, simulate active environmental regulation
+  const toggleFan = () => {
+    const nextState = !fanActive;
+    setFanActive(nextState);
+    if (nextState) {
+      // Fan on: reduce humidity and temperature
+      setHumidity(prev => Math.max(58.0, Number((prev - 9.5).toFixed(1))));
+      setTemp(prev => Math.max(25.5, Number((prev - 2.8).toFixed(1))));
+      setAmmoniaPpm(3.8);
+    } else {
+      // Fan off: restore realistic ambient
+      setHumidity(74.2);
+      setTemp(30.4);
+      setAmmoniaPpm(8.4);
+    }
+  };
+
+  // Urea Critical Relative Humidity threshold is 72.5%
   const isCakingRisk = humidity > 72.5;
 
+  const bays = {
+    bay_a: {
+      name: tr("Bay A: ප්‍රිල්ඩ් යූරියා (Prilled Urea)", "Bay A: Prilled Urea", "பகுதி A: யூரியா"),
+      commodity: "Urea 46% N",
+      stock_mt: 2500,
+      bags: "50,000 Bags",
+      crh: "72.5% CRH",
+      pallets: "15cm Treated Hardwood Dunnage",
+      status: isCakingRisk ? "CAKING_RISK" : "OPTIMAL_STORAGE",
+      color: "emerald"
+    },
+    bay_b: {
+      name: tr("Bay B: ත්‍රිත්ව සුපර් පොස්පේට් (TSP)", "Bay B: Triple Superphosphate (TSP)", "பகுதி B: TSP பாஸ்பேட்"),
+      commodity: "TSP 46% P2O5",
+      stock_mt: 1500,
+      bags: "30,000 Bags",
+      crh: "84.0% CRH",
+      pallets: "Waterproof Plastic Skid Pallets",
+      status: "OPTIMAL_STORAGE",
+      color: "cyan"
+    },
+    bay_c: {
+      name: tr("Bay C: මියුරියේට් ඔෆ් පොටෑෂ් (MOP)", "Bay C: Muriate of Potash (MOP)", "பகுதி C: MOP பொட்டாஷ்"),
+      commodity: "MOP 60% K2O",
+      stock_mt: 1000,
+      bags: "20,000 Bags",
+      crh: "92.0% CRH",
+      pallets: "Heavy-Duty Dunnage Stacks",
+      status: "OPTIMAL_STORAGE",
+      color: "rose"
+    }
+  };
+
+  const currentBayData = bays[selectedBay];
+
   return (
-    <div className="space-y-8 pb-16">
+    <div className="space-y-6 pb-20 animate-fadeIn">
       
-      {/* Banner */}
-      <div className="rounded-3xl bg-gradient-to-br from-slate-900 via-amber-950/40 to-slate-900 border border-amber-800/40 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold mb-3">
-              <Building2 className="w-4 h-4 text-amber-400" />
-              <span>IoT Smart Warehouse Digital Twin</span>
+      {/* Header Banner - Clean Logistics Theme */}
+      <div className="clean-card p-6 sm:p-8 bg-gradient-to-r from-amber-50 via-white to-orange-50 border-amber-200">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center space-x-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-amber-700 text-white flex items-center justify-center text-3xl shadow-md flex-shrink-0">
+              🏬
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-              3D ඩිජිටල් නිවුන් <span className="text-amber-400">ස්මාර්ට් ගබඩා පාලනය</span>
-            </h1>
-            <p className="mt-1 text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
-              අනුරාධපුර ප්‍රධාන පොහොර ගබඩාවේ 3D ආකෘතිය, තත්‍ය කාලීන උෂ්ණත්ව/ආර්ද්‍රතා සංවේදක සහ යූරියා කැට ගල්වීම (Caking) වළක්වන ස්වයංක්‍රීය වාතාශ්‍ර පද්ධතිය.
-            </p>
+            <div>
+              <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-black mb-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <span>{tr("තත්‍ය කාලීන IoT සංවේදක සක්‍රියයි", "Live IoT Sensor Stream Active", "நேரலை IoT சென்சார்கள்")}</span>
+              </div>
+              <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+                {tr("3D ඩිජිටල් නිවුන් ස්මාර්ට් ගබඩා පාලන මැදිරිය", "3D Digital Twin Smart Warehouse Management", "3D டிஜிட்டல் களஞ்சிய மேலாண்மை")}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
+                {tr("අනුරාධපුර ප්‍රධාන මධ්‍යම පොහොර ගබඩාවේ 5,000 MT තොගය, උෂ්ණත්ව/ආර්ද්‍රතා සංවේදක සහ යූරියා කැට ගල්වීම (Caking) වළක්වන ස්වයංක්‍රීය වාතාශ්‍ර පද්ධතිය.", "Anuradhapura Central 5,000 MT Depot with real-time temperature, RH caking prevention, and automated ventilation.", "அனுராதபுரம் 5,000 MT உரக் களஞ்சியத்தின் வெப்பநிலை மற்றும் உரம் கட்டிபிடிப்பதை தடுக்கும் அமைப்பு.")}
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="flex h-3 w-3 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            <span className="px-3.5 py-1.5 rounded-xl bg-white border border-amber-300 text-amber-950 font-black text-xs shadow-xs">
+              📍 WH-AP-01 • 5,000 MT
             </span>
-            <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">IoT Telemetry Live</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Main Grid: 3D Isometric View + IoT Controls */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         
-        {/* Left 3D Isometric Warehouse View */}
-        <div className="lg:col-span-7 bg-slate-900/90 rounded-3xl border border-slate-800 p-6 shadow-2xl backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <Rotate3d className="w-5 h-5 text-amber-400" />
-              <h3 className="text-white font-bold text-sm sm:text-base">Isometric 3D ගබඩා බිම් සැලැස්ම</h3>
-            </div>
-            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300">
-              ධාරිතාව: 5,000 MT
-            </span>
-          </div>
-
-          <div className="w-full h-80 sm:h-96 bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden relative shadow-inner">
-            <ThreeWarehouseCanvas currentRH={humidity} />
-            
-            {/* Overlay warning if caking */}
-            <div className={`absolute top-3 left-3 right-3 p-3 rounded-xl border flex items-center justify-between backdrop-blur-md ${
-              isCakingRisk 
-                ? 'bg-rose-950/80 border-rose-500/60 text-rose-200' 
-                : 'bg-emerald-950/80 border-emerald-500/60 text-emerald-200'
-            }`}>
-              <div className="flex items-center space-x-2 text-xs font-bold">
-                {isCakingRisk ? <AlertTriangle className="w-4 h-4 text-rose-400" /> : <ShieldCheck className="w-4 h-4 text-emerald-400" />}
-                <span>
-                  {isCakingRisk 
-                    ? 'අන්තරායයි: සාපේක්ෂ ආර්ද්‍රතාවය 72.5% ඉක්මවා ඇත! යූරියා ගල්වීමේ (Caking) අවදානම!' 
-                    : 'ආරක්ෂිතයි: ආර්ද්‍රතාවය ප්‍රශස්ත මට්ටමේ පවතී.'}
+        {/* Left: 3D Warehouse Canvas */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="clean-card p-6 border-slate-200 bg-white">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-2">
+                <Rotate3d className="w-5 h-5 text-amber-700" />
+                <h3 className="text-slate-900 font-black text-sm sm:text-base">
+                  {tr("Isometric 3D ගබඩා බිම් සැලැස්ම (Digital Twin)", "Isometric 3D Warehouse Digital Twin", "3D களஞ்சிய மாதிரி")}
+                </h3>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+                  fanActive ? 'bg-cyan-100 text-cyan-800 animate-pulse' : 'bg-slate-100 text-slate-600'
+                }`}>
+                  {fanActive ? tr("🌀 වාතාශ්‍රය සක්‍රියයි", "🌀 Exhaust Active", "🌀 காற்றோட்டம் தயார்") : tr("වාතාශ්‍රය අක්‍රියයි", "Ventilation Idle", "இயங்கவில்லை")}
                 </span>
               </div>
-              <span className="text-[11px] font-black">{humidity}% RH</span>
+            </div>
+
+            <div className="w-full h-80 sm:h-96 bg-slate-950 rounded-2xl overflow-hidden relative shadow-inner">
+              <ThreeWarehouseCanvas currentRH={humidity} />
+              
+              {/* Overlay warning if caking */}
+              <div className={`absolute top-3 left-3 right-3 p-3 rounded-xl border flex items-center justify-between backdrop-blur-md transition-all ${
+                isCakingRisk 
+                  ? 'bg-rose-950/85 border-rose-500 text-rose-200 shadow-lg' 
+                  : 'bg-emerald-950/85 border-emerald-500 text-emerald-200'
+              }`}>
+                <div className="flex items-center space-x-2 text-xs font-black">
+                  {isCakingRisk ? <AlertTriangle className="w-4 h-4 text-rose-400 animate-bounce" /> : <ShieldCheck className="w-4 h-4 text-emerald-400" />}
+                  <span>
+                    {isCakingRisk 
+                      ? tr("අන්තරායයි: සාපේක්ෂ ආර්ද්‍රතාවය 72.5% ඉක්මවා ඇත! යූරියා ගල්වීමේ (Caking) අවදානම!", "DANGER: RH exceeds 72.5% CRH! Urea caking into solid rock risk!", "ஆபத்து: ஈரப்பதம் 72.5% தாண்டியுள்ளது! உரம் கட்டியாகும் அபாயம்!")
+                      : tr("ආරක්ෂිතයි: සාපේක්ෂ ආර්ද්‍රතාවය ප්‍රශස්ත තත්ත්වයේ පවතී.", "SAFE: Relative humidity within optimal safe boundary.", "பாதுகாப்பானது: உகந்த ஈரப்பதம் நிலவுகிறது.")
+                    }
+                  </span>
+                </div>
+                {isCakingRisk && !fanActive && (
+                  <button
+                    type="button"
+                    onClick={toggleFan}
+                    className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-black text-xs transition-all flex items-center space-x-1"
+                  >
+                    <Power className="w-3 h-3" />
+                    <span>{tr("විසඳුම: පංකා දමන්න", "Turn Fan ON", "காற்றாடி போடு")}</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="absolute bottom-2 left-3 right-3 text-center text-[10px] text-white/70 bg-black/40 backdrop-blur-xs py-1 rounded-lg">
+                {tr("ගබඩාව ත්‍රිමාණව කරකවන්න (Drag to view all 3 bays)", "Drag to inspect storage bays in 360°", "360° சுழற்றி பார்க்கவும்")}
+              </div>
+            </div>
+
+            {/* Bay Selector Pills */}
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {Object.keys(bays).map(bKey => (
+                <button
+                  key={bKey}
+                  type="button"
+                  onClick={() => setSelectedBay(bKey)}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    selectedBay === bKey
+                      ? 'bg-amber-50 border-amber-600 text-amber-950 ring-2 ring-amber-500/20 shadow-xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <strong className="text-xs font-black block">{bays[bKey].name.split(':')[0]}</strong>
+                  <span className="text-[11px] text-slate-500 block">{bays[bKey].commodity}</span>
+                </button>
+              ))}
+            </div>
+
+          </div>
+
+          {/* Selected Bay Inspection Details */}
+          <div className="clean-card p-5 border-slate-200 bg-white space-y-3">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 flex items-center space-x-1.5">
+              <Layers className="w-4 h-4 text-amber-700" />
+              <span>{tr("තෝරාගත් අංශයේ තත්ත්ව වාර්තාව", "Bay Integrity & Pallet Specification", "பிரிவு தணிக்கை அறிக்கை")}</span>
+            </h4>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-slate-500 block font-bold">වත්මන් තොගය:</span>
+                <strong className="text-slate-900 font-black text-sm">{currentBayData.stock_mt} MT</strong>
+                <span className="text-[10px] text-slate-400 block">{currentBayData.bags}</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-slate-500 block font-bold">විවේචනාත්මක CRH:</span>
+                <strong className="text-slate-900 font-black text-sm">{currentBayData.crh}</strong>
+                <span className="text-[10px] text-slate-400 block">Atmospheric Limit</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-slate-500 block font-bold">පැලට් ආරක්ෂාව:</span>
+                <strong className="text-slate-900 font-black text-xs">{currentBayData.pallets}</strong>
+                <span className="text-[10px] text-emerald-700 font-bold block">✓ තෙතමන ආරක්ෂිතයි</span>
+              </div>
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                <span className="text-slate-500 block font-bold">ගබඩා තත්ත්වය:</span>
+                <strong className={`text-xs font-black block ${isCakingRisk && selectedBay === 'bay_a' ? 'text-rose-700' : 'text-emerald-700'}`}>
+                  {isCakingRisk && selectedBay === 'bay_a' ? '⚠️ ගල්වීමේ අවදානමක්' : '✓ ප්‍රශස්ත සුරක්ෂිතයි'}
+                </strong>
+                <span className="text-[10px] text-slate-400 block">SLSI Storage Audit</span>
+              </div>
             </div>
           </div>
 
-          <p className="text-xs text-slate-400 mt-4 leading-relaxed">
-            * ත්‍රිමාණ සිතියමේ කහ සහ රතු පැහැයෙන් දැක්වෙන්නේ ආර්ද්‍රතාවය අධික වීමෙන් යූරියා මිටි එකට ඇලී ගල්වීමේ අවදානමක් ඇති තොග තට්ටු (Pallet Stacks) වේ.
-          </p>
         </div>
 
-        {/* Right IoT Telemetry & Controls */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Right: Real-Time Climate IoT Control Center */}
+        <div className="lg:col-span-5 space-y-4">
           
-          <div className="bg-slate-900/90 rounded-3xl border border-slate-800 p-6 shadow-2xl backdrop-blur-xl space-y-5">
-            <div className="flex items-center space-x-2">
-              <Radio className="w-5 h-5 text-amber-400" />
-              <h3 className="text-white font-bold text-base">සජීවී IoT සංවේදක පුවරුව</h3>
+          <div className="clean-card p-6 border-slate-200 bg-white space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <Gauge className="w-5 h-5 text-amber-700" />
+                <h3 className="text-base font-black text-slate-900">
+                  {tr("IoT සංවේදක හා දේශගුණ පාලකය", "Climate & IoT Control Dashboard", "IoT காலநிலை கட்டுப்பாடு")}
+                </h3>
+              </div>
+              <span className="text-xs text-slate-400 font-mono">LIVE 10s</span>
             </div>
 
-            {/* Relative Humidity Slider */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
-                  <Droplets className="w-4 h-4 text-cyan-400" />
-                  <span>සාපේක්ෂ ආර්ද්‍රතාවය (Relative Humidity):</span>
+            {/* Relative Humidity Control Slider */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-1.5 text-xs font-black text-slate-800">
+                  <Droplets className="w-4 h-4 text-blue-600" />
+                  <span>{tr("සාපේක්ෂ ආර්ද්‍රතාවය (Relative Humidity)", "Relative Humidity (RH %)", "ஈரப்பதம்")}</span>
+                </div>
+                <span className={`text-base font-black ${isCakingRisk ? 'text-rose-700' : 'text-emerald-700'}`}>
+                  {humidity}%
                 </span>
-                <span className={`text-sm font-black ${humidity > 72.5 ? 'text-rose-400' : 'text-cyan-400'}`}>{humidity}%</span>
               </div>
               <input
                 type="range"
-                min="40"
+                min="45"
                 max="95"
                 step="0.5"
                 value={humidity}
                 onChange={(e) => setHumidity(parseFloat(e.target.value))}
-                className="w-full accent-cyan-400"
+                className="w-full accent-blue-600 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-                <span>40% (වියළි)</span>
-                <span className="text-amber-400 font-bold">72.5% (Urea CRH Limit)</span>
-                <span>95% (තෙත්)</span>
+              <div className="flex justify-between text-[11px] font-semibold text-slate-500">
+                <span>ප්‍රශස්ත: &lt; 70.0%</span>
+                <span className="text-rose-600 font-bold">යූරියා CRH සීමාව: 72.5%</span>
               </div>
             </div>
 
-            {/* Temperature Slider */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-xs font-bold text-slate-300 flex items-center space-x-1.5">
-                  <Thermometer className="w-4 h-4 text-amber-400" />
-                  <span>ගබඩා උෂ්ණත්වය (Temperature):</span>
+            {/* Temperature Control Slider */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-1.5 text-xs font-black text-slate-800">
+                  <Thermometer className="w-4 h-4 text-amber-600" />
+                  <span>{tr("ගබඩා උෂ්ණත්වය (Temperature)", "Ambient Temperature (°C)", "வெப்பநிலை")}</span>
+                </div>
+                <span className="text-base font-black text-amber-900">
+                  {temp} °C
                 </span>
-                <span className="text-sm font-black text-amber-400">{temp}°C</span>
               </div>
               <input
                 type="range"
-                min="18"
+                min="20"
                 max="42"
                 step="0.2"
                 value={temp}
                 onChange={(e) => setTemp(parseFloat(e.target.value))}
-                className="w-full accent-amber-400"
+                className="w-full accent-amber-600 cursor-pointer"
               />
-              <div className="flex justify-between text-[10px] text-slate-500 mt-1">
-                <span>18°C (සිසිල්)</span>
-                <span>28°C (ප්‍රශස්ත)</span>
-                <span>42°C (අධික රස්නය)</span>
+              <div className="flex justify-between text-[11px] font-semibold text-slate-500">
+                <span>ප්‍රශස්ත: 24 - 28 °C</span>
+                <span>උපරිම අවසර ලත්: 32 °C</span>
               </div>
             </div>
 
-            {/* HVAC Fan Actuator Toggle */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex justify-between items-center">
-              <div>
-                <span className="text-xs font-bold text-white block">ස්වයංක්‍රීය වාතාශ්‍ර පංකා (Dehumidifier Fans):</span>
-                <span className="text-[11px] text-slate-400">ආර්ද්‍රතාවය අඩු කිරීම සඳහා බලපංකා ක්‍රියාත්මක කිරීම</span>
+            {/* Ammonia & Air Safety */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Wind className="w-4 h-4 text-slate-600" />
+                <div>
+                  <span className="text-xs font-black text-slate-800 block">Ammonia (NH3) Gas Level</span>
+                  <span className="text-[11px] text-slate-500">ගබඩා වායු විමෝචන සංවේදකය</span>
+                </div>
               </div>
+              <div className="text-right">
+                <span className={`text-sm font-black ${ammoniaPpm > 15 ? 'text-rose-700' : 'text-emerald-700'}`}>
+                  {ammoniaPpm} ppm
+                </span>
+                <span className="text-[10px] text-slate-400 block">සීමාව: &lt; 25 ppm</span>
+              </div>
+            </div>
+
+            {/* Industrial Ventilation Fan Power Switch */}
+            <div className="pt-2">
               <button
                 type="button"
-                onClick={() => {
-                  setFanActive(!fanActive);
-                  if (!fanActive) {
-                    setHumidity(Math.max(55, humidity - 12));
-                  }
-                }}
-                className={`flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
-                  fanActive 
-                    ? 'bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/30' 
-                    : 'bg-slate-900 text-slate-400 border-slate-700'
+                onClick={toggleFan}
+                className={`w-full py-3.5 px-4 rounded-2xl font-black text-sm shadow-md transition-all flex items-center justify-center space-x-2 ${
+                  fanActive
+                    ? 'bg-rose-700 hover:bg-rose-800 text-white ring-2 ring-rose-400'
+                    : 'bg-emerald-700 hover:bg-emerald-800 text-white'
                 }`}
               >
-                <Wind className={`w-4 h-4 ${fanActive ? 'animate-spin' : ''}`} />
-                <span>{fanActive ? 'ක්‍රියාත්මකයි' : 'අක්‍රියයි'}</span>
+                <Power className="w-4 h-4" />
+                <span>
+                  {fanActive
+                    ? tr("කර්මාන්තශාලා වාතාශ්‍ර පංකා අක්‍රිය කරන්න (Stop Fans)", "Turn Exhaust Fans OFF", "காற்றாடியை நிறுத்து")
+                    : tr("🌀 ස්වයංක්‍රීය වාතාශ්‍ර පංකා ක්‍රියාත්මක කරන්න (Start Fans)", "Activate Automatic Exhaust Fans", "காற்றாடியை இயக்கு")}
+                </span>
               </button>
             </div>
 
-            {/* Microclimate Advice */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-300 space-y-2">
-              <strong className="text-amber-300 block">ගබඩා පාලන උපදේශය:</strong>
-              <p className="leading-relaxed text-slate-400">
-                යූරියා වල Critical Relative Humidity (CRH) අගය 30°C දී 72.5% කි. ආර්ද්‍රතාවය මීට වඩා වැඩි වුවහොත් කැට වාතයෙන් ජලය උරාගෙන දියවී එකට ඇලී තද ගල් බවට පත්වේ. පංකා ක්‍රියාත්මක කර ආර්ද්‍රතාවය 65% ට අඩුවෙන් පවත්වා ගන්න.
-              </p>
+          </div>
+
+          {/* Emergency Dispatch & Loading Bay Gate Activity */}
+          <div className="clean-card p-5 border-slate-200 bg-white space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Truck className="w-4 h-4 text-slate-700" />
+                <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider">
+                  {tr("අද දින පොහොර බෙදාහැරීමේ ලොරි රථ පිටත්වීම්", "Today's Dispatch & Gate Outflows", "இன்றைய லாரி விநியோகம்")}
+                </h4>
+              </div>
+              <span className="text-[11px] text-emerald-700 font-bold">Gate Active</span>
             </div>
 
+            <div className="divide-y divide-slate-100 text-xs">
+              {[
+                { reg: "WP-ND-8491", to: "තඹුත්තේගම ගොවිජන සේවා (ASC)", qty: "20 MT (400 Bags)", status: "බෙදාහරින ලදී (Dispatched)" },
+                { reg: "NC-GA-3104", to: "මැදවච්චිය කෘෂි මධ්‍යස්ථානය", qty: "15 MT (300 Bags)", status: "පැටවීම් සිදුකෙරේ (Loading)" },
+                { reg: "CP-SP-9022", to: "කැකිරාව සහන ගබඩාව", qty: "25 MT (500 Bags)", status: "අනුමැතිය අපේක්ෂිතයි" }
+              ].map((truck, idx) => (
+                <div key={idx} className="py-2 flex items-center justify-between">
+                  <div>
+                    <strong className="text-slate-900 block font-mono">{truck.reg}</strong>
+                    <span className="text-[11px] text-slate-500">{truck.to} • {truck.qty}</span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 text-slate-700">
+                    {truck.status}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
 
         </div>
