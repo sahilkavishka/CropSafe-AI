@@ -71,6 +71,11 @@ export default function FarmerMode({ language = 'si' }) {
   // Active Action Tab inside Farmer Mode ('home' by default for clean portal view)
   const [activeTab, setActiveTab] = useState('home');
 
+  // --- Home Dashboard Animated Stats & Tips ---
+  const [animatedStats, setAnimatedStats] = useState({ farmers: 0, frauds: 0, money: 0, districts: 0 });
+  const [tipIndex, setTipIndex] = useState(0);
+  const [recentTools, setRecentTools] = useState([]);
+
   // --- 1. DIY Screening State ---
   const [test1Water, setTest1Water] = useState('fast_cold'); // 'fast_cold' vs 'slow_sediment'
   const [test2Vinegar, setTest2Vinegar] = useState('no_bubbles'); // 'no_bubbles' vs 'has_bubbles'
@@ -323,6 +328,58 @@ export default function FarmerMode({ language = 'si' }) {
   useEffect(() => {
     if (activeTab === 'priceforecast' && !forecastResult) {
       handleFetchPriceForecast();
+    }
+
+    // Save recent tools logic
+    if (activeTab !== 'home') {
+      setRecentTools(prev => {
+        const newTools = [activeTab, ...prev.filter(t => t !== activeTab)].slice(0, 3);
+        try { localStorage.setItem('recentFarmerTools', JSON.stringify(newTools)); } catch(e) {}
+        return newTools;
+      });
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    // Load recent tools on mount
+    try {
+      const stored = localStorage.getItem('recentFarmerTools');
+      if (stored) setRecentTools(JSON.parse(stored));
+    } catch(e) {}
+  }, []);
+
+  useEffect(() => {
+    // Rotating tips
+    const tipInterval = setInterval(() => {
+      setTipIndex(prev => (prev + 1) % 3);
+    }, 4000);
+    return () => clearInterval(tipInterval);
+  }, []);
+
+  useEffect(() => {
+    // Animate stats on load
+    if (activeTab === 'home') {
+      let start = 0;
+      const duration = 2000;
+      const incrementTime = 50;
+      const steps = duration / incrementTime;
+      const targets = { farmers: 847293, frauds: 12847, money: 284, districts: 25 };
+      
+      const timer = setInterval(() => {
+        start += 1;
+        if (start > steps) {
+          clearInterval(timer);
+          setAnimatedStats(targets);
+        } else {
+          setAnimatedStats({
+            farmers: Math.floor((targets.farmers / steps) * start),
+            frauds: Math.floor((targets.frauds / steps) * start),
+            money: Math.floor((targets.money / steps) * start),
+            districts: Math.floor((targets.districts / steps) * start)
+          });
+        }
+      }, incrementTime);
+      return () => clearInterval(timer);
     }
   }, [activeTab]);
 
@@ -1274,67 +1331,82 @@ export default function FarmerMode({ language = 'si' }) {
       {activeTab === 'home' && (
         <div className="space-y-6 animate-fadeIn">
           
-          {/* Friendly Welcome Card (Clean Facebook Style) */}
-          <div className={`clean-card p-6 bg-gradient-to-r from-emerald-50 via-white to-green-50 ${sunlightMode ? 'border-2 border-emerald-900 shadow-md' : 'border-emerald-200'}`}>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center space-x-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-3xl shadow-md flex-shrink-0">
-                  🌾
-                </div>
+          {/* --- Animated Statistics Bar --- */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: tr("සක්‍රිය ගොවීන්", "Active Farmers", "செயலில் உள்ள விவசாயிகள்"), val: animatedStats.farmers.toLocaleString(), icon: "🌾", color: "text-emerald-700", bg: "bg-emerald-50" },
+              { label: tr("ව්‍යාජ අල්ලා ගැනීම්", "Frauds Caught", "பிடிபட்ட மோசடிகள்"), val: animatedStats.frauds.toLocaleString(), icon: "🧪", color: "text-rose-700", bg: "bg-rose-50" },
+              { label: tr("ඉතිරි කළ මුදල", "Money Saved", "சேமித்த பணம்"), val: `රු.${animatedStats.money}M`, icon: "💰", color: "text-amber-700", bg: "bg-amber-50" },
+              { label: tr("දිස්ත්‍රික්ක", "Districts", "மாவட்டங்கள்"), val: animatedStats.districts, icon: "🛡️", color: "text-blue-700", bg: "bg-blue-50" }
+            ].map((stat, idx) => (
+              <div key={idx} className={`p-4 rounded-2xl ${stat.bg} border border-white shadow-sm flex items-center space-x-3 transition-all hover:scale-105`}>
+                <div className="text-2xl">{stat.icon}</div>
                 <div>
-                  <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-900 text-xs font-black mb-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>{tr("ගොවි සහන සේවය සක්‍රියයි", "Farmer Support Active", "விவசாய சேவை தயார்")}</span>
-                  </div>
-                  <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-                    {t.welcomeGreeting}
-                  </h1>
-                  <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                    {t.welcomeSub}
-                  </p>
+                  <div className={`text-xl font-black ${stat.color}`}>{stat.val}</div>
+                  <div className="text-[10px] font-bold text-slate-600 uppercase tracking-wide">{stat.label}</div>
                 </div>
               </div>
-
-              {/* Quick Weather pill */}
-              <div 
-                onClick={() => setActiveTab('weather')}
-                className="p-3 bg-amber-50 hover:bg-amber-100 rounded-2xl border border-amber-200 flex items-center space-x-3 text-xs cursor-pointer transition-all flex-shrink-0"
-              >
-                <span className="text-2xl">☀️</span>
-                <div>
-                  <strong className="text-amber-950 font-black block">{tr("අද කාලගුණය යහපත්", "Favorable Weather", "வானிலை நன்று")}</strong>
-                  <span className="text-amber-800 text-[11px]">{tr("තද වැසි නැත • පොහොර යෙදීමට සුදුසුයි", "No rain leaching risk", "உரம் இடலாம்")}</span>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Government MRP & Daily Agri-Tip Live Banner */}
-          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-emerald-500/10 to-teal-500/10 border border-emerald-200/80 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
-            <div className="flex items-center space-x-2 flex-wrap">
-              <span className="px-2 py-0.5 rounded-md bg-amber-600 text-white font-black text-[10px] uppercase tracking-wider flex items-center space-x-1">
-                <span>🏷️</span>
-                <span>{tr("රජයේ පාලන මිල", "Govt MRP", "அரசு நிர்ணய விலை")}</span>
-              </span>
-              <div className="flex items-center flex-wrap gap-2 text-slate-800 font-bold">
-                <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs">
-                  🌾 <span className="font-black text-emerald-800">යූරියා (50kg):</span> රු. 2,500
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs">
-                  🪨 <span className="font-black text-slate-800">TSP (50kg):</span> රු. 4,500
-                </span>
-                <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs">
-                  🔴 <span className="font-black text-rose-800">MOP (50kg):</span> රු. 4,500
-                </span>
+          {/* Friendly Welcome Card with Hero Banner and Rotating Tips */}
+          <div className={`clean-card overflow-hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-800 text-white shadow-lg ${sunlightMode ? 'border-2 border-slate-900' : 'border-0'}`}>
+            <div className="p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+              <div className="flex items-center space-x-4 w-full">
+                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center text-4xl shadow-inner flex-shrink-0 border border-white/30">
+                  👨🏽‍🌾
+                </div>
+                <div className="flex-1">
+                  <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-emerald-50 text-xs font-black mb-2 backdrop-blur-sm">
+                    <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+                    <span>{tr("ගොවි සහන සේවය සක්‍රියයි", "Farmer Support Active", "விவசாய சேவை தயார்")}</span>
+                  </div>
+                  <h1 className="text-2xl sm:text-3xl font-black text-white drop-shadow-md">
+                    {t.welcomeGreeting}
+                  </h1>
+                  
+                  {/* Rotating Crop Tips */}
+                  <div className="mt-3 bg-black/20 p-3 rounded-xl border border-white/10 flex items-start space-x-3 backdrop-blur-sm transition-all h-[60px] overflow-hidden">
+                    <span className="text-amber-300 text-lg flex-shrink-0 animate-bounce">💡</span>
+                    <p className="text-sm font-medium text-emerald-50 leading-snug animate-fadeIn w-full">
+                      {[
+                        tr("යූරියා ජලයට දමූ විට තත්පර 60 න් දියවිය යුතුයි.", "Urea must dissolve in water within 60 seconds.", "யூரியா 60 வினாடிகளில் நீரில் கரைய வேண்டும்."),
+                        tr("කන්නයේ පළමු දිනවල TSP සහ MOP මූලික පොහොර ලෙස යෙදිය යුතුයි.", "Apply TSP and MOP as basal fertilizers in early days.", "ஆரம்ப நாட்களில் TSP மற்றும் MOP இடவும்."),
+                        tr("පිදුරු දිරවීමෙන් MOP 50% ක් ඉතිරි කරගත හැක.", "Save 50% MOP by decomposing paddy straw.", "வைக்கோலை மட்கச் செய்வதன் மூலம் 50% MOP சேமிக்கலாம்.")
+                      ][tipIndex]}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Quick Status Bar within Hero */}
+              <div className="flex flex-col gap-2 w-full md:w-auto">
+                <div 
+                  onClick={() => setActiveTab('weather')}
+                  className="p-3 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl flex items-center space-x-3 text-xs cursor-pointer transition-all backdrop-blur-sm"
+                >
+                  <span className="text-2xl">🌤️</span>
+                  <div>
+                    <strong className="text-white font-black block">{tr("අද කාලගුණය යහපත්", "Favorable Weather", "வானிலை நன்று")}</strong>
+                    <span className="text-emerald-100 text-[11px]">{tr("පොහොර යෙදීමට සුදුසුයි", "Good for fertilizing", "உரம் இடலாம்")}</span>
+                  </div>
+                </div>
+                {recentTools.length > 0 && (
+                  <div className="p-2 bg-black/20 border border-white/10 rounded-xl flex items-center space-x-2 backdrop-blur-sm overflow-hidden">
+                     <span className="text-[10px] text-emerald-200 uppercase font-bold pl-1">{tr("මෑතකදී:", "Recent:", "சமீபத்திய:")}</span>
+                     {recentTools.map(rt => {
+                       const t = allTiles.find(x => x.id === rt);
+                       return t ? (
+                         <button key={rt} onClick={() => setActiveTab(rt)} className="w-8 h-8 flex items-center justify-center bg-white/10 rounded-lg hover:bg-white/20 transition-all text-sm" title={t.label}>{t.icon}</button>
+                       ) : null;
+                     })}
+                  </div>
+                )}
               </div>
             </div>
-
-            <div className="flex items-center space-x-2 text-slate-600 font-medium">
-              <span className="text-amber-600 font-black flex-shrink-0">💡 {tr("දවසේ උපදෙස:", "Daily Tip:", "இன்றைய குறிப்பு:")}</span>
-              <span className="line-clamp-1">
-                {tr("යූරියා යෙදූ පසු අවම දින 3ක් කුඹුරේ ජලය නොකඩවා රඳවා තබන්න.", "Retain shallow water for 3 days after applying Urea to prevent nitrogen loss.", "யூரியா இட்ட பின் 3 நாட்களுக்கு நீரை தேக்கி வைக்கவும்.")}
-              </span>
-            </div>
+            {/* Background decorative elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-emerald-900/20 rounded-full blur-2xl translate-y-1/4 -translate-x-1/4 pointer-events-none"></div>
           </div>
 
           {/* Elderly Farmer Accessibility & Field Sunlight Toolbar */}
@@ -1472,21 +1544,22 @@ export default function FarmerMode({ language = 'si' }) {
             </div>
           </div>
 
-          {/* The Big 3 Core Farmer Hero Cards */}
+          {/* The Big 4 Core Farmer Hero Cards */}
           <div className="space-y-3">
             <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center space-x-2">
               <span>⭐</span>
-              <span>{tr("ගොවීන් නිතරම භාවිතා කරන ප්‍රධාන සේවාවන් 3", "Top 3 Most Used Farmer Services", "முக்கிய 3 விவசாய சேவைகள்")}</span>
+              <span>{tr("ගොවීන් නිතරම භාවිතා කරන ප්‍රධාන සේවාවන් 4", "Top 4 Most Used Farmer Services", "முக்கிய 4 விவசாய சேவைகள்")}</span>
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Card 1: Screening */}
               <div 
                 onClick={() => setActiveTab('screening')}
-                className="p-6 rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1 flex flex-col justify-between"
+                className="group relative p-6 rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2 overflow-hidden flex flex-col justify-between"
               >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner">
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-sm z-0"></div>
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner group-hover:scale-110 transition-transform">
                     🔍
                   </div>
                   <span className="text-[10px] uppercase font-black text-emerald-200 tracking-wider block mb-1">
@@ -1496,22 +1569,23 @@ export default function FarmerMode({ language = 'si' }) {
                     {tr("පොහොර බාලද බලමු", "Check Fake Fertilizer", "போலி உர பரிசோதனை")}
                   </h3>
                   <p className="text-xs text-emerald-100 leading-relaxed font-medium">
-                    {tr("වතුර වීදුරුවකින් හෝ ගින්දරෙන් ගෙදරදීම ගල් කුඩු සහ බාල පොහොර තත්පර 30න් අල්ලමු.", "Test fertilizer at home with water or heat to detect sand, marble stone and chalk adulterants.", "நீர் மற்றும் வெப்பம் மூலம் போலி உரங்களை வீட்டிலேயே கண்டறியுங்கள்.")}
+                    {tr("වතුර වීදුරුවකින් හෝ ගින්දරෙන් ගෙදරදීම ගල් කුඩු සහ බාල පොහොර තත්පර 30න් අල්ලමු.", "Test fertilizer at home with water or heat to detect adulterants.", "நீர் மற்றும் வெப்பம் மூலம் போலி உரங்களை வீட்டிலேயே கண்டறியுங்கள்.")}
                   </p>
                 </div>
-                <div className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
+                <div className="relative z-10 mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
                   <span>{tr("පරීක්ෂා කරමු", "Start Test Now", "தொடங்கவும்")}</span>
-                  <span className="text-lg">➔</span>
+                  <span className="text-lg group-hover:translate-x-2 transition-transform">➔</span>
                 </div>
               </div>
 
               {/* Card 2: Dosage */}
               <div 
                 onClick={() => setActiveTab('dosage')}
-                className="p-6 rounded-3xl bg-gradient-to-br from-amber-600 to-orange-700 text-white shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1 flex flex-col justify-between"
+                className="group relative p-6 rounded-3xl bg-gradient-to-br from-amber-600 to-orange-700 text-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2 overflow-hidden flex flex-col justify-between"
               >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner">
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-sm z-0"></div>
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner group-hover:scale-110 transition-transform">
                     ⚖️
                   </div>
                   <span className="text-[10px] uppercase font-black text-amber-200 tracking-wider block mb-1">
@@ -1521,22 +1595,23 @@ export default function FarmerMode({ language = 'si' }) {
                     {tr("අවශ්‍ය පොහොර මිටි ගණන", "How Many Bags Needed?", "தேவையான மூட்டைகள்")}
                   </h3>
                   <p className="text-xs text-amber-100 leading-relaxed font-medium">
-                    {tr("අක්කර ගණන දුන් සැනින් අවශ්‍ය යූරියා, TSP, MOP මිටි ගණන සහ ඉතිරි වන මුදල ගණනය කරමු.", "Calculate exact 50kg bags of Urea, TSP, and MOP for your land extent to avoid fertilizer waste.", "நிலத்தின் அளவுக்கு ஏற்ப உர மூட்டைகளையும் பண சேமிப்பையும் அறியவும்.")}
+                    {tr("අක්කර ගණන දුන් සැනින් අවශ්‍ය යූරියා, TSP, MOP මිටි ගණන සහ ඉතිරි වන මුදල ගණනය කරමු.", "Calculate exact 50kg bags of Urea, TSP, and MOP for your land extent.", "நிலத்தின் அளவுக்கு ஏற்ப உர மூட்டைகளையும் பண சேமிப்பையும் அறியவும்.")}
                   </p>
                 </div>
-                <div className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
+                <div className="relative z-10 mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
                   <span>{tr("මිටි ගණන හදමු", "Calculate Bags", "கணக்கிட")}</span>
-                  <span className="text-lg">➔</span>
+                  <span className="text-lg group-hover:translate-x-2 transition-transform">➔</span>
                 </div>
               </div>
 
               {/* Card 3: Leaf Doctor */}
               <div 
                 onClick={() => setActiveTab('leafdoctor')}
-                className="p-6 rounded-3xl bg-gradient-to-br from-green-700 to-emerald-900 text-white shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1 flex flex-col justify-between"
+                className="group relative p-6 rounded-3xl bg-gradient-to-br from-green-700 to-emerald-900 text-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2 overflow-hidden flex flex-col justify-between"
               >
-                <div>
-                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner">
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-sm z-0"></div>
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner group-hover:scale-110 transition-transform">
                     🌿
                   </div>
                   <span className="text-[10px] uppercase font-black text-green-200 tracking-wider block mb-1">
@@ -1546,12 +1621,38 @@ export default function FarmerMode({ language = 'si' }) {
                     {tr("ගොයමේ කොළ කහවෙලාද?", "Are Leaves Yellowing?", "இலை மஞ்சள் அடைந்துள்ளதா?")}
                   </h3>
                   <p className="text-xs text-green-100 leading-relaxed font-medium">
-                    {tr("කොළ කහවීම, දම් පැහැවීම 3D වී ගස කරකවා බලා කුඹුරේ ලෙඩේට හරියන බෙහෙත තෝරාගනිමු.", "Inspect 3D rice paddy plant in 360° to match leaf discoloration with Nitrogen, Potassium, or Zinc deficiency.", "3D நெல் பயிரை பார்த்து இலை நோய்க்கான காரணத்தை கண்டறியுங்கள்.")}
+                    {tr("කොළ කහවීම, දම් පැහැවීම 3D වී ගස කරකවා බලා කුඹුරේ ලෙඩේට හරියන බෙහෙත තෝරාගනිමු.", "Inspect 3D rice plant in 360° to match leaf discoloration with deficiencies.", "3D நெல் பயிரை பார்த்து இலை நோய்க்கான காரணத்தை கண்டறியுங்கள்.")}
                   </p>
                 </div>
-                <div className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
+                <div className="relative z-10 mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
                   <span>{tr("3D පරීක්ෂාව", "Open 3D Doctor", "3D திறக்க")}</span>
-                  <span className="text-lg">➔</span>
+                  <span className="text-lg group-hover:translate-x-2 transition-transform">➔</span>
+                </div>
+              </div>
+              
+              {/* Card 4: Subsidies */}
+              <div 
+                onClick={() => setActiveTab('subsidy')}
+                className="group relative p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-800 text-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:-translate-y-2 overflow-hidden flex flex-col justify-between"
+              >
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-sm z-0"></div>
+                <div className="relative z-10">
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner group-hover:scale-110 transition-transform">
+                    💳
+                  </div>
+                  <span className="text-[10px] uppercase font-black text-blue-200 tracking-wider block mb-1">
+                    {tr("පොහොර සහනාධාර ඊ-පසුම්බිය", "Govt Subsidy E-Wallet", "அரசு மானிய மின்-பை")}
+                  </span>
+                  <h3 className="text-xl font-black mb-2">
+                    {tr("රු. 15,000 කෝටාව", "Rs. 15,000 Quota", "ரூ. 15,000 மானியம்")}
+                  </h3>
+                  <p className="text-xs text-blue-100 leading-relaxed font-medium">
+                    {tr("ජාතික හැඳුනුම්පත මගින් ඔබේ රජයේ පොහොර සහනාධාර මුදල හා කාබන් දීමනාව පරීක්ෂා කරන්න.", "Check your government fertilizer subsidy e-wallet balance using your NIC.", "உங்கள் அரசு உர மானிய இருப்புத் தொகையை சரிபார்க்கவும்.")}
+                  </p>
+                </div>
+                <div className="relative z-10 mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
+                  <span>{tr("ඊ-පසුම්බිය බලන්න", "Check Wallet", "மின்-பை பார்க்க")}</span>
+                  <span className="text-lg group-hover:translate-x-2 transition-transform">➔</span>
                 </div>
               </div>
             </div>
@@ -1592,12 +1693,14 @@ export default function FarmerMode({ language = 'si' }) {
               {/* Category Filter Pills */}
               <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
                 {[
-                  { id: 'all', label: tr('සියල්ල', 'All', 'அனைத்தும்'), count: 18 },
-                  { id: 'quality', label: tr('තත්ත්ව පරීක්ෂාව', 'Quality', 'தரம்'), count: 4 },
-                  { id: 'dosage', label: tr('පොහොර ගණනය', 'Dosage', 'அளவு'), count: 5 },
-                  { id: 'soilcrop', label: tr('පස් හා බෝග', 'Soil & Crops', 'மண் & பயிர்'), count: 6 },
-                  { id: 'weatherorganic', label: tr('කාලගුණ/කාබනික', 'Weather/Organic', 'வானிலை/இயற்கை'), count: 3 }
-                ].map(cat => (
+                  { id: 'all', label: tr('සියල්ල', 'All', 'அனைத்தும்') },
+                  { id: 'quality', label: tr('තත්ත්ව පරීක්ෂාව', 'Quality', 'தரம்') },
+                  { id: 'dosage', label: tr('පොහොර ගණනය', 'Dosage', 'அளவு') },
+                  { id: 'soilcrop', label: tr('පස් හා බෝග', 'Soil & Crops', 'மண் & பயிர்') },
+                  { id: 'weatherorganic', label: tr('කාලගුණ/කාබනික', 'Weather/Organic', 'வானிலை/இயற்கை') }
+                ].map(cat => {
+                  const count = cat.id === 'all' ? allTiles.length : allTiles.filter(t => t.cat === cat.id).length;
+                  return (
                   <button
                     key={cat.id}
                     type="button"
