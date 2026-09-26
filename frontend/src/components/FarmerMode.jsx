@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   FlaskConical, 
@@ -23,14 +23,17 @@ import {
   Sun
 } from 'lucide-react';
 import ThreeGranuleCanvas from './ThreeGranuleCanvas';
+import { translations } from '../i18n';
 
 const API_BASE = "http://localhost:8000";
 
 export default function FarmerMode({ language = 'si' }) {
+  const t = translations[language] || translations.si;
+
   // Active Action Tab inside Farmer Mode
   const [activeTab, setActiveTab] = useState('screening');
 
-  // --- 1. DIY Screening State (Zero confusing sliders!) ---
+  // --- 1. DIY Screening State ---
   const [test1Water, setTest1Water] = useState('fast_cold'); // 'fast_cold' vs 'slow_sediment'
   const [test2Vinegar, setTest2Vinegar] = useState('no_bubbles'); // 'no_bubbles' vs 'has_bubbles'
   const [test3Heat, setTest3Heat] = useState('white_melt'); // 'white_melt', 'clay_char', 'rock_ash'
@@ -46,7 +49,6 @@ export default function FarmerMode({ language = 'si' }) {
   // --- 3. Tank Mix State ---
   const [tankFertilizers, setTankFertilizers] = useState(['urea', 'mop']);
   const [tankResult, setTankResult] = useState(null);
-  const [tankLoading, setTankLoading] = useState(false);
 
   // --- 4. Leaf Doctor State ---
   const [selectedSymptom, setSelectedSymptom] = useState('yellow_lower');
@@ -55,24 +57,31 @@ export default function FarmerMode({ language = 'si' }) {
   // --- 5. Weather State ---
   const [selectedDistrict, setSelectedDistrict] = useState('Anuradhapura');
   const [weatherData, setWeatherData] = useState(null);
-  const [weatherLoading, setWeatherLoading] = useState(false);
 
   // --- 6. Organic Recipe State ---
   const [recipeKey, setRecipeKey] = useState('jeevamrutha');
-  const [recipeLiters, setRecipeLiters] = useState(200);
 
   // --- 7. 3D Granule State ---
   const [granuleType, setGranuleType] = useState('urea');
 
   // --- 8. AI Farmer Chat State ---
   const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    {
-      sender: 'bot',
-      text: 'ආයුබෝවන් ගොවි මහතාණෙනි! 🙏 ඔබගේ වගාවේ පොහොර ගැටලුව හෝ බෝග රෝගය ගැන ඕනෑම දෙයක් මෙතැනින් අසන්න.'
-    }
-  ]);
+  const [chatMessages, setChatMessages] = useState([]);
   const [chatLoading, setChatLoading] = useState(false);
+
+  // Reset or update localized defaults on language change
+  useEffect(() => {
+    setChatMessages([
+      {
+        sender: 'bot',
+        text: t.chatInitBot
+      }
+    ]);
+    // Clear screening banner if present so language updates cleanly
+    if (screeningResult) {
+      setScreeningResult(null);
+    }
+  }, [language]);
 
   // ==========================================
   // ACTION HANDLERS
@@ -98,32 +107,41 @@ export default function FarmerMode({ language = 'si' }) {
       });
       if (res.ok) {
         const data = await res.json();
-        setScreeningResult(data);
+        setScreeningResult({
+          is_genuine: data.sample_verdict === "STANDARD_COMPLIANT",
+          confidence: data.purity_confidence_pct,
+          adulterants: data.detected_adulterants,
+          title: data.sample_verdict === "STANDARD_COMPLIANT" ? t.genuineTitle : t.fakeTitle,
+          description: data.sample_verdict === "STANDARD_COMPLIANT" ? t.genuineDesc : t.fakeDesc
+        });
       } else {
         throw new Error();
       }
     } catch {
-      // Friendly localized fallback
+      // Localized fallback
       if (isFake) {
         setScreeningResult({
-          sample_verdict: "ADULTERATED_SUSPICIOUS",
-          purity_confidence_pct: 25.0,
-          detected_adulterants: test2Vinegar === 'has_bubbles' ? ["ගල් කුඩු / ඩොලමයිට් (Dolomite Stone Powder)"] : ["දිය නොවන වැලි / ජිප්සම් (Gypsum & Sand)"],
-          recommendation: "ප්‍රවේශම් වන්න! මෙම පොහොර සාම්පලයේ ගල් කුඩු හෝ ඩොලමයිට් කලවම් කර ඇති බවට තහවුරු විය. මෙය කුඹුරට යෙදීමෙන් වළකින්න. වහාම ගොවිජන සේවා නිලධාරී මහතාට හෝ 1920 අමතන්න."
+          is_genuine: false,
+          confidence: 25.0,
+          adulterants: test2Vinegar === 'has_bubbles' ? ["Dolomite / Limestone (Carbonate)"] : ["Gypsum / Insoluble Sand"],
+          title: t.fakeTitle,
+          description: t.fakeDesc
         });
       } else if (isSuspicious) {
         setScreeningResult({
-          sample_verdict: "ADULTERATED_SUSPICIOUS",
-          purity_confidence_pct: 48.0,
-          detected_adulterants: ["කාබනික අපද්‍රව්‍ය / මැටි (Clay Impurities)"],
-          recommendation: "මෙම පොහොරවල කාබනික අපද්‍රව්‍ය හෝ මැටි අඩංගු බවට සැක සහිතයි. ප්‍රමිතිය බාල විය හැකි බැවින් ගොවිජන සේවා මධ්‍යස්ථානයට සාම්පලයක් පෙන්වන්න."
+          is_genuine: false,
+          confidence: 48.0,
+          adulterants: ["Organic Residue / Clay Filler"],
+          title: t.fakeTitle,
+          description: t.fakeDesc
         });
       } else {
         setScreeningResult({
-          sample_verdict: "STANDARD_COMPLIANT",
-          purity_confidence_pct: 98.5,
-          detected_adulterants: [],
-          recommendation: "සුබ ආරංචියක්! මෙම යූරියා සාම්පලය නියම ප්‍රමිතියෙන් යුක්තයි. කිසිදු බියකින් තොරව ඔබේ වගාවට යොදන්න පුළුවන්."
+          is_genuine: true,
+          confidence: 98.5,
+          adulterants: [],
+          title: t.genuineTitle,
+          description: t.genuineDesc
         });
       }
     } finally {
@@ -168,29 +186,7 @@ export default function FarmerMode({ language = 'si' }) {
           Total_Bags: ureaBags + mopBags + tspBags
         },
         cost_breakdown_lkr: {
-          subsidized_total_lkr: (ureaBags + mopBags + tspBags) * 2500,
-          commercial_total_lkr: ureaBags * 8500 + mopBags * 9000 + tspBags * 10500,
           farmer_savings_lkr: Math.round(acres * 14200)
-        },
-        stage_specific_schedule: {
-          "1. මූලික පොහොර (බිම් සකසන විට)": {
-            urea_kg: Math.round(acres * 10),
-            tsp_kg: Math.round(acres * 22),
-            mop_kg: Math.round(acres * 8),
-            instruction: "අවසාන හෑමේදී පසට දමා කලවම් කරන්න"
-          },
-          "2. පළමු ඉහිරවීම (පැළ වී සති 3 කින්)": {
-            urea_kg: Math.round(acres * 18),
-            tsp_kg: 0,
-            mop_kg: 0,
-            instruction: "පැළ ගොයම හොඳින් වැවීමට යූරියා පමණක් ඉසින්න"
-          },
-          "3. දෙවන ඉහිරවීම (කරල් එන විට - සති 7-8)": {
-            urea_kg: Math.round(acres * 15),
-            tsp_kg: 0,
-            mop_kg: Math.round(acres * 10),
-            instruction: "කරල් පිරී බර වීම සඳහා යූරියා සමඟ රතු පොහොර (MOP) යොදන්න"
-          }
         }
       });
     } finally {
@@ -200,85 +196,93 @@ export default function FarmerMode({ language = 'si' }) {
 
   // 3. Tank Mix Check
   const handleCheckTankMix = () => {
-    setTankLoading(true);
     const hasCa = tankFertilizers.includes('calcium_nitrate');
     const hasTSP = tankFertilizers.includes('tsp');
     const hasCopper = tankFertilizers.includes('copper');
     const hasUrea = tankFertilizers.includes('urea');
 
-    setTimeout(() => {
-      if (hasCa && hasTSP) {
-        setTankResult({
-          safe: false,
-          title: "❌ අන්තරායයි! මේවා එකට කලවම් කරන්න එපා!",
-          detail: "කැල්සියම් නයිට්රේට් සහ TSP එකට මිශ්‍ර කළ විට දිය නොවන සුදු කැටි හැදේ. ස්ප්‍රේ නොසලය මුළුමනින්ම හිරවන අතර ශාකයට පොස්පරස් හා කැල්සියම් උරාගත නොහැක."
-        });
-      } else if (hasCopper && hasUrea) {
-        setTankResult({
-          safe: false,
-          title: "⚠️ අනතුරු ඇඟවීමයි! කොපර් සහ යූරියා මිශ්‍ර නොකරන්න!",
-          detail: "කොපර් දිලීර නාශක යූරියා සමඟ දැමූ විට ඇමෝනියා වායුව පිටවී ගොයමේ කොළ පිළිස්සී යයි."
-        });
-      } else {
-        setTankResult({
-          safe: true,
-          title: "✅ ආරක්ෂිතයි! මේවා එකට කලවම් කළ හැක.",
-          detail: "මෙම පොහොර වර්ග එකිනෙක ගැටෙන්නේ නැත. සාමාන්‍ය පරිදි වතුරට දියකර ස්ප්‍රේ කරන්න."
-        });
-      }
-      setTankLoading(false);
-    }, 300);
+    if (hasCa && hasTSP) {
+      setTankResult({
+        safe: false,
+        title: language === 'en' 
+          ? "❌ Danger! Do not mix Calcium Nitrate with TSP!" 
+          : (language === 'ta' ? "❌ ஆபத்து! கால்சியம் நைட்ரேட் மற்றும் TSP ஐ ஒன்றாக கலக்காதீர்கள்!" : "❌ අන්තරායයි! කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න එපා!"),
+        detail: language === 'en'
+          ? "Forms insoluble Calcium Phosphate precipitate. Spray nozzles will severely clog and crops cannot absorb phosphorus."
+          : (language === 'ta' ? "கால்சியம் பாஸ்பேட் படிவுகள் உருவாகி ஸ்ப்ரே நாசில்களை அடைக்கும்." : "කැල්සියම් නයිට්රේට් සහ TSP එකට මිශ්‍ර කළ විට දිය නොවන සුදු කැටි හැදේ. ස්ප්‍රේ නොසලය මුළුමනින්ම හිරවන අතර ශාකයට පොස්පරස් උරාගත නොහැක.")
+      });
+    } else if (hasCopper && hasUrea) {
+      setTankResult({
+        safe: false,
+        title: language === 'en'
+          ? "⚠️ Warning! Do not mix Copper Fungicide with Urea!"
+          : (language === 'ta' ? "⚠️ எச்சரிக்கை! தாமிர பூஞ்சைக் கொல்லியை யூரியாவுடன் கலக்காதீர்கள்!" : "⚠️ අනතුරු ඇඟවීමයි! කොපර් සහ යූරියා මිශ්‍ර නොකරන්න!"),
+        detail: language === 'en'
+          ? "Releases toxic free ammonia vapor and causes severe foliar scorch."
+          : (language === 'ta' ? "நச்சு வாயு வெளியாகி இலைகள் கருகிவிடும்." : "කොපර් දිලීර නාශක යූරියා සමඟ දැමූ විට ඇමෝනියා වායුව පිටවී ගොයමේ කොළ පිළිස්සී යයි.")
+      });
+    } else {
+      setTankResult({
+        safe: true,
+        title: language === 'en'
+          ? "✅ Safe! These fertilizers are compatible to mix."
+          : (language === 'ta' ? "✅ பாதுகாப்பானது! இவற்றை ஒன்றாக கலக்கலாம்." : "✅ ආරක්ෂිතයි! මේවා එකට කලවම් කළ හැක."),
+        detail: language === 'en'
+          ? "No adverse chemical antagonism detected. You can safely dissolve and spray."
+          : (language === 'ta' ? "எந்தவித ரசாயன பாதிப்பும் இல்லை. பாதுகாப்பாக தெளிக்கலாம்." : "මෙම පොහොර වර්ග එකිනෙක ගැටෙන්නේ නැත. සාමාන්‍ය පරිදි වතුරට දියකර ස්ප්‍රේ කරන්න.")
+      });
+    }
   };
 
-  // 4. Leaf Doctor Diagnose
+  // 4. Leaf Doctor
   const handleDiagnoseLeaf = (symptomKey) => {
     setSelectedSymptom(symptomKey);
     const remedies = {
       yellow_lower: {
-        title: "නයිට්‍රජන් (N) ඌනතාවය",
-        cause: "පසේ යූරියා සේදී යාම හෝ මූලික යෙදුම මදිවීම.",
-        solution: "වතුර ලීටර් 16 ක ස්ප්‍රේ ටැංකියකට යූරියා ග්‍රෑම් 160ක් දියකර උදෑසන ගොයමට ඉසින්න. දින 3-4 කින් කොළ නැවත තද කොළ පැහැයට හැරේ."
+        title: language === 'en' ? "Nitrogen (N) Deficiency" : (language === 'ta' ? "நைட்ரஜன் (N) குறைபாடு" : "නයිට්‍රජන් (N) ඌනතාවය"),
+        cause: language === 'en' ? "Nitrogen leaching due to rain or low basal application." : (language === 'ta' ? "மண்ணில் நைட்ரஜன் சத்து குறைவு." : "පසේ යූරියා සේදී යාම හෝ මූලික යෙදුම මදිවීම."),
+        solution: language === 'en' ? "Dissolve 160g Urea in a 16L knapsack sprayer (1.0% foliar spray) and spray early morning. Leaves recover in 3-4 days." : (language === 'ta' ? "16L ஸ்ப்ரே டேங்கில் 160g யூரியாவை கரைத்து காலையில் தெளிக்கவும்." : "වතුර ලීටර් 16 ක ස්ප්‍රේ ටැංකියකට යූරියා ග්‍රෑම් 160ක් දියකර උදෑසන ගොයමට ඉසින්න. දින 3-4 කින් කොළ නැවත තද කොළ පැහැයට හැරේ.")
       },
       scorch_edges: {
-        title: "පොටෑසියම් (K) ඌනතාවය",
-        cause: "පොටෑෂ් මදිවීම නිසා කොළ වල දාර වේලී පිච්චී ගොස් ඇත.",
-        solution: "MOP රතු පොහොර පසට යොදන්න. ප්‍රමාණවත් තරම් වතුර කුඹුරේ රඳවා ගන්න."
+        title: language === 'en' ? "Potassium (K) Deficiency" : (language === 'ta' ? "பொட்டாசியம் (K) குறைபாடு" : "පොටෑසියම් (K) ඌනතාවය"),
+        cause: language === 'en' ? "Lack of available potash resulting in marginal leaf scorch." : (language === 'ta' ? "பொட்டாஷ் சத்து குறைபாடு." : "පොටෑෂ් මදිවීම නිසා කොළ වල දාර වේලී පිච්චී ගොස් ඇත."),
+        solution: language === 'en' ? "Apply MOP (Muriate of Potash) fertilizer to soil and maintain adequate irrigation." : (language === 'ta' ? "MOP சிவப்பு உரத்தை மண்ணில் இட்டு தேவையான ஈரப்பதத்தை பராமரிக்கவும்." : "MOP රතු පොහොර පසට යොදන්න. ප්‍රමාණවත් තරම් වතුර කුඹුරේ රඳවා ගන්න.")
       },
       purple_leaves: {
-        title: "පොස්පරස් (P) ඌනතාවය",
-        cause: "මුල් ඇදීම බාල වී කොළ දම් හෝ තද රතු පැහැයට හැරී ඇත.",
-        solution: "TSP කළු පොහොර හෝ රොක් පොස්පේට් දමා පස් කරන්න."
+        title: language === 'en' ? "Phosphorus (P) Deficiency" : (language === 'ta' ? "பாஸ்பரஸ் (P) குறைபாடு" : "පොස්පරස් (P) ඌනතාවය"),
+        cause: language === 'en' ? "Poor root development and purple bronzing of older leaves." : (language === 'ta' ? "வேர் வளர்ச்சி குறைபாடு." : "මුල් ඇදීම බාල වී කොළ දම් හෝ තද රතු පැහැයට හැරී ඇත."),
+        solution: language === 'en' ? "Apply Triple Superphosphate (TSP) or Rock Phosphate mixed with organic compost." : (language === 'ta' ? "TSP உரத்தை உரமாக இட்டு மண்ணுடன் கலக்கவும்." : "TSP කළු පොහොර හෝ රොක් පොස්පේට් දමා පස් කරන්න.")
       },
       veins_green: {
-        title: "මැග්නීසියම් (Mg) ඌනතාවය",
-        cause: "නහර කොළ පැහැව තිබියදී අතරමැද කහ පැහැ වී ඇත.",
-        solution: "මැග්නීසියම් සල්ෆේට් (එප්සම් ලුණු) ග්‍රෑම් 80ක් වතුර ලීටර් 16 ට දියකර ඉසින්න."
+        title: language === 'en' ? "Magnesium (Mg) Deficiency" : (language === 'ta' ? "மெக்னீசியம் (Mg) குறைபாடு" : "මැග්නීසියම් (Mg) ඌනතාවය"),
+        cause: language === 'en' ? "Interveinal chlorosis where veins remain green while leaf turns yellow." : (language === 'ta' ? "இடை நரம்பு மஞ்சள் நிறமாதல்." : "නහර කොළ පැහැව තිබියදී අතරමැද කහ පැහැ වී ඇත."),
+        solution: language === 'en' ? "Dissolve 80g Magnesium Sulphate (Epsom salt) in 16L water and foliar spray." : (language === 'ta' ? "80g மெக்னீசியம் சல்பேட் (எப்சம் உப்பு) கரைத்து தெளிக்கவும்." : "මැග්නීසියම් සල්ෆේට් (එප්සම් ලුණු) ග්‍රෑම් 80ක් වතුර ලීටර් 16 ට දියකර ඉසින්න.")
       }
     };
     setLeafResult(remedies[symptomKey]);
   };
 
-  // 5. Weather Advisory Fetch
+  // 5. Weather
   const handleFetchWeather = (dist = selectedDistrict) => {
     setSelectedDistrict(dist);
-    setWeatherLoading(true);
-    setTimeout(() => {
-      setWeatherData({
-        district: dist,
-        advice: "අද සහ හෙට තද වැසි අපේක්ෂා කෙරේ. අද යූරියා යෙදුවහොත් 70% ක්ම සේදී යයි. බදාදා වන තෙක් පොහොර යෙදීම කල් තබන්න.",
-        days: [
-          { day: "අද", rain: "45 mm", status: "🌧️ තද වැසි", canSpray: false },
-          { day: "හෙට", rain: "35 mm", status: "🌧️ වැසි සහිතයි", canSpray: false },
-          { day: "අනිද්දා", rain: "10 mm", status: "⛅ මද වැසි", canSpray: false },
-          { day: "බදාදා", rain: "2 mm", status: "☀️ හොඳ අව්ව", canSpray: true },
-          { day: "බ්‍රහස්පතින්දා", rain: "0 mm", status: "☀️ ප්‍රශස්තයි", canSpray: true }
-        ]
-      });
-      setWeatherLoading(false);
-    }, 300);
+    const isEn = language === 'en';
+    const isTa = language === 'ta';
+    setWeatherData({
+      district: dist,
+      advice: isEn 
+        ? "Heavy rain expected today and tomorrow. 70% of nitrogen will leach away if applied today. Postpone until Wednesday."
+        : (isTa ? "இன்றும் நாளையும் கனமழை எதிர்பார்க்கப்படுகிறது. உரம் இடுவதை புதன்கிழமை வரை தள்ளி வைக்கவும்." : "අද සහ හෙට තද වැසි අපේක්ෂා කෙරේ. අද යූරියා යෙදුවහොත් 70% ක්ම සේදී යයි. බදාදා වන තෙක් පොහොර යෙදීම කල් තබන්න."),
+      days: [
+        { day: isEn ? "Today" : (isTa ? "இன்று" : "අද"), rain: "45 mm", status: isEn ? "🌧️ Heavy Rain" : (isTa ? "🌧️ கனமழை" : "🌧️ තද වැසි"), canSpray: false },
+        { day: isEn ? "Tomorrow" : (isTa ? "நாளை" : "හෙට"), rain: "35 mm", status: isEn ? "🌧️ Rainy" : (isTa ? "🌧️ மிதமான மழை" : "🌧️ වැසි සහිතයි"), canSpray: false },
+        { day: isEn ? "Day 3" : (isTa ? "3 ஆம் நாள்" : "අනිද්දා"), rain: "10 mm", status: isEn ? "⛅ Light Rain" : (isTa ? "⛅ லேசான மழை" : "⛅ මද වැසි"), canSpray: false },
+        { day: isEn ? "Wednesday" : (isTa ? "புதன்கிழமை" : "බදාදා"), rain: "2 mm", status: isEn ? "☀️ Sunny" : (isTa ? "☀️ தெளிவான வெயில்" : "☀️ හොඳ අව්ව"), canSpray: true },
+        { day: isEn ? "Thursday" : (isTa ? "வியாழக்கிழமை" : "බ්‍රහස්පතින්දා"), rain: "0 mm", status: isEn ? "☀️ Ideal" : (isTa ? "☀️ உகந்தது" : "☀️ ප්‍රශස්තයි"), canSpray: true }
+      ]
+    });
   };
 
-  // 6. AI Farmer Chat
+  // 6. AI Chat Send
   const handleSendChat = (text = chatInput) => {
     if (!text.trim()) return;
     const userMsg = { sender: 'user', text };
@@ -287,13 +291,20 @@ export default function FarmerMode({ language = 'si' }) {
     setChatLoading(true);
 
     setTimeout(() => {
-      let botReply = "යූරියා බාලදැයි නිවසේදීම සොයාගැනීමට වතුර වීදුරුවකට යූරියා තේ හැන්දක් දමන්න. එය විනාඩියෙන් දියවී වීදුරුව අයිස් මෙන් සීතල විය යුතුය. විනාකිරි දැමූ විට පෙණ නගී නම් එය ගල් කුඩු කලවම් කළ ව්‍යාජ පොහොරකි.";
-      if (text.includes("මූලික") || text.includes("කවදාද")) {
-        botReply = "වී වගාවේ මූලික පොහොර යෙදිය යුත්තේ අවසන් හෑමේදී හෝ පැළ සිටුවීමට දිනකට පෙරය. මූලික පොහොර ලෙස TSP (කළු පොහොර) සම්පූර්ණයෙන්ද, යූරියා සහ MOP වලින් කොටසක්ද පසට කලවම් කරන්න.";
-      } else if (text.includes("කැල්සියම්") || text.includes("TSP")) {
-        botReply = "නැත, කිසිසේත්ම කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න එපා! ඒවා එකතු වූ විට නොදියවෙන සුදු කැටි හැදී ස්ප්‍රේ නොසලය හිරවී බෝගයට හානි සිදුවේ.";
-      } else if (text.includes("කහ") || text.includes("ලෙඩ")) {
-        botReply = "යටි කොළ මුලින්ම කහ වේ නම් එය නයිට්‍රජන් ඌනතාවයයි. වතුර ලීටර් 16 ටැංකියකට යූරියා ග්‍රෑම් 160ක් දියකර කොළ වලට ඉසින්න.";
+      let botReply = language === 'en'
+        ? "To test Urea at home, drop a teaspoon into half a glass of clean water. Genuine Urea dissolves within 60 seconds and makes the water intensely icy cold. If it bubbles with vinegar, it is adulterated with stone powder."
+        : (language === 'ta' 
+          ? "யூரியாவை சோதிக்க ஒரு கரண்டி உரத்தை தண்ணீரில் போடவும். ஒரு நிமிடத்தில் கரைந்து பனிக்கட்டி போல் குளிர்ந்தால் அது தூய உரம்."
+          : "යූරියා බාලදැයි නිවසේදීම සොයාගැනීමට වතුර වීදුරුවකට යූරියා තේ හැන්දක් දමන්න. එය විනාඩියෙන් දියවී වීදුරුව අයිස් මෙන් සීතල විය යුතුය. විනාකිරි දැමූ විට පෙණ නගී නම් එය ගල් කුඩු කලවම් කළ ව්‍යාජ පොහොරකි.");
+
+      if (text.includes("මූලික") || text.includes("basal") || text.includes("அடிப்படை")) {
+        botReply = language === 'en'
+          ? "Basal fertilizer for paddy must be incorporated during the final ploughing before planting. Apply all TSP and a portion of MOP and Urea."
+          : (language === 'ta' ? "கடைசி உழவின் போது அடிப்படை உரங்களை மண்ணில் இடவும்." : "වී වගාවේ මූලික පොහොර යෙදිය යුත්තේ අවසන් හෑමේදී හෝ පැළ සිටුවීමට දිනකට පෙරය. මූලික පොහොර ලෙස TSP සම්පූර්ණයෙන්ද, යූරියා සහ MOP වලින් කොටසක්ද පසට කලවම් කරන්න.");
+      } else if (text.includes("කැල්සියම්") || text.includes("calcium") || text.includes("கால்சியம்")) {
+        botReply = language === 'en'
+          ? "No! Never mix Calcium Nitrate with TSP. They react to form insoluble rock-hard chalk that clogs spray nozzles."
+          : (language === 'ta' ? "கால்சியம் நைட்ரேட் மற்றும் TSP ஐ ஒன்றாக கலக்காதீர்கள். நாசில்கள் அடைக்கும்." : "නැත, කිසිසේත්ම කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න එපා! ඒවා එකතු වූ විට නොදියවෙන සුදු කැටි හැදී ස්ප්‍රේ නොසලය හිරවේ.");
       }
 
       setChatMessages(prev => [...prev, { sender: 'bot', text: botReply }]);
@@ -301,22 +312,21 @@ export default function FarmerMode({ language = 'si' }) {
     }, 400);
   };
 
-  // Main Nav Tiles
   const mainTiles = [
-    { id: 'screening', label: 'පොහොර බාලද බලමු', icon: '🔍', desc: 'වතුරෙන් සහ විනාකිරෙන් ගෙදරදීම' },
-    { id: 'dosage', label: 'පොහොර ගණන් හදමු', icon: '⚖️', desc: 'අවශ්‍ය මිටි ගණන සහ මුදල් ඉතිරිය' },
-    { id: 'tankmix', label: 'එකට කලවම් කළ හැකිද?', icon: '💧', desc: 'ටැංකි මිශ්‍රණ අනතුරු ඇඟවීම්' },
-    { id: 'leafdoctor', label: 'කොළ කහවීම හා ලෙඩ රෝග', icon: '🌿', desc: 'පත්‍රයේ ලක්ෂණ අනුව බෙහෙත්' },
-    { id: 'weather', label: 'අද පොහොර දාන්න හොඳද?', icon: '🌧️', desc: 'සේදීයාම වළක්වන කාලගුණය' },
-    { id: 'organic', label: 'කාබනික දියර පොහොර', icon: '🍯', desc: 'ජීවාමෘත හා කොහොඹ වට්ටෝරු' },
-    { id: 'granule3d', label: '3D පොහොර කැටය බලන්න', icon: '🔎', desc: 'සැබෑ සහ ව්‍යාජ කැටය ත්‍රිමාණව' },
-    { id: 'chat', label: 'ගොවි AI උපදේශක', icon: '💬', desc: 'ඕනෑම ප්‍රශ්නයක් අසන්න' }
+    { id: 'screening', label: t.tileScreening, icon: '🔍', desc: t.tileScreeningDesc },
+    { id: 'dosage', label: t.tileDosage, icon: '⚖️', desc: t.tileDosageDesc },
+    { id: 'tankmix', label: t.tileTankMix, icon: '💧', desc: t.tileTankMixDesc },
+    { id: 'leafdoctor', label: t.tileLeafDoctor, icon: '🌿', desc: t.tileLeafDoctorDesc },
+    { id: 'weather', label: t.tileWeather, icon: '🌧️', desc: t.tileWeatherDesc },
+    { id: 'organic', label: t.tileOrganic, icon: '🍯', desc: t.tileOrganicDesc },
+    { id: 'granule3d', label: t.tileGranule3D, icon: '🔎', desc: t.tileGranule3DDesc },
+    { id: 'chat', label: t.tileChat, icon: '💬', desc: t.tileChatDesc }
   ];
 
   return (
     <div className="space-y-6 pb-20">
       
-      {/* Friendly Welcome Card (Facebook / App Style) */}
+      {/* Friendly Welcome Card (Clean Facebook Style) */}
       <div className="clean-card p-6 bg-gradient-to-r from-emerald-50 via-white to-green-50 border-emerald-200">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center space-x-4">
@@ -325,10 +335,10 @@ export default function FarmerMode({ language = 'si' }) {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-                ආයුබෝවන් ගොවි මහතාණෙනි! 🙏
+                {t.welcomeGreeting}
               </h1>
               <p className="text-sm text-slate-600 mt-1">
-                ඔබේ වගාවට අවශ්‍ය නියම පොහොර ප්‍රමාණය, බාල පොහොර හඳුනාගැනීම සහ කෘෂි උපදෙස් මෙතැනින් ලබාගන්න.
+                {t.welcomeSub}
               </p>
             </div>
           </div>
@@ -338,19 +348,19 @@ export default function FarmerMode({ language = 'si' }) {
               onClick={() => setActiveTab('screening')}
               className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow transition-all flex items-center space-x-1.5"
             >
-              <span>🔍 පොහොර පරීක්ෂාව</span>
+              <span>{t.btnCheckNow}</span>
             </button>
             <button 
               onClick={() => setActiveTab('dosage')}
               className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 font-bold text-sm border border-emerald-300 shadow-sm transition-all flex items-center space-x-1.5"
             >
-              <span>⚖️ පොහොර ගණකය</span>
+              <span>{t.btnCalcNow}</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Main Service Shortcuts Grid (Like Facebook / Mobile Banking Shortcuts) */}
+      {/* Main Service Shortcuts Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {mainTiles.map(tile => (
           <button
@@ -372,19 +382,19 @@ export default function FarmerMode({ language = 'si' }) {
       </div>
 
       {/* ================================================================ */}
-      {/* FEATURE 1: DIY FIELD SCREENING (Zero Numbers, Just Clear Questions) */}
+      {/* FEATURE 1: DIY FIELD SCREENING */}
       {/* ================================================================ */}
       {activeTab === 'screening' && (
         <div className="clean-card p-6 sm:p-8 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
-              <span>පියවර 1, 2, 3 සරල පරීක්ෂාව</span>
+              <span>{t.screeningStepTag}</span>
             </div>
             <h2 className="text-xl font-black text-slate-900">
-              ගෙදරදීම හෝ කුඹුරේදීම පොහොර බාලදැයි පරීක්ෂා කරමු
+              {t.screeningHeader}
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              පහත ප්‍රශ්න 3 ට ඔබේ පොහොර සාම්පලයේ සිදුවූ දේ තෝරන්න.
+              {t.screeningHelp}
             </p>
           </div>
 
@@ -393,7 +403,7 @@ export default function FarmerMode({ language = 'si' }) {
             {/* Step 1: Water test */}
             <div className="space-y-2">
               <label className="text-sm font-black text-slate-900 block">
-                1. පිරිසිදු වතුර වීදුරුවකට පොහොර හැන්දක් දැමූ විට කුමක් සිදුවීද?
+                {t.q1Label}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
@@ -411,8 +421,8 @@ export default function FarmerMode({ language = 'si' }) {
                     {test1Water === 'fast_cold' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                   <div>
-                    <span className="font-black text-sm block">✅ විනාඩියෙන් දියවී, වතුර අයිස් වගේ සීතල වුණා</span>
-                    <span className="text-xs text-slate-500 block mt-1">නියම යූරියා වල ලක්ෂණයකි (Good)</span>
+                    <span className="font-black text-sm block">{t.q1OptA}</span>
+                    <span className="text-xs text-slate-500 block mt-1">{t.q1OptASub}</span>
                   </div>
                 </button>
 
@@ -431,8 +441,8 @@ export default function FarmerMode({ language = 'si' }) {
                     {test1Water === 'slow_sediment' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                   <div>
-                    <span className="font-black text-sm block">❌ දියවුණේ නෑ / අඩියේ ගල් කුඩු සහ වැලි ඉතිරි වුණා</span>
-                    <span className="text-xs text-slate-500 block mt-1">ගල් කුඩු හෝ ජිප්සම් කලවමකි (Suspect)</span>
+                    <span className="font-black text-sm block">{t.q1OptB}</span>
+                    <span className="text-xs text-slate-500 block mt-1">{t.q1OptBSub}</span>
                   </div>
                 </button>
               </div>
@@ -441,7 +451,7 @@ export default function FarmerMode({ language = 'si' }) {
             {/* Step 2: Vinegar test */}
             <div className="space-y-2">
               <label className="text-sm font-black text-slate-900 block">
-                2. පොහොර ස්වල්පයකට විනාකිරි බිංදු කිහිපයක් දැමූ විට:
+                {t.q2Label}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button
@@ -459,8 +469,8 @@ export default function FarmerMode({ language = 'si' }) {
                     {test2Vinegar === 'no_bubbles' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                   <div>
-                    <span className="font-black text-sm block">✅ පෙණ ආවේ නෑ, සාමාන්‍යයි</span>
-                    <span className="text-xs text-slate-500 block mt-1">ඩොලමයිට් හෝ හුණුගල් නැත (Safe)</span>
+                    <span className="font-black text-sm block">{t.q2OptA}</span>
+                    <span className="text-xs text-slate-500 block mt-1">{t.q2OptASub}</span>
                   </div>
                 </button>
 
@@ -479,17 +489,17 @@ export default function FarmerMode({ language = 'si' }) {
                     {test2Vinegar === 'has_bubbles' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                   <div>
-                    <span className="font-black text-sm block">❌ සබන් වගේ පෙණ බුබුළු දැම්මා</span>
-                    <span className="text-xs text-slate-500 block mt-1">ගල් කුඩු හෝ ඩොලමයිට් කලවම් කර ඇත!</span>
+                    <span className="font-black text-sm block">{t.q2OptB}</span>
+                    <span className="text-xs text-slate-500 block mt-1">{t.q2OptBSub}</span>
                   </div>
                 </button>
               </div>
             </div>
 
-            {/* Step 3: Flame / Spoon test */}
+            {/* Step 3: Flame test */}
             <div className="space-y-2">
               <label className="text-sm font-black text-slate-900 block">
-                3. ලෝහ හැන්දක පොහොර ටිකක් දමා ලිපේ රත් කළ විට:
+                {t.q3Label}
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <button
@@ -507,8 +517,8 @@ export default function FarmerMode({ language = 'si' }) {
                     {test3Heat === 'white_melt' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                   <div>
-                    <span className="font-black text-xs sm:text-sm block">✅ සුදු පාටට දියවී වාෂ්ප වුණා</span>
-                    <span className="text-[11px] text-slate-500 block mt-1">නියම පිරිසිදු යූරියා</span>
+                    <span className="font-black text-xs sm:text-sm block">{t.q3OptA}</span>
+                    <span className="text-[11px] text-slate-500 block mt-1">{t.q3OptASub}</span>
                   </div>
                 </button>
 
@@ -527,8 +537,8 @@ export default function FarmerMode({ language = 'si' }) {
                     {test3Heat === 'clay_char' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                   <div>
-                    <span className="font-black text-xs sm:text-sm block">⚠️ කළු වී පිළිස්සුණා</span>
-                    <span className="text-[11px] text-slate-500 block mt-1">කුණු හෝ මැටි කලවම්</span>
+                    <span className="font-black text-xs sm:text-sm block">{t.q3OptB}</span>
+                    <span className="text-[11px] text-slate-500 block mt-1">{t.q3OptBSub}</span>
                   </div>
                 </button>
 
@@ -547,8 +557,8 @@ export default function FarmerMode({ language = 'si' }) {
                     {test3Heat === 'rock_ash' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
                   </div>
                   <div>
-                    <span className="font-black text-xs sm:text-sm block">❌ ගල් කැට වගේ ඉතුරු වුණා</span>
-                    <span className="text-[11px] text-slate-500 block mt-1">ගල් කුඩු (Marble)</span>
+                    <span className="font-black text-xs sm:text-sm block">{t.q3OptC}</span>
+                    <span className="text-[11px] text-slate-500 block mt-1">{t.q3OptCSub}</span>
                   </div>
                 </button>
               </div>
@@ -562,11 +572,11 @@ export default function FarmerMode({ language = 'si' }) {
               className="w-full py-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-base shadow-md transition-all flex items-center justify-center space-x-2"
             >
               {screeningLoading ? (
-                <span>පරීක්ෂා කරමින් පවතී...</span>
+                <span>{t.evaluating}</span>
               ) : (
                 <>
                   <ShieldCheck className="w-5 h-5" />
-                  <span>පොහොර තත්ත්වය පරීක්ෂා කරන්න</span>
+                  <span>{t.btnEvaluate}</span>
                 </>
               )}
             </button>
@@ -574,33 +584,31 @@ export default function FarmerMode({ language = 'si' }) {
             {/* Big Friendly Result Banner */}
             {screeningResult && (
               <div className={`p-6 rounded-2xl border-2 text-left transition-all ${
-                screeningResult.sample_verdict === 'STANDARD_COMPLIANT'
+                screeningResult.is_genuine
                   ? 'bg-emerald-50 border-emerald-500 text-emerald-950'
                   : 'bg-rose-50 border-rose-500 text-rose-950'
               }`}>
                 <div className="flex items-center space-x-3 mb-2">
                   <span className="text-3xl">
-                    {screeningResult.sample_verdict === 'STANDARD_COMPLIANT' ? '🟢' : '🔴'}
+                    {screeningResult.is_genuine ? '🟢' : '🔴'}
                   </span>
                   <div>
                     <h3 className="text-lg sm:text-xl font-black">
-                      {screeningResult.sample_verdict === 'STANDARD_COMPLIANT'
-                        ? 'ප්‍රමිතියෙන් යුතු නියම යූරියා පොහොර!'
-                        : 'ප්‍රවේශම් වන්න! බාල හෝ කලවම් කළ පොහොරක්!'}
+                      {screeningResult.title}
                     </h3>
                     <span className="text-xs font-bold text-slate-600">
-                      විශ්වාසනීයත්වය: {screeningResult.purity_confidence_pct}%
+                      {t.confidenceLabel}: {screeningResult.confidence}%
                     </span>
                   </div>
                 </div>
 
                 <p className="text-sm font-medium mt-3 leading-relaxed">
-                  {screeningResult.recommendation}
+                  {screeningResult.description}
                 </p>
 
-                {screeningResult.detected_adulterants && screeningResult.detected_adulterants.length > 0 && (
+                {screeningResult.adulterants && screeningResult.adulterants.length > 0 && (
                   <div className="mt-3 p-3 bg-white rounded-xl border border-rose-200 text-xs text-rose-800 font-bold">
-                    හඳුනාගත් කලවම් ද්‍රව්‍ය: {screeningResult.detected_adulterants.join(', ')}
+                    {t.detectedAdulterantsLabel} {screeningResult.adulterants.join(', ')}
                   </div>
                 )}
               </div>
@@ -611,16 +619,16 @@ export default function FarmerMode({ language = 'si' }) {
       )}
 
       {/* ================================================================ */}
-      {/* FEATURE 2: DOSAGE CALCULATOR (Clean & Simple) */}
+      {/* FEATURE 2: DOSAGE CALCULATOR */}
       {/* ================================================================ */}
       {activeTab === 'dosage' && (
         <div className="clean-card p-6 sm:p-8 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h2 className="text-xl font-black text-slate-900">
-              කුඹුරට හෝ වගාවට අවශ්‍ය නියම පොහොර ප්‍රමාණය ගණනය කරමු
+              {t.dosageHeader}
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              අධික පොහොර නාස්තිය වළක්වා රුපියල් දහස් ගණනක් ඉතිරි කරගන්න.
+              {t.dosageHelp}
             </p>
           </div>
 
@@ -629,15 +637,15 @@ export default function FarmerMode({ language = 'si' }) {
             {/* Step 1: Crop Chooser */}
             <div>
               <label className="text-sm font-black text-slate-900 block mb-2">
-                1. ඔබේ බෝග වර්ගය තෝරන්න:
+                {t.cropSelectLabel}
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                 {[
-                  { id: 'paddy', label: 'වී වගාව', icon: '🌾' },
-                  { id: 'maize', label: 'බඩඉරිඟු', icon: '🌽' },
-                  { id: 'tea', label: 'තේ වගාව', icon: '🍃' },
-                  { id: 'vegetables', label: 'එළවළු / අල', icon: '🥦' },
-                  { id: 'chilli', label: 'මිරිස්', icon: '🌶️' }
+                  { id: 'paddy', label: t.cropPaddy, icon: '🌾' },
+                  { id: 'maize', label: t.cropMaize, icon: '🌽' },
+                  { id: 'tea', label: t.cropTea, icon: '🍃' },
+                  { id: 'vegetables', label: t.cropVeg, icon: '🥦' },
+                  { id: 'chilli', label: t.cropChilli, icon: '🌶️' }
                 ].map(c => (
                   <button
                     key={c.id}
@@ -659,7 +667,7 @@ export default function FarmerMode({ language = 'si' }) {
             {/* Step 2: Land size */}
             <div>
               <label className="text-sm font-black text-slate-900 block mb-2">
-                2. ඉඩමේ ප්‍රමාණය (අක්කර වලින්):
+                {t.landSizeLabel}
               </label>
               <div className="flex flex-wrap items-center gap-2">
                 {[0.5, 1.0, 2.0, 3.0, 5.0].map(ac => (
@@ -673,7 +681,7 @@ export default function FarmerMode({ language = 'si' }) {
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
                     }`}
                   >
-                    අක්කර {ac}
+                    {t.acreUnit} {ac}
                   </button>
                 ))}
                 <div className="flex items-center space-x-1.5 ml-2">
@@ -686,7 +694,7 @@ export default function FarmerMode({ language = 'si' }) {
                     onChange={(e) => handleCalculateDosage(selectedCrop, parseFloat(e.target.value) || 1)}
                     className="w-24 p-2 rounded-xl border border-slate-300 text-center font-bold text-sm"
                   />
-                  <span className="text-xs text-slate-600 font-bold">අක්කර</span>
+                  <span className="text-xs text-slate-600 font-bold">{t.acreUnit}</span>
                 </div>
               </div>
             </div>
@@ -698,40 +706,40 @@ export default function FarmerMode({ language = 'si' }) {
                 {/* Bags required highlight */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
-                    <span className="text-xs font-bold text-emerald-800 uppercase block">සුදු පොහොර (යූරියා)</span>
+                    <span className="text-xs font-bold text-emerald-800 uppercase block">{t.ureaLabel}</span>
                     <span className="text-3xl font-black text-emerald-950 mt-1 block">
-                      {dosageResult.bags_50kg_required?.Urea_Bags || 2} <span className="text-sm font-medium">කොට්ට</span>
+                      {dosageResult.bags_50kg_required?.Urea_Bags || 2} <span className="text-sm font-medium">{t.bagUnit}</span>
                     </span>
-                    <span className="text-[11px] text-emerald-700">50kg මිටි</span>
+                    <span className="text-[11px] text-emerald-700">{t.bag50kgNote}</span>
                   </div>
 
                   <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center">
-                    <span className="text-xs font-bold text-amber-800 uppercase block">රතු පොහොර (MOP)</span>
+                    <span className="text-xs font-bold text-amber-800 uppercase block">{t.mopLabel}</span>
                     <span className="text-3xl font-black text-amber-950 mt-1 block">
-                      {dosageResult.bags_50kg_required?.MOP_Bags || 1} <span className="text-sm font-medium">කොට්ට</span>
+                      {dosageResult.bags_50kg_required?.MOP_Bags || 1} <span className="text-sm font-medium">{t.bagUnit}</span>
                     </span>
-                    <span className="text-[11px] text-amber-700">පොටෑසියම් සඳහා</span>
+                    <span className="text-[11px] text-amber-700">{t.bag50kgNote}</span>
                   </div>
 
                   <div className="p-4 rounded-xl bg-cyan-50 border border-cyan-200 text-center">
-                    <span className="text-xs font-bold text-cyan-800 uppercase block">කළු පොහොර (TSP)</span>
+                    <span className="text-xs font-bold text-cyan-800 uppercase block">{t.tspLabel}</span>
                     <span className="text-3xl font-black text-cyan-950 mt-1 block">
-                      {dosageResult.bags_50kg_required?.TSP_Bags || 1} <span className="text-sm font-medium">කොට්ට</span>
+                      {dosageResult.bags_50kg_required?.TSP_Bags || 1} <span className="text-sm font-medium">{t.bagUnit}</span>
                     </span>
-                    <span className="text-[11px] text-cyan-700">මුල් ඇදීම සඳහා</span>
+                    <span className="text-[11px] text-cyan-700">{t.bag50kgNote}</span>
                   </div>
                 </div>
 
-                {/* Money savings card */}
+                {/* Money savings banner */}
                 <div className="p-5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md flex items-center justify-between">
                   <div>
                     <span className="text-xs text-green-100 font-bold uppercase tracking-wider block">
-                      නියම මාත්‍රාව යෙදීමෙන් ඔබ ඉතිරි කරගන්නා මුදල:
+                      {t.savingsTitle}
                     </span>
                     <span className="text-2xl sm:text-3xl font-black mt-0.5 block">
-                      රු. {dosageResult.cost_breakdown_lkr?.farmer_savings_lkr?.toLocaleString() || '14,200'} /=
+                      Rs. {dosageResult.cost_breakdown_lkr?.farmer_savings_lkr?.toLocaleString() || '14,200'} /=
                     </span>
-                    <span className="text-xs text-green-100">අධිකව පොහොර නොදැමීමෙන් එක් කන්නයකට ඉතිරි වේ.</span>
+                    <span className="text-xs text-green-100">{t.savingsSub}</span>
                   </div>
                   <div className="text-4xl">💰</div>
                 </div>
@@ -739,31 +747,31 @@ export default function FarmerMode({ language = 'si' }) {
                 {/* Stage Schedule */}
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
                   <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    පොහොර යෙදිය යුතු නිවැරදි වෙලාවල්:
+                    {t.scheduleHeader}
                   </h4>
                   <div className="space-y-2 text-xs">
                     <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
                       <div>
-                        <strong className="text-slate-900 block text-sm">1. බිම් සකසන විට (මූලික පොහොර)</strong>
-                        <span className="text-slate-500">අවසාන හෑමේදී පසට කලවම් කරන්න</span>
+                        <strong className="text-slate-900 block text-sm">{t.stageBasal}</strong>
+                        <span className="text-slate-500">{t.stageBasalSub}</span>
                       </div>
-                      <span className="font-bold text-emerald-800">TSP සම්පූර්ණයෙන්ම + MOP ටිකක්</span>
+                      <span className="font-bold text-emerald-800">{t.stageBasalDose}</span>
                     </div>
 
                     <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
                       <div>
-                        <strong className="text-slate-900 block text-sm">2. පැළ වී සති 3 කින් (පළමු ඉහිරවීම)</strong>
-                        <span className="text-slate-500">ගොයම හොඳින් පඳුරු දැමීමට</span>
+                        <strong className="text-slate-900 block text-sm">{t.stageTop1}</strong>
+                        <span className="text-slate-500">{t.stageTop1Sub}</span>
                       </div>
-                      <span className="font-bold text-emerald-800">යූරියා පමණක්</span>
+                      <span className="font-bold text-emerald-800">{t.stageTop1Dose}</span>
                     </div>
 
                     <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
                       <div>
-                        <strong className="text-slate-900 block text-sm">3. කරල් එන විට (සති 7-8 දෙවන ඉහිරවීම)</strong>
-                        <span className="text-slate-500">කරල් පිරී බර වීම සඳහා</span>
+                        <strong className="text-slate-900 block text-sm">{t.stageTop2}</strong>
+                        <span className="text-slate-500">{t.stageTop2Sub}</span>
                       </div>
-                      <span className="font-bold text-emerald-800">යූරියා + MOP (රතු පොහොර)</span>
+                      <span className="font-bold text-emerald-800">{t.stageTop2Dose}</span>
                     </div>
                   </div>
                 </div>
@@ -782,26 +790,26 @@ export default function FarmerMode({ language = 'si' }) {
         <div className="clean-card p-6 sm:p-8 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h2 className="text-xl font-black text-slate-900">
-              පොහොර එකට කලවම් කරන්න පුළුවන්ද? (ටැංකි මිශ්‍රණ පරීක්ෂාව)
+              {t.tankMixHeader}
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              එකට මිශ්‍ර නොකළ යුතු පොහොර එකට දැමීමෙන් බෝගය පිලිස්සී ස්ප්‍රේ නොසල් හිරවේ.
+              {t.tankMixHelp}
             </p>
           </div>
 
           <div className="space-y-4">
             <label className="text-sm font-black text-slate-900 block">
-              ඔබ එකට කලවම් කිරීමට හදන පොහොර වර්ග තෝරන්න:
+              {t.tankMixSelectLabel}
             </label>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               {[
-                { id: 'urea', label: 'යූරියා (Urea)' },
-                { id: 'mop', label: 'MOP (රතු පොහොර)' },
-                { id: 'tsp', label: 'TSP (කළු පොහොර)' },
-                { id: 'calcium_nitrate', label: 'කැල්සියම් නයිට්රේට්' },
-                { id: 'copper', label: 'කොපර් දිලීර නාශක' },
-                { id: 'zinc', label: 'සින්ක් සල්ෆේට්' }
+                { id: 'urea', label: t.chemUrea },
+                { id: 'mop', label: t.chemMop },
+                { id: 'tsp', label: t.chemTsp },
+                { id: 'calcium_nitrate', label: t.chemCa },
+                { id: 'copper', label: t.chemCopper },
+                { id: 'zinc', label: t.chemZinc }
               ].map(item => {
                 const checked = tankFertilizers.includes(item.id);
                 return (
@@ -838,7 +846,7 @@ export default function FarmerMode({ language = 'si' }) {
               disabled={tankFertilizers.length < 2}
               className="w-full py-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow-md transition-all disabled:opacity-50"
             >
-              මිශ්‍රණය ගැළපේදැයි පරීක්ෂා කරන්න
+              {t.btnCheckMix}
             </button>
 
             {tankResult && (
@@ -862,20 +870,20 @@ export default function FarmerMode({ language = 'si' }) {
         <div className="clean-card p-6 sm:p-8 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h2 className="text-xl font-black text-slate-900">
-              කොළ කහවීම සහ බෝග ලෙඩ රෝග හඳුනාගැනීම
+              {t.leafDocHeader}
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              කොළ වල පෙනෙන ලක්ෂණය තෝරා ගත යුතු නිවැරදි බෙහෙත ක්ෂණිකව දැනගන්න.
+              {t.leafDocHelp}
             </p>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                { id: 'yellow_lower', label: 'යටි කොළ මුලින්ම සම්පූර්ණයෙන්ම කහ වෙලාද?', sub: 'නයිට්‍රජන් ඌනතාවය' },
-                { id: 'scorch_edges', label: 'කොළ වල දාර පිච්චිලා දුඹුරු පාට වෙලාද?', sub: 'පොටෑසියම් ඌනතාවය' },
-                { id: 'purple_leaves', label: 'කොළ දම් පාට හෝ තද රතු පාට වෙලාද?', sub: 'පොස්පරස් ඌනතාවය' },
-                { id: 'veins_green', label: 'නහර කොළ පාටව තියෙද්දි මැද කහ වෙලාද?', sub: 'මැග්නීසියම් ඌනතාවය' }
+                { id: 'yellow_lower', label: t.symptomYellowLower, sub: t.symptomYellowLowerSub },
+                { id: 'scorch_edges', label: t.symptomScorch, sub: t.symptomScorchSub },
+                { id: 'purple_leaves', label: t.symptomPurple, sub: t.symptomPurpleSub },
+                { id: 'veins_green', label: t.symptomVeinsGreen, sub: t.symptomVeinsGreenSub }
               ].map(s => (
                 <button
                   key={s.id}
@@ -895,11 +903,11 @@ export default function FarmerMode({ language = 'si' }) {
 
             {leafResult && (
               <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-slate-900 space-y-2">
-                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block">හඳුනාගත් රෝගය:</span>
+                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block">{t.diagnosedDiseaseLabel}</span>
                 <h3 className="text-lg font-black text-emerald-950">{leafResult.title}</h3>
                 <p className="text-xs text-slate-600">{leafResult.cause}</p>
                 <div className="p-3 bg-white rounded-xl border border-emerald-200 mt-2">
-                  <strong className="text-xs font-bold text-emerald-900 block mb-1">නිර්දේශිත පිළියම:</strong>
+                  <strong className="text-xs font-bold text-emerald-900 block mb-1">{t.prescribedRemedyLabel}</strong>
                   <p className="text-sm font-medium text-slate-800 leading-relaxed">{leafResult.solution}</p>
                 </div>
               </div>
@@ -915,16 +923,16 @@ export default function FarmerMode({ language = 'si' }) {
         <div className="clean-card p-6 sm:p-8 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h2 className="text-xl font-black text-slate-900">
-              අද පොහොර දාන්න හොඳද? (කාලගුණ හා සේදීයාම් අනාවැකිය)
+              {t.weatherHeader}
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              තද වැසි දිනවල පොහොර යෙදීමෙන් වැළකී සේදීයාම සහ මුදල් අපතේ යාම වළක්වන්න.
+              {t.weatherHelp}
             </p>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-black text-slate-900 block mb-2">ඔබේ දිස්ත්‍රික්කය තෝරන්න:</label>
+              <label className="text-sm font-black text-slate-900 block mb-2">{t.selectDistrictLabel}</label>
               <div className="flex flex-wrap gap-2">
                 {["Anuradhapura", "Polonnaruwa", "Kurunegala", "Ampara", "Badulla", "Hambantota"].map(d => (
                   <button
@@ -946,7 +954,7 @@ export default function FarmerMode({ language = 'si' }) {
             {weatherData && (
               <div className="space-y-3 pt-2">
                 <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 font-medium text-sm leading-relaxed">
-                  💡 <strong>කාලගුණ උපදෙස:</strong> {weatherData.advice}
+                  💡 <strong>{t.weatherAdviceLabel}</strong> {weatherData.advice}
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
@@ -964,7 +972,7 @@ export default function FarmerMode({ language = 'si' }) {
                       <span className={`text-[11px] font-black px-2 py-0.5 rounded-full inline-block ${
                         item.canSpray ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
                       }`}>
-                        {item.canSpray ? 'පොහොර දැමිය හැක' : 'සේදී යයි!'}
+                        {item.canSpray ? t.canSprayTag : t.cantSprayTag}
                       </span>
                     </div>
                   ))}
@@ -982,19 +990,19 @@ export default function FarmerMode({ language = 'si' }) {
         <div className="clean-card p-6 sm:p-8 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h2 className="text-xl font-black text-slate-900">
-              සාම්ප්‍රදායික කාබනික දියර පොහොර හා කෘමි විකර්ෂක වට්ටෝරු
+              {t.organicHeader}
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              පස සරු කරන ක්ෂුද්‍රජීවී ජීවාමෘත සහ ස්වභාවික කොහොඹ කෘමි විකර්ෂකය නිවසේදීම සාදාගනිමු.
+              {t.organicHelp}
             </p>
           </div>
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               {[
-                { id: 'jeevamrutha', label: 'ජීවාමෘත (Jeevamrutha)', desc: 'පසේ පණ ගැන්වීමට' },
-                { id: 'panchagavya', label: 'පංචගව්‍ය (Panchagavya)', desc: 'බෝග වර්ධනයට' },
-                { id: 'neem', label: 'කොහොඹ සාරය (Neem Spray)', desc: 'ස්වභාවික කෘමි විකර්ෂකය' }
+                { id: 'jeevamrutha', label: t.recJeevTitle, desc: t.recJeevDesc },
+                { id: 'panchagavya', label: t.recPanchTitle, desc: t.recPanchDesc },
+                { id: 'neem', label: t.recNeemTitle, desc: t.recNeemDesc }
               ].map(r => (
                 <button
                   key={r.id}
@@ -1014,32 +1022,32 @@ export default function FarmerMode({ language = 'si' }) {
 
             <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
               <h3 className="text-base font-black text-slate-900">
-                {recipeKey === 'jeevamrutha' ? 'ජීවාමෘත ලීටර් 200 ක් සාදාගන්නා ක්‍රමය:' : (recipeKey === 'panchagavya' ? 'පංචගව්‍ය සාදාගන්නා ක්‍රමය:' : 'කොහොඹ කොළ සාරය සාදාගන්නා ක්‍රමය:')}
+                {recipeKey === 'jeevamrutha' ? (language === 'en' ? 'Jeevamrutha 200L Preparation Formulation:' : 'ජීවාමෘත ලීටර් 200 ක් සාදාගන්නා ක්‍රමය:') : (recipeKey === 'panchagavya' ? 'Panchagavya Preparation:' : 'Neem Leaf Extract Spray:')}
               </h3>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                 <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-500 block">නැවුම් ගොම:</span>
+                  <span className="text-slate-500 block">{language === 'en' ? 'Cow Dung:' : 'නැවුම් ගොම:'}</span>
                   <strong className="text-sm font-black text-emerald-800">10 kg</strong>
                 </div>
                 <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-500 block">ගව මුත්‍රා:</span>
+                  <span className="text-slate-500 block">{language === 'en' ? 'Cow Urine:' : 'ගව මුත්‍රා:'}</span>
                   <strong className="text-sm font-black text-emerald-800">10 Liters</strong>
                 </div>
                 <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-500 block">හකුරු / පැණි:</span>
+                  <span className="text-slate-500 block">{language === 'en' ? 'Jaggery / Molasses:' : 'හකුරු / පැණි:'}</span>
                   <strong className="text-sm font-black text-emerald-800">2 kg</strong>
                 </div>
                 <div className="p-2.5 bg-white rounded-lg border border-slate-200">
-                  <span className="text-slate-500 block">කඩල/මුං පිටි:</span>
+                  <span className="text-slate-500 block">{language === 'en' ? 'Pulse Flour:' : 'කඩල/මුං පිටි:'}</span>
                   <strong className="text-sm font-black text-emerald-800">2 kg</strong>
                 </div>
               </div>
 
               <div className="text-xs text-slate-700 space-y-1 pt-2">
-                <p>1. බැරලයකට වතුර දමා ඉහත ද්‍රව්‍ය සහ තුඹසකින් ගත් පස් අතලොස්සක් දමා කලවම් කරන්න.</p>
-                <p>2. දින 5-7 ක් සෙවණේ තබා දිනකට දෙවරක් ලී දණ්ඩකින් දක්ෂිණාවර්තව කලවම් කරන්න.</p>
-                <p>3. වතුර 10:1 අනුපාතයට තනුක කර අක්කරයකට ලීටර් 200 ක් ගොයමට යොදන්න.</p>
+                <p>1. {language === 'en' ? 'Mix fresh cow dung, urine, jaggery, flour, and a handful of fertile virgin soil into 200L water.' : 'බැරලයකට වතුර දමා ඉහත ද්‍රව්‍ය සහ තුඹසකින් ගත් පස් අතලොස්සක් දමා කලවම් කරන්න.'}</p>
+                <p>2. {language === 'en' ? 'Keep in shade for 5-7 days and stir clockwise twice daily with a wooden stick.' : 'දින 5-7 ක් සෙවණේ තබා දිනකට දෙවරක් ලී දණ්ඩකින් දක්ෂිණාවර්තව කලවම් කරන්න.'}</p>
+                <p>3. {language === 'en' ? 'Dilute 10:1 with water and apply 200L per acre during moist soil conditions.' : 'වතුර 10:1 අනුපාතයට තනුක කර අක්කරයකට ලීටර් 200 ක් ගොයමට යොදන්න.'}</p>
               </div>
             </div>
           </div>
@@ -1047,16 +1055,16 @@ export default function FarmerMode({ language = 'si' }) {
       )}
 
       {/* ================================================================ */}
-      {/* FEATURE 7: 3D GRANULE INSPECTION (Clean Studio Backdrop) */}
+      {/* FEATURE 7: 3D GRANULE INSPECTION */}
       {/* ================================================================ */}
       {activeTab === 'granule3d' && (
         <div className="clean-card p-6 sm:p-8 space-y-6">
           <div className="border-b border-slate-100 pb-4">
             <h2 className="text-xl font-black text-slate-900">
-              3D පොහොර කැටය ත්‍රිමාණව නිරීක්ෂණය කරමු (360° Visualizer)
+              {t.granule3DHeader}
             </h2>
             <p className="text-sm text-slate-600 mt-1">
-              පොහොර කැටය මවුස් එකෙන් හෝ ඇඟිල්ලෙන් කරකවා සැබෑ සහ ව්‍යාජ පොහොර අතර වෙනස බලන්න.
+              {t.granule3DHelp}
             </p>
           </div>
 
@@ -1068,17 +1076,19 @@ export default function FarmerMode({ language = 'si' }) {
                 purityScore={granuleType === 'urea' ? 98.5 : 40.0} 
               />
               <div className="absolute bottom-2 left-3 right-3 text-center text-[11px] text-slate-400 bg-slate-950/70 py-1 rounded-lg backdrop-blur-sm">
-                👆 ඇඟිල්ලෙන් හෝ මවුස් එකෙන් කරකවන්න (Touch & Rotate)
+                {t.granuleDragHint}
               </div>
             </div>
 
             <div className="lg:col-span-5 space-y-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">පරීක්ෂා කිරීමට කැටය තෝරන්න:</span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                {t.granuleSelectLabel}
+              </span>
               
               {[
-                { id: 'urea', title: 'පිරිසිදු යූරියා (Pure Urea)', desc: 'වීදුරු බෝලයක් මෙන් සිනිඳුයි, විනිවිද පෙනේ.' },
-                { id: 'marble', title: 'ගල් කුඩු කලවම (Crushed Marble)', desc: 'රළුයි, උල් ඇත, වතුරේ දිය නොවේ.' },
-                { id: 'mop', title: 'MOP රතු පොහොර (Potash Salt)', desc: 'රතු-රෝස පැහැති ස්ඵටික කැට.' }
+                { id: 'urea', title: t.granuleUreaTitle, desc: t.granuleUreaDesc },
+                { id: 'marble', title: t.granuleMarbleTitle, desc: t.granuleMarbleDesc },
+                { id: 'mop', title: t.granuleMopTitle, desc: t.granuleMopDesc }
               ].map(btn => (
                 <button
                   key={btn.id}
@@ -1099,26 +1109,26 @@ export default function FarmerMode({ language = 'si' }) {
       )}
 
       {/* ================================================================ */}
-      {/* FEATURE 8: FARMER AI CHAT (WhatsApp / Facebook Messenger Style) */}
+      {/* FEATURE 8: FARMER AI CHAT */}
       {/* ================================================================ */}
       {activeTab === 'chat' && (
         <div className="clean-card p-6 sm:p-8 space-y-4">
           <div className="border-b border-slate-100 pb-3">
             <h2 className="text-xl font-black text-slate-900">
-              ගොවි AI උපදේශක (Farmer Assistant)
+              {t.chatHeader}
             </h2>
             <p className="text-xs text-slate-600 mt-0.5">
-              ඔබට ඇති ඕනෑම කෘෂි ගැටලුවක් පහතින් අසන්න.
+              {t.chatHelp}
             </p>
           </div>
 
           {/* Quick Questions */}
           <div className="flex flex-wrap gap-1.5">
             {[
-              "යූරියා බාලද කියලා ගෙදරදි හොයාගන්නේ කොහොමද?",
-              "වී වගාවට මූලික පොහොර යොදන්නේ කවදාද?",
-              "කැල්සියම් නයිට්රේට් සහ TSP කලවම් කරන්න පුලුවන්ද?",
-              "ගොයමේ කොළ කහ වෙලා, මොකද්ද බෙහෙත?"
+              language === 'en' ? "How to test Urea purity at home?" : "යූරියා බාලද කියලා ගෙදරදි හොයාගන්නේ කොහොමද?",
+              language === 'en' ? "When should I apply basal fertilizer for paddy?" : "වී වගාවට මූලික පොහොර යොදන්නේ කවදාද?",
+              language === 'en' ? "Can I mix Calcium Nitrate and TSP?" : "කැල්සියම් නයිට්රේට් සහ TSP කලවම් කරන්න පුලුවන්ද?",
+              language === 'en' ? "Paddy bottom leaves turning yellow, what is the remedy?" : "ගොයමේ කොළ කහ වෙලා, මොකද්ද බෙහෙත?"
             ].map((q, idx) => (
               <button
                 key={idx}
@@ -1148,7 +1158,7 @@ export default function FarmerMode({ language = 'si' }) {
               </div>
             ))}
             {chatLoading && (
-              <div className="text-xs text-slate-500 italic">CropSafe AI පිළිතුර සකසමින් පවතී...</div>
+              <div className="text-xs text-slate-500 italic">{t.chatThinking}</div>
             )}
           </div>
 
@@ -1158,7 +1168,7 @@ export default function FarmerMode({ language = 'si' }) {
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="ඔබට ඇති ගැටලුව මෙහි ලියා යවන්න..."
+              placeholder={t.chatPlaceholder}
               onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
               className="flex-1 p-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:outline-none"
             />
@@ -1167,7 +1177,7 @@ export default function FarmerMode({ language = 'si' }) {
               onClick={() => handleSendChat()}
               className="px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow transition-all"
             >
-              යවන්න
+              {t.btnSend}
             </button>
           </div>
         </div>
