@@ -58,8 +58,8 @@ export default function FarmerMode({ language = 'si' }) {
   // Category filter: 'all' | 'quality' | 'dosage' | 'soilcrop' | 'weatherorganic'
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  // Active Action Tab inside Farmer Mode
-  const [activeTab, setActiveTab] = useState('screening');
+  // Active Action Tab inside Farmer Mode ('home' by default for clean portal view)
+  const [activeTab, setActiveTab] = useState('home');
 
   // --- 1. DIY Screening State ---
   const [test1Water, setTest1Water] = useState('fast_cold'); // 'fast_cold' vs 'slow_sediment'
@@ -1013,161 +1013,388 @@ export default function FarmerMode({ language = 'si' }) {
   return (
     <div className={`space-y-6 pb-20 ${sunlightMode ? 'contrast-125 filter' : ''} ${fontSize === 'large' ? 'text-base' : (fontSize === 'xlarge' ? 'text-lg' : '')}`}>
       
-      {/* Friendly Welcome Card (Clean Facebook Style) */}
-      <div className={`clean-card p-6 bg-gradient-to-r from-emerald-50 via-white to-green-50 ${sunlightMode ? 'border-2 border-emerald-900 shadow-md' : 'border-emerald-200'}`}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="w-14 h-14 rounded-full bg-emerald-600 text-white flex items-center justify-center text-2xl shadow-md flex-shrink-0">
-              🌾
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-                {t.welcomeGreeting}
-              </h1>
-              <p className="text-sm text-slate-600 mt-1">
-                {t.welcomeSub}
-              </p>
-            </div>
-          </div>
+      {/* ========================================================================= */}
+      {/* 1. TOP NAVIGATION BAR WHEN INSIDE A TOOL (BREADCRUMB & BACK BUTTON)       */}
+      {/* ========================================================================= */}
+      {activeTab !== 'home' && (
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-emerald-200 shadow-sm animate-fadeIn">
+          <button
+            type="button"
+            onClick={() => setActiveTab('home')}
+            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs sm:text-sm shadow transition-all transform hover:scale-[1.02]"
+          >
+            <span className="text-base font-black">←</span>
+            <span>{tr("ආපසු ප්‍රධාන මෙනුවට", "Back to Main Menu", "முதன்மை மெனுவுக்கு")}</span>
+          </button>
 
           <div className="flex items-center space-x-2">
-            <button 
-              onClick={() => setActiveTab('screening')}
-              className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-sm shadow transition-all flex items-center space-x-1.5"
+            <span className="text-xs font-bold text-slate-500 hidden md:inline">
+              {tr("වෙනත් සේවාවකට මාරුවෙන්න:", "Switch Tool:", "வேறு சேவை:")}
+            </span>
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="p-2 sm:p-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
-              <span>{t.btnCheckNow}</span>
-            </button>
-            <button 
-              onClick={() => setActiveTab('dosage')}
-              className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 font-bold text-sm border border-emerald-300 shadow-sm transition-all flex items-center space-x-1.5"
+              {allTiles.map(tile => (
+                <option key={tile.id} value={tile.id}>
+                  {tile.icon} {tile.label}
+                </option>
+              ))}
+            </select>
+            <a
+              href="tel:1920"
+              className="px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 font-black text-xs border border-amber-300 transition-all flex items-center space-x-1"
             >
-              <span>{t.btnCalcNow}</span>
-            </button>
+              <PhoneCall className="w-3.5 h-3.5 text-amber-800" />
+              <span>1920</span>
+            </a>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Elderly Farmer Accessibility & Field Sunlight Toolbar */}
-      <div className={`flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-white ${sunlightMode ? 'border-2 border-slate-900 shadow-md' : 'border border-emerald-200/80 shadow-xs'}`}>
-        <div className="flex items-center space-x-2.5 text-xs font-bold text-slate-700">
-          <span className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-black shadow-xs">
-            👁️
-          </span>
-          <div>
-            <span className="block font-black text-slate-900 leading-tight">
-              {tr("ගොවි පහසුකම් සහායක", "Farmer Accessibility Bar", "விவசாயி அணுகல்தன்மை")}
-            </span>
-            <span className="text-[11px] text-slate-500">
-              {tr("පැහැදිලි කියවීමට අකුරු හා ආලෝකය හදන්න", "Adjust font size and outdoor sun contrast", "எழுத்து அளவு மற்றும் வெளிச்சம்")}
-            </span>
+      {/* ========================================================================= */}
+      {/* 2. THE GRAND FARMER HOME PORTAL (SHOWN BY DEFAULT WHEN activeTab === 'home') */}
+      {/* ========================================================================= */}
+      {activeTab === 'home' && (
+        <div className="space-y-6 animate-fadeIn">
+          
+          {/* Friendly Welcome Card (Clean Facebook Style) */}
+          <div className={`clean-card p-6 bg-gradient-to-r from-emerald-50 via-white to-green-50 ${sunlightMode ? 'border-2 border-emerald-900 shadow-md' : 'border-emerald-200'}`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-3xl shadow-md flex-shrink-0">
+                  🌾
+                </div>
+                <div>
+                  <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-emerald-100 text-emerald-900 text-xs font-black mb-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>{tr("ගොවි සහන සේවය සක්‍රියයි", "Farmer Support Active", "விவசாய சேவை தயார்")}</span>
+                  </div>
+                  <h1 className="text-xl sm:text-2xl font-black text-slate-900">
+                    {t.welcomeGreeting}
+                  </h1>
+                  <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                    {t.welcomeSub}
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Weather pill */}
+              <div 
+                onClick={() => setActiveTab('weather')}
+                className="p-3 bg-amber-50 hover:bg-amber-100 rounded-2xl border border-amber-200 flex items-center space-x-3 text-xs cursor-pointer transition-all flex-shrink-0"
+              >
+                <span className="text-2xl">☀️</span>
+                <div>
+                  <strong className="text-amber-950 font-black block">{tr("අද කාලගුණය යහපත්", "Favorable Weather", "வானிலை நன்று")}</strong>
+                  <span className="text-amber-800 text-[11px]">{tr("තද වැසි නැත • පොහොර යෙදීමට සුදුසුයි", "No rain leaching risk", "உரம் இடலாம்")}</span>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="flex items-center flex-wrap gap-2">
-          {/* Font Zoom Controls */}
-          <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
-            {[
-              { id: 'normal', label: 'A', title: tr("සාමාන්‍ය අකුරු", "Normal Text", "சாதாரண எழுத்து") },
-              { id: 'large', label: 'A+', title: tr("විශාල අකුරු", "Large Text", "பெரிய எழுத்து") },
-              { id: 'xlarge', label: 'A++', title: tr("ඉතා විශාල අකුරු (වැඩිහිටි ගොවීන්ට)", "Extra Large", "மிகப் பெரிய எழுத்து") }
-            ].map(f => (
+          {/* Elderly Farmer Accessibility & Field Sunlight Toolbar */}
+          <div className={`flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-white ${sunlightMode ? 'border-2 border-slate-900 shadow-md' : 'border border-emerald-200/80 shadow-xs'}`}>
+            <div className="flex items-center space-x-2.5 text-xs font-bold text-slate-700">
+              <span className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center text-sm font-black shadow-xs">
+                👁️
+              </span>
+              <div>
+                <span className="block font-black text-slate-900 leading-tight">
+                  {tr("ගොවි පහසුකම් සහායක", "Farmer Accessibility Bar", "விவசாயி அணுகல்தன்மை")}
+                </span>
+                <span className="text-[11px] text-slate-500">
+                  {tr("පැහැදිලි කියවීමට අකුරු හා ආලෝකය හදන්න", "Adjust font size and outdoor sun contrast", "எழுத்து அளவு மற்றும் வெளிச்சம்")}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center flex-wrap gap-2">
+              {/* Font Zoom Controls */}
+              <div className="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200">
+                {[
+                  { id: 'normal', label: 'A', title: tr("සාමාන්‍ය අකුරු", "Normal Text", "சாதாரண எழுத்து") },
+                  { id: 'large', label: 'A+', title: tr("විශාල අකුරු", "Large Text", "பெரிய எழுத்து") },
+                  { id: 'xlarge', label: 'A++', title: tr("ඉතා විශාල අකුරු (වැඩිහිටි ගොවීන්ට)", "Extra Large", "மிகப் பெரிய எழுத்து") }
+                ].map(f => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setFontSize(f.id)}
+                    title={f.title}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
+                      fontSize === f.id
+                        ? 'bg-emerald-700 text-white shadow-xs'
+                        : 'text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Sunlight Mode Toggle */}
               <button
-                key={f.id}
                 type="button"
-                onClick={() => setFontSize(f.id)}
-                title={f.title}
-                className={`px-2.5 py-1 rounded-lg text-xs font-black transition-all ${
-                  fontSize === f.id
-                    ? 'bg-emerald-700 text-white shadow-xs'
-                    : 'text-slate-700 hover:bg-slate-200'
+                onClick={() => setSunlightMode(!sunlightMode)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 border ${
+                  sunlightMode
+                    ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-md font-extrabold'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                 }`}
               >
-                {f.label}
+                <span>☀️</span>
+                <span>{tr("හිරු එළිය මාදිලිය", "Sunlight Mode", "சூரிய ஒளி பயன்முறை")}</span>
+              </button>
+
+              {/* Audio Guidance Button */}
+              <button
+                type="button"
+                onClick={() => handleSpeak(
+                  language === 'en'
+                    ? "Welcome to CropSafe AI. You can select any agricultural service from the tiles below or use the microphone to ask questions in your language."
+                    : (language === 'ta'
+                        ? "CropSafe AI இற்கு வரவேற்கிறோம். கீழேயுள்ள சேவைகளில் தேவையானதை தேர்வு செய்யலாம் அல்லது மைக்ரோபோன் மூலம் பேசி ஆலோசனை பெறலாம்."
+                        : "CropSafe AI වෙත සාදරයෙන් පිළිගනිමු. පහත ප්‍රධාන කාඩ්පත් 3 න් එකක් තෝරන්න. නැතහොත් මයික්‍රෆෝනය ඔබා හඬින් ප්‍රශ්නය අසන්න.")
+                )}
+                className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-black transition-all flex items-center space-x-1.5"
+              >
+                <Volume2 className="w-3.5 h-3.5 text-emerald-700" />
+                <span>{tr("හඬ මඟපෙන්වීම", "Voice Help", "குரல் உதவி")}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Voice AI Assistant Hero Card */}
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white shadow-lg space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-4 text-center sm:text-left">
+                <button
+                  type="button"
+                  onClick={handleStartVoice}
+                  className={`w-16 h-16 rounded-2xl flex items-center justify-center text-white shadow-xl transition-all transform hover:scale-105 ${
+                    isListening 
+                      ? 'bg-rose-600 animate-pulse ring-4 ring-rose-400' 
+                      : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950'
+                  }`}
+                  title={tr("හඬින් අසන්න", "Voice Speak", "குரல் மூலம் கேட்க")}
+                >
+                  {isListening ? <MicOff className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-white" />}
+                </button>
+                <div>
+                  <h2 className="text-lg sm:text-xl font-black">
+                    {isListening 
+                      ? tr("ඔබට සවන් දෙමින් පවතී... කතා කරන්න 🎙️", "Listening to you... Speak now", "கேட்கிறது... பேசுங்கள்...")
+                      : tr("🎙️ ඕනෑම ගැටලුවක් මෙතැනින් කතා කර අසන්න", "Ask Any Question with Your Voice", "குரல் மூலம் எந்த கேள்வியும் கேட்கலாம்")}
+                  </h2>
+                  <p className="text-xs text-emerald-100 mt-0.5">
+                    {tr("ලිවීමට හෝ කියවීමට අවශ්‍ය නැත. මයික්‍රෆෝනය ඔබා සිංහලෙන් හෝ දෙමළෙන් අසන්න.", "No typing needed. Tap the mic and speak in Sinhala, Tamil, or English.", "எழுத தேவையில்லை. பேசி ஆலோசனை பெறுங்கள்.")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Emergency 1920 Call Badge */}
+              <a
+                href="tel:1920"
+                className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs shadow-md flex items-center space-x-2 transition-all flex-shrink-0"
+              >
+                <PhoneCall className="w-4 h-4 text-amber-950 animate-bounce" />
+                <span>{tr("නොමිලේ අමතන්න: 1920", "Toll-Free Call: 1920", "இலவச அழைப்பு: 1920")}</span>
+              </a>
+            </div>
+
+            {/* Quick 1-Tap Questions for Illiterate/Elderly Farmers */}
+            <div className="pt-2 border-t border-emerald-700/60 flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-emerald-200 text-[11px] font-bold">{tr("නිතර අසන ප්‍රශ්න:", "Quick Questions:", "அடிக்கடி கேட்கப்படும் கேள்விகள்:")}</span>
+              {[
+                { q: "යූරියා පොහොර බාලද කියලා ගෙදරදීම බලන්නේ කොහොමද?", label: "🔍 යූරියා බාලද බලමු?" },
+                { q: "අක්කර 1ක කුඹුරකට යූරියා මිටි කීයක් ඕනද?", label: "⚖️ අක්කරේට මිටි කීයද?" },
+                { q: "ගොයමේ කොළ කහවෙලා. මොකද්ද හේතුව?", label: "🌿 කොළ කහවෙලා ඇයි?" },
+                { q: "ජීවාමෘත සාදාගන්නේ කොහොමද?", label: "🍯 ජීවාමෘත හදන්නේ කොහොමද?" }
+              ].map((item, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setChatInput(item.q);
+                    setActiveTab('chat');
+                    handleSendChat(item.q);
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white font-medium text-xs transition-all"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* The Big 3 Core Farmer Hero Cards */}
+          <div className="space-y-3">
+            <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center space-x-2">
+              <span>⭐</span>
+              <span>{tr("ගොවීන් නිතරම භාවිතා කරන ප්‍රධාන සේවාවන් 3", "Top 3 Most Used Farmer Services", "முக்கிய 3 விவசாய சேவைகள்")}</span>
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Card 1: Screening */}
+              <div 
+                onClick={() => setActiveTab('screening')}
+                className="p-6 rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner">
+                    🔍
+                  </div>
+                  <span className="text-[10px] uppercase font-black text-emerald-200 tracking-wider block mb-1">
+                    {tr("තත්පර 30 සරල පරීක්ෂාව", "30-Sec DIY Test", "30 நொடி பரிசோதனை")}
+                  </span>
+                  <h3 className="text-xl font-black mb-2">
+                    {tr("පොහොර බාලද බලමු", "Check Fake Fertilizer", "போலி உர பரிசோதனை")}
+                  </h3>
+                  <p className="text-xs text-emerald-100 leading-relaxed font-medium">
+                    {tr("වතුර වීදුරුවකින් හෝ ගින්දරෙන් ගෙදරදීම ගල් කුඩු සහ බාල පොහොර තත්පර 30න් අල්ලමු.", "Test fertilizer at home with water or heat to detect sand, marble stone and chalk adulterants.", "நீர் மற்றும் வெப்பம் மூலம் போலி உரங்களை வீட்டிலேயே கண்டறியுங்கள்.")}
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
+                  <span>{tr("පරීක්ෂා කරමු", "Start Test Now", "தொடங்கவும்")}</span>
+                  <span className="text-lg">➔</span>
+                </div>
+              </div>
+
+              {/* Card 2: Dosage */}
+              <div 
+                onClick={() => setActiveTab('dosage')}
+                className="p-6 rounded-3xl bg-gradient-to-br from-amber-600 to-orange-700 text-white shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner">
+                    ⚖️
+                  </div>
+                  <span className="text-[10px] uppercase font-black text-amber-200 tracking-wider block mb-1">
+                    {tr("මුදල් ඉතිරි කරන ගණකය", "Exact Dosage Calculator", "சரியான உர அளவு")}
+                  </span>
+                  <h3 className="text-xl font-black mb-2">
+                    {tr("අවශ්‍ය පොහොර මිටි ගණන", "How Many Bags Needed?", "தேவையான மூட்டைகள்")}
+                  </h3>
+                  <p className="text-xs text-amber-100 leading-relaxed font-medium">
+                    {tr("අක්කර ගණන දුන් සැනින් අවශ්‍ය යූරියා, TSP, MOP මිටි ගණන සහ ඉතිරි වන මුදල ගණනය කරමු.", "Calculate exact 50kg bags of Urea, TSP, and MOP for your land extent to avoid fertilizer waste.", "நிலத்தின் அளவுக்கு ஏற்ப உர மூட்டைகளையும் பண சேமிப்பையும் அறியவும்.")}
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
+                  <span>{tr("මිටි ගණන හදමු", "Calculate Bags", "கணக்கிட")}</span>
+                  <span className="text-lg">➔</span>
+                </div>
+              </div>
+
+              {/* Card 3: Leaf Doctor */}
+              <div 
+                onClick={() => setActiveTab('leafdoctor')}
+                className="p-6 rounded-3xl bg-gradient-to-br from-green-700 to-emerald-900 text-white shadow-md hover:shadow-xl transition-all cursor-pointer transform hover:-translate-y-1 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl mb-4 shadow-inner">
+                    🌿
+                  </div>
+                  <span className="text-[10px] uppercase font-black text-green-200 tracking-wider block mb-1">
+                    {tr("3D සජීවී බෝග වෛද්‍යවරයා", "3D Interactive Leaf Doctor", "3D பயிர் மருத்துவர்")}
+                  </span>
+                  <h3 className="text-xl font-black mb-2">
+                    {tr("ගොයමේ කොළ කහවෙලාද?", "Are Leaves Yellowing?", "இலை மஞ்சள் அடைந்துள்ளதா?")}
+                  </h3>
+                  <p className="text-xs text-green-100 leading-relaxed font-medium">
+                    {tr("කොළ කහවීම, දම් පැහැවීම 3D වී ගස කරකවා බලා කුඹුරේ ලෙඩේට හරියන බෙහෙත තෝරාගනිමු.", "Inspect 3D rice paddy plant in 360° to match leaf discoloration with Nitrogen, Potassium, or Zinc deficiency.", "3D நெல் பயிரை பார்த்து இலை நோய்க்கான காரணத்தை கண்டறியுங்கள்.")}
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-white/20 flex items-center justify-between text-xs font-black">
+                  <span>{tr("3D පරීක්ෂාව", "Open 3D Doctor", "3D திறக்க")}</span>
+                  <span className="text-lg">➔</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Daily Farmer Quick Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { id: 'bagscan', icon: '🛡️', title: tr("3D පොහොර උරය", "3D Bag & Hologram", "3D உரப்பை"), desc: tr("රජයේ මුද්‍රාව බලන්න", "Verify packaging", "போலி பை ஆய்வு") },
+              { id: 'subsidy', icon: '💳', title: tr("සහනාධාර ඊ-පසුම්බිය", "Subsidy E-Wallet", "மானிய மின்-பை"), desc: tr("රු. 15,000 වවුචරය", "Rs. 15k Quota", "ரூ. 15,000 மானியம்") },
+              { id: 'organic', icon: '🍯', title: tr("කාබනික දියර පොහොර", "Organic Bio-Fertilizer", "இயற்கை திரவ உரம்"), desc: tr("ජීවාමෘත හා කොහොඹ", "Jeevamrutha & Neem", "ஜீவாமிருதம்") },
+              { id: 'weather', icon: '🌧️', title: tr("අද කාලගුණය", "Today's Weather", "வானிலை"), desc: tr("පොහොර සේදීයාම", "Rain leaching risk", "மழை இழப்பு") }
+            ].map((q, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setActiveTab(q.id)}
+                className="p-4 rounded-2xl bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 shadow-xs transition-all text-left flex flex-col justify-between"
+              >
+                <span className="text-2xl mb-1">{q.icon}</span>
+                <div>
+                  <strong className="text-xs sm:text-sm font-black text-slate-900 block">{q.title}</strong>
+                  <span className="text-[11px] text-slate-500 font-medium">{q.desc}</span>
+                </div>
               </button>
             ))}
           </div>
 
-          {/* Sunlight Mode Toggle */}
-          <button
-            type="button"
-            onClick={() => setSunlightMode(!sunlightMode)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1.5 border ${
-              sunlightMode
-                ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-md font-extrabold'
-                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            <span>☀️</span>
-            <span>{tr("හිරු එළිය මාදිලිය", "Sunlight Mode", "சூரிய ஒளி பயன்முறை")}</span>
-          </button>
+          {/* All 17 Services Section with Category Filter Pills */}
+          <div className="space-y-4 pt-4 border-t border-slate-200">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center space-x-2">
+                <span>📱</span>
+                <span>{tr("සියලුම කෘෂි සේවාවන් 17", "All 17 Agricultural Services", "அனைத்து 17 விவசாய சேவைகள்")}</span>
+              </h2>
 
-          {/* Audio Guidance Button */}
-          <button
-            type="button"
-            onClick={() => handleSpeak(
-              language === 'en'
-                ? "Welcome to CropSafe AI. You can select any agricultural service from the tiles below or use the microphone to ask questions in your language."
-                : (language === 'ta'
-                    ? "CropSafe AI இற்கு வரவேற்கிறோம். கீழேயுள்ள சேவைகளில் தேவையானதை தேர்வு செய்யலாம் அல்லது மைக்ரோபோன் மூலம் பேசி ஆலோசனை பெறலாம்."
-                    : "CropSafe AI වෙත සාදරයෙන් පිළිගනිමු. පහත සේවා අතරින් ඔබට අවශ්‍ය සේවාව තෝරන්න. නැතහොත් මයික්‍රෆෝනය ඔබා හඬින් ප්‍රශ්නය අසන්න.")
-            )}
-            className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-black transition-all flex items-center space-x-1.5"
-          >
-            <Volume2 className="w-3.5 h-3.5 text-emerald-700" />
-            <span>{tr("හඬ මඟපෙන්වීම", "Voice Help", "குரல் உதவி")}</span>
-          </button>
+              {/* Category Filter Pills */}
+              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
+                {[
+                  { id: 'all', label: tr('සියල්ල', 'All', 'அனைத்தும்'), count: 17 },
+                  { id: 'quality', label: tr('තත්ත්ව පරීක්ෂාව', 'Quality', 'தரம்'), count: 4 },
+                  { id: 'dosage', label: tr('පොහොර ගණනය', 'Dosage', 'அளவு'), count: 4 },
+                  { id: 'soilcrop', label: tr('පස් හා බෝග', 'Soil & Crops', 'மண் & பயிர்'), count: 6 },
+                  { id: 'weatherorganic', label: tr('කාලගුණ/කාබනික', 'Weather/Organic', 'வானிலை/இயற்கை'), count: 3 }
+                ].map(cat => (
+                  <button
+                    key={cat.id}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center space-x-1 ${
+                      selectedCategory === cat.id
+                        ? 'bg-emerald-700 text-white shadow-xs'
+                        : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                    <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
+                      selectedCategory === cat.id ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {cat.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Grid of All Filtered Services */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {visibleTiles.map(tile => (
+                <button
+                  key={tile.id}
+                  onClick={() => setActiveTab(tile.id)}
+                  className="p-4 rounded-2xl border text-left transition-all bg-white text-slate-800 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/60 shadow-xs hover:shadow-md transform hover:scale-[1.01]"
+                >
+                  <span className="text-2xl block mb-2">{tile.icon}</span>
+                  <span className="text-sm font-black block leading-snug">{tile.label}</span>
+                  <span className="text-xs text-slate-500 block mt-1 line-clamp-1">
+                    {tile.desc}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
-      </div>
-
-      {/* Category Filter Pills */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1 scrollbar-none">
-        {[
-          { id: 'all', label: tr('සියලු සේවා 17', 'All 17 Services', 'அனைத்து 17 சேவைகள்'), count: 17 },
-          { id: 'quality', label: t.catQuality, count: 4 },
-          { id: 'dosage', label: t.catDosage, count: 4 },
-          { id: 'soilcrop', label: t.catSoilCrop, count: 6 },
-          { id: 'weatherorganic', label: t.catWeatherOrganic, count: 3 }
-        ].map(cat => (
-          <button
-            key={cat.id}
-            type="button"
-            onClick={() => setSelectedCategory(cat.id)}
-            className={`px-4 py-2 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center space-x-1.5 ${
-              selectedCategory === cat.id
-                ? 'bg-slate-900 text-white shadow-sm'
-                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            <span>{cat.label}</span>
-            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-              selectedCategory === cat.id ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'
-            }`}>
-              {cat.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Main Service Shortcuts Grid (Filtered by Category) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-        {visibleTiles.map(tile => (
-          <button
-            key={tile.id}
-            onClick={() => setActiveTab(tile.id)}
-            className={`p-4 rounded-2xl border text-left transition-all ${
-              activeTab === tile.id
-                ? 'bg-emerald-700 text-white border-emerald-700 shadow-md transform scale-[1.01]'
-                : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 shadow-sm'
-            }`}
-          >
-            <span className="text-2xl block mb-2">{tile.icon}</span>
-            <span className="text-sm font-black block leading-snug">{tile.label}</span>
-            <span className={`text-xs block mt-1 line-clamp-1 ${activeTab === tile.id ? 'text-emerald-100' : 'text-slate-500'}`}>
-              {tile.desc}
-            </span>
-          </button>
-        ))}
-      </div>
+      )}
 
       {/* ================================================================ */}
       {/* FEATURE 1: DIY FIELD SCREENING */}
