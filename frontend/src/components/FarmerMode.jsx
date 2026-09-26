@@ -39,7 +39,8 @@ import {
   Calendar,
   Clock,
   Bell,
-  Sparkle
+  Sparkle,
+  Waves
 } from 'lucide-react';
 import ThreeGranuleCanvas from './ThreeGranuleCanvas';
 import ThreePlantCanvas from './ThreePlantCanvas';
