@@ -1,0 +1,12 @@
+{
+  "session_id": "VOICE-20260926-184741",
+  "input_transcript": "ගොයමේ කොළ කහ වෙලා, මොකද්ද බෙහෙත?",
+  "detected_intent": "INTENT_CROP_TOXICITY",
+  "extracted_entities": {},
+  "action_routing": "DISPATCH_TOXICITY_TROUBLESHOOTER",
+  "speech_synthesis_transcript": {
+    "sinhala_response": "පොහොර යෙදූ පසු කොළ අග කහ වීම හෝ පිච්චීම සිදුවී ඇත්නම්, එය බයියුරෙට් විෂවීමක් හෝ පොහොර සැර වැඩිවීමක් විය හැක. කඩිනමින් කුඹුරට අඟල් 2-3ක් ජලය බැඳ අතිරික්ත ලවණ සෝදා හරින්න. ඉදිරි සති දෙක තුළ කිසිදු රසායනික පොහොරක් නොයොදන්න.",
+    "english_translation": "If leaf tips are turning yellow or scorched, it indicates biuret toxicity or salt burn. Immediately flush the field with 2-3 inches of clean water to leach salts and pause fertilizer application."
+  },
+  "timestamp": "2026-09-26T18:47:41.209432+00:00"
+}

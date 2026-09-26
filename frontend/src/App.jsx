@@ -1,13 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import Navbar from './components/Navbar';
 import FarmerMode from './components/FarmerMode';
-import ChemistLabMode from './components/ChemistLabMode';
-import WarehouseMode from './components/WarehouseMode';
-import InspectorMode from './components/InspectorMode';
-import NationalMapMode from './components/NationalMapMode';
 import { translations } from './i18n';
-import { Sprout, PhoneCall, ShieldCheck, GraduationCap, Heart, Zap } from 'lucide-react';
+import { 
+  Sprout, 
+  PhoneCall, 
+  ShieldCheck, 
+  GraduationCap, 
+  Heart, 
+  Zap, 
+  Lock, 
+  Unlock, 
+  ShieldAlert, 
+  UserCheck, 
+  KeyRound, 
+  CheckCircle2, 
+  ArrowRight,
+  Layers
+} from 'lucide-react';
 import './App.css';
+
+// Code-split heavy modes with React.lazy for instant mobile loading & optimal bundle size
+const ChemistLabMode = lazy(() => import('./components/ChemistLabMode'));
+const WarehouseMode = lazy(() => import('./components/WarehouseMode'));
+const InspectorMode = lazy(() => import('./components/InspectorMode'));
+const NationalMapMode = lazy(() => import('./components/NationalMapMode'));
 
 const API_BASE = "http://localhost:8000";
 
@@ -17,10 +34,10 @@ function SplashScreen({ onDone }) {
   const [currentHint, setCurrentHint] = useState(0);
 
   const hints = [
-    "🌾 ගොවි දත්ත පූරණය කෙරේ...",
-    "🔬 AI ආදර්ශ ප්‍රාරම්භ කෙරේ...",
-    "🛡️ ආරක්ෂිත සම්බන්ධතාවය පරීක්ෂා කෙරේ...",
-    "✅ සූදානම්!"
+    "🌾 ගොවි දත්ත හා පැතිකඩ පූරණය කෙරේ...",
+    "🔬 AI පර්යේෂණ ආදර්ශ ප්‍රාරම්භ කෙරේ...",
+    "🛡️ රාජ්‍ය ආරක්ෂිත ද්වාර පරීක්ෂා කෙරේ...",
+    "✅ සාදරයෙන් පිළිගනිමු!"
   ];
 
   useEffect(() => {
@@ -57,7 +74,7 @@ function SplashScreen({ onDone }) {
 
       {/* Features pills */}
       <div className="flex flex-wrap justify-center gap-2 mb-10 animate-fadeIn delay-200">
-        {['50 AI Models', 'Trilingual', 'Offline Ready', 'Farmer First'].map((f, i) => (
+        {['50 AI Models', 'Trilingual', 'Farmer Profile', 'Live Camera', 'Officer RBAC'].map((f, i) => (
           <span key={i} className="px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white text-xs font-bold backdrop-blur-sm">
             ✓ {f}
           </span>
@@ -81,6 +98,155 @@ function SplashScreen({ onDone }) {
   );
 }
 
+// Suspense Fallback Loader
+function TabLoader({ title }) {
+  return (
+    <div className="clean-card p-12 text-center space-y-4 my-8 animate-fadeIn">
+      <div className="w-16 h-16 rounded-2xl bg-emerald-100 text-emerald-700 mx-auto flex items-center justify-center animate-spin">
+        <Layers className="w-8 h-8" />
+      </div>
+      <div>
+        <h3 className="text-base font-black text-slate-800">{title || "මොඩියුලය පූරණය වෙමින් පවතී..."}</h3>
+        <p className="text-xs text-slate-500 mt-1">කෘෂිකාර්මික දත්ත හා 3D පරිසරය සූදානම් කෙරේ</p>
+      </div>
+    </div>
+  );
+}
+
+// Institutional Officer Authentication Modal
+function OfficerAuthModal({ targetTab, onAuthenticate, onCancel, language }) {
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState(false);
+
+  const roleMeta = {
+    chemist: {
+      name: language === 'en' ? 'SLSI Certified Chemist Lab' : 'SLSI සහතිකලත් රසායනාගාරය',
+      dept: 'Sri Lanka Standards Institution (SLSI 644)',
+      badge: 'CHEM-LAB-SLSI',
+      desc: 'නිල රසායනාගාර පරීක්ෂණ, ව්‍යාජ සංයුති වර්ගීකරණය හා SLSI විශ්ලේෂණ වාර්තා (CoA) සැකසීම.'
+    },
+    warehouse: {
+      name: language === 'en' ? 'Government Warehouse & Buffer Depot' : 'රජයේ පොහොර මධ්‍යම ගබඩාව',
+      dept: 'National Fertilizer Secretariat (NFS)',
+      badge: 'WH-AP-01-NFS',
+      desc: 'ජාතික පොහොර සංචිත කළමනාකරණය, IoT ඩිජිටල් නිවුන් පද්ධතිය හා නිකුත් කිරීම් පාලනය.'
+    },
+    inspector: {
+      name: language === 'en' ? 'Enforcement & Legal Inspection Wing' : 'නීති බලාත්මක හා වැටලීම් ඒකකය',
+      dept: 'Consumer Affairs Authority & Fertilizer Act No. 68',
+      badge: 'LEGAL-INSP-2026',
+      desc: 'අධිකරණ B-වාර්තා සැකසීම, පැමිණිලි විමර්ශනය හා ජාතික ප්‍රතිපත්ති ආරක්ෂණ පද්ධතිය.'
+    }
+  }[targetTab] || {
+    name: 'රාජකාරි පිවිසුම',
+    dept: 'Department of Agriculture',
+    badge: 'DOA-OFFICER',
+    desc: 'නිලධාරී අංශය වෙත පිවිසීම.'
+  };
+
+  const handleVerify = (e) => {
+    e?.preventDefault();
+    // Default Officer PINs: 1234, 1920, 2026, or 'admin'
+    if (['1234', '1920', '2026', 'admin', 'cropsafe'].includes(pin.trim())) {
+      onAuthenticate({ mode: 'OFFICER', badgeId: roleMeta.badge });
+    } else {
+      setError(true);
+    }
+  };
+
+  const handleDemoGuest = () => {
+    onAuthenticate({ mode: 'GUEST_DEMO', badgeId: 'DEMO-OBSERVER' });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 sm:p-8 space-y-6 animate-scaleIn">
+        
+        {/* Header */}
+        <div className="flex items-center space-x-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0">
+            <ShieldAlert className="w-7 h-7 text-amber-700" />
+          </div>
+          <div>
+            <div className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-900 text-[10px] font-black uppercase tracking-wider">
+              <Lock className="w-3 h-3 text-amber-700" />
+              <span>නිලධාරී පිවිසුම් ද්වාරය</span>
+            </div>
+            <h3 className="text-lg font-black text-slate-900 mt-1">{roleMeta.name}</h3>
+            <p className="text-xs text-slate-500 font-semibold">{roleMeta.dept}</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-600 bg-slate-50 p-3.5 rounded-2xl border border-slate-100 leading-relaxed">
+          {roleMeta.desc}
+        </p>
+
+        {/* PIN Entry Form */}
+        <form onSubmit={handleVerify} className="space-y-4">
+          <div>
+            <label className="block text-xs font-black text-slate-700 mb-1.5 flex items-center justify-between">
+              <span>රාජකාරි PIN අංකය (Officer PIN)</span>
+              <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
+                Demo PIN: 1234
+              </span>
+            </label>
+            <div className="relative">
+              <input
+                type="password"
+                maxLength={6}
+                value={pin}
+                onChange={(e) => { setPin(e.target.value); setError(false); }}
+                placeholder="PIN අංකය ඇතුළත් කරන්න (උදා: 1234)"
+                className="w-full p-3.5 pl-11 rounded-2xl border border-slate-300 font-bold text-base text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all"
+                autoFocus
+              />
+              <KeyRound className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            </div>
+            {error && (
+              <p className="text-xs font-bold text-rose-600 mt-1.5 animate-fadeIn">
+                ❌ PIN අංකය වැරදිය. (නිරීක්ෂණය සඳහා පහත ආදර්ශන බොත්තම ඔබන්න)
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <button
+              type="submit"
+              className="flex-1 py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm shadow-md transition-all flex items-center justify-center space-x-1.5 active:scale-95"
+            >
+              <Unlock className="w-4 h-4" />
+              <span>තහවුරු කර පිවිසෙන්න</span>
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="py-3 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-sm hover:bg-slate-50 transition-all"
+            >
+              ආපසු
+            </button>
+          </div>
+        </form>
+
+        {/* Demo / Evaluator Bypass Option */}
+        <div className="pt-4 border-t border-slate-100 text-center">
+          <button
+            type="button"
+            onClick={handleDemoGuest}
+            className="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all flex items-center justify-center space-x-2 border border-slate-200"
+          >
+            <UserCheck className="w-4 h-4 text-emerald-700" />
+            <span>නිරීක්ෂණ මාදිලියෙන් පිවිසෙන්න (Guest / Evaluator Demo Mode)</span>
+          </button>
+          <p className="text-[10px] text-slate-400 mt-1.5">
+            විශ්වවිද්‍යාල ඇගයීම් හා පර්යේෂණ නිරීක්ෂණ සඳහා PIN රහිතව සම්පූර්ණ දසුන ලබාගත හැක.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [currentTab, setCurrentTab] = useState('farmer');
   const [language, setLanguage] = useState('si');
@@ -88,6 +254,17 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [tabTransition, setTabTransition] = useState(false);
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  // Institutional RBAC Authentication State
+  const [pendingTab, setPendingTab] = useState(null);
+  const [authorizedRoles, setAuthorizedRoles] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('cropsafe_authorized_roles');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
   const t = translations[language] || translations.si;
 
@@ -118,7 +295,7 @@ function App() {
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+  }, [authorizedRoles]);
 
   // PWA install prompt
   useEffect(() => {
@@ -132,9 +309,32 @@ function App() {
 
   const handleTabChange = (tab) => {
     if (tab === currentTab) return;
+
+    // Secure tabs check: Chemist, Warehouse, Inspector require authentication
+    if (['chemist', 'warehouse', 'inspector'].includes(tab) && !authorizedRoles[tab]) {
+      setPendingTab(tab);
+      return;
+    }
+
     setTabTransition(true);
     setTimeout(() => {
       setCurrentTab(tab);
+      setTabTransition(false);
+    }, 150);
+  };
+
+  const handleAuthenticate = (roleData) => {
+    if (!pendingTab) return;
+    const updated = { ...authorizedRoles, [pendingTab]: roleData };
+    setAuthorizedRoles(updated);
+    try {
+      sessionStorage.setItem('cropsafe_authorized_roles', JSON.stringify(updated));
+    } catch {}
+    const dest = pendingTab;
+    setPendingTab(null);
+    setTabTransition(true);
+    setTimeout(() => {
+      setCurrentTab(dest);
       setTabTransition(false);
     }, 150);
   };
@@ -143,6 +343,16 @@ function App() {
     <>
       {/* Splash Screen */}
       {showSplash && <SplashScreen onDone={() => setShowSplash(false)} />}
+
+      {/* Officer Authentication Modal */}
+      {pendingTab && (
+        <OfficerAuthModal
+          targetTab={pendingTab}
+          onAuthenticate={handleAuthenticate}
+          onCancel={() => setPendingTab(null)}
+          language={language}
+        />
+      )}
 
       <div className={`min-h-screen bg-slate-100 text-slate-900 flex flex-col font-sans transition-opacity duration-300 ${showSplash ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
 
@@ -155,6 +365,32 @@ function App() {
           apiOnline={apiOnline}
         />
 
+        {/* Role Status Banner when inside restricted mode */}
+        {authorizedRoles[currentTab] && currentTab !== 'farmer' && currentTab !== 'map' && (
+          <div className="bg-emerald-900 text-emerald-100 px-4 py-1.5 text-xs font-semibold flex items-center justify-between no-print border-b border-emerald-800">
+            <div className="flex items-center space-x-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>
+                {authorizedRoles[currentTab].mode === 'OFFICER' 
+                  ? `තහවුරු කළ නිලධාරී සැසිය: [${authorizedRoles[currentTab].badgeId}]` 
+                  : `ආදර්ශන නිරීක්ෂණ මාදිලිය (Guest Demo Mode) සක්‍රියයි`}
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                const next = { ...authorizedRoles };
+                delete next[currentTab];
+                setAuthorizedRoles(next);
+                try { sessionStorage.setItem('cropsafe_authorized_roles', JSON.stringify(next)); } catch {}
+                setCurrentTab('farmer');
+              }}
+              className="text-[11px] font-bold text-emerald-300 hover:text-white underline ml-4"
+            >
+              ඉවත් වන්න (Logout)
+            </button>
+          </div>
+        )}
+
         {/* Install Banner */}
         {showInstallBanner && (
           <div className="bg-emerald-700 text-white px-4 py-2 flex items-center justify-between text-sm no-print animate-slideInUp">
@@ -166,13 +402,16 @@ function App() {
           </div>
         )}
 
-        {/* Main Content Area */}
+        {/* Main Content Area with Code Splitting & Suspense */}
         <main className={`flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 transition-opacity duration-150 ${tabTransition ? 'opacity-0' : 'opacity-100'}`}>
-          {currentTab === 'farmer'    && <FarmerMode    language={language} />}
-          {currentTab === 'chemist'   && <ChemistLabMode language={language} />}
-          {currentTab === 'warehouse' && <WarehouseMode  language={language} />}
-          {currentTab === 'inspector' && <InspectorMode  language={language} />}
-          {currentTab === 'map'       && <NationalMapMode language={language} />}
+          {currentTab === 'farmer' && <FarmerMode language={language} />}
+
+          <Suspense fallback={<TabLoader title={currentTab === 'chemist' ? 'රසායනාගාරය පූරණය වේ...' : currentTab === 'warehouse' ? 'ස්මාර්ට් ගබඩාව පූරණය වේ...' : currentTab === 'inspector' ? 'නීති හා වැටලීම් පද්ධතිය පූරණය වේ...' : 'ජාතික සිතියම පූරණය වේ...'} />}>
+            {currentTab === 'chemist'   && <ChemistLabMode language={language} officerRole={authorizedRoles.chemist} />}
+            {currentTab === 'warehouse' && <WarehouseMode  language={language} officerRole={authorizedRoles.warehouse} />}
+            {currentTab === 'inspector' && <InspectorMode  language={language} officerRole={authorizedRoles.inspector} />}
+            {currentTab === 'map'       && <NationalMapMode language={language} />}
+          </Suspense>
         </main>
 
         {/* Enhanced Footer */}

@@ -1,0 +1,12 @@
+{
+  "session_id": "VOICE-20260926-184900",
+  "input_transcript": "yuria",
+  "detected_intent": "INTENT_UNKNOWN",
+  "extracted_entities": {},
+  "action_routing": "GENERAL_ASSISTANCE",
+  "speech_synthesis_transcript": {
+    "sinhala_response": "ගොවි මහත්මයා, ඔබගේ කෘෂිකාර්මික විමසීම CropSafe AI වෙත ලැබුණි. කරුණාකර පොහොර වර්ගය සහ ගැටලුව පැහැදිලි කරන්න.",
+    "english_translation": "Farmer, your voice query was received. Please specify the fertilizer type and your concern."
+  },
+  "timestamp": "2026-09-26T18:49:00.963908+00:00"
+}
