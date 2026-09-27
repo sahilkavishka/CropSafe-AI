@@ -46,22 +46,22 @@ export default function Navbar({
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 text-white shadow-xl">
+    <header className="sticky top-0 z-50 bg-gradient-to-r from-emerald-950 via-teal-900 to-emerald-900 border-b-2 border-emerald-500/70 text-white shadow-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3">
         
         {/* Brand Logo & Name */}
         <div className="flex items-center space-x-3 select-none">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-950/50 flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 via-teal-400 to-emerald-600 flex items-center justify-center shadow-lg shadow-emerald-500/30 flex-shrink-0">
             <Sprout className="w-6 h-6 text-slate-950 font-black" />
           </div>
           <div>
             <div className="flex items-center space-x-1.5">
               <span className="text-xl font-black tracking-tight text-white leading-none">
-                Crop<span className="text-emerald-400">Safe</span>
+                Crop<span className="text-emerald-300">Safe</span>
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-black border border-emerald-500/30">AI GovNet</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-400/25 text-emerald-200 font-mono font-black border border-emerald-400/40">AI GovNet</span>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium hidden sm:block leading-none mt-0.5">
+            <p className="text-[10px] text-emerald-200/90 font-semibold hidden sm:block leading-none mt-0.5">
               {tr("ශ්‍රී ලංකා ජාතික පොහොර බුද්ධි පද්ධතිය", "National Fertilizer Intelligence System", "தேசிய உர நுண்ணறிவு தளம்")}
             </p>
           </div>
@@ -76,30 +76,31 @@ export default function Navbar({
               <button
                 type="button"
                 onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left transition-all hover:border-slate-600 shadow-sm"
+                className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border-2 border-emerald-400/40 hover:border-emerald-300 text-left transition-all shadow-md backdrop-blur-md"
               >
-                <span className="text-xl flex-shrink-0">{currentUser.avatar_icon || '👨🏽‍🌾'}</span>
+                <span className="text-2xl flex-shrink-0">{currentUser.avatar_icon || '👨🏽‍🌾'}</span>
                 <div className="hidden md:block leading-tight">
                   <div className="flex items-center space-x-1.5">
                     <span className="text-xs font-black text-white">{currentUser.full_name_si || currentUser.full_name_en}</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black shadow-xs">
                       {currentUser.role}
                     </span>
                   </div>
-                  <span className="text-[10px] text-slate-400 block truncate max-w-[150px]">
+                  <span className="text-[10px] text-emerald-200 block truncate max-w-[160px] font-medium">
                     {currentUser.district_si || currentUser.asc_division || currentUser.facility_name_si || currentUser.agency || 'Sri Lanka'}
                   </span>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronDown className="w-3.5 h-3.5 text-emerald-200" />
               </button>
 
               {/* Quick Switch Dropdown */}
               {roleMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-72 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-fadeIn">
-                  <div className="px-3 py-2 border-b border-slate-800 text-[11px] font-black text-slate-400 uppercase tracking-wider">
-                    {tr("භූමිකාව මාරු කරන්න (Switch Role)", "Switch Official Role", "பாத்திரத்தை மாற்றுக")}
+                <div className="absolute right-0 top-full mt-2 w-80 bg-slate-900 border-2 border-emerald-500/40 rounded-3xl shadow-2xl p-2.5 z-50 animate-fadeIn">
+                  <div className="px-3 py-2 border-b border-slate-800 text-[11px] font-black text-emerald-400 uppercase tracking-wider flex items-center justify-between">
+                    <span>{tr("භූමිකාව මාරු කරන්න", "Switch Official Role", "பாத்திரத்தை மாற்றுக")}</span>
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
                   </div>
-                  <div className="space-y-1 py-1">
+                  <div className="space-y-1.5 py-1.5">
                     {allRoles.map(r => {
                       const isActive = currentUser.role?.toLowerCase().includes(r.key);
                       return (
@@ -110,20 +111,20 @@ export default function Navbar({
                             setRoleMenuOpen(false);
                             onSwitchRole(r.key);
                           }}
-                          className={`w-full px-3 py-2 rounded-xl text-left text-xs font-bold transition-all flex items-center justify-between ${
+                          className={`w-full px-3.5 py-2.5 rounded-2xl text-left text-xs font-bold transition-all flex items-center justify-between ${
                             isActive
-                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                              : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                              ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black shadow-md'
+                              : 'text-slate-200 hover:bg-slate-800 hover:text-white border border-transparent hover:border-slate-700'
                           }`}
                         >
-                          <div className="flex items-center space-x-2">
-                            <span>{r.icon}</span>
+                          <div className="flex items-center space-x-2.5">
+                            <span className="text-xl">{r.icon}</span>
                             <div>
                               <p className="leading-tight">{r.label}</p>
-                              <span className="text-[10px] text-slate-400 block font-normal">{r.name}</span>
+                              <span className={`text-[10px] block font-normal ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>{r.name}</span>
                             </div>
                           </div>
-                          {isActive && <Check className="w-4 h-4 text-emerald-400" />}
+                          {isActive && <Check className="w-4 h-4 text-white" />}
                         </button>
                       );
                     })}

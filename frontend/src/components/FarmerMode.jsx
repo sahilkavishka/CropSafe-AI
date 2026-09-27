@@ -497,85 +497,93 @@ export default function FarmerMode({ language = 'si', currentUser = null }) {
             </span>
           </div>
 
-          {/* 4 Hero Quick-Action Workspace Launchers */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* 4 Hero Quick-Action Workspace Launchers - Vibrant High-Contrast Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
               type="button"
               onClick={() => handleOpenTool('dosage')}
-              className="p-5 rounded-2xl bg-white hover:bg-emerald-50/70 border-2 border-emerald-200 text-left transition-all hover:scale-[1.02] shadow-sm group"
+              className="p-5 rounded-3xl bg-gradient-to-br from-white via-emerald-50/80 to-emerald-100/80 hover:to-emerald-200/80 border-2 border-emerald-400 hover:border-emerald-600 text-left transition-all hover:scale-[1.02] shadow-md shadow-emerald-600/10 group flex flex-col justify-between"
             >
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl mb-3 shadow-xs group-hover:scale-110 transition-transform">
-                ⚖️
+              <div>
+                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex items-center justify-center text-2xl mb-3 shadow-md shadow-emerald-600/30 group-hover:scale-110 transition-transform">
+                  ⚖️
+                </div>
+                <strong className="text-base font-black text-slate-950 block group-hover:text-emerald-800 transition-colors">
+                  {t.tileDosage}
+                </strong>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 font-medium">
+                  {t.dosageHelp}
+                </p>
               </div>
-              <strong className="text-base font-black text-slate-900 block group-hover:text-emerald-800">
-                {t.tileDosage}
-              </strong>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                {t.dosageHelp}
-              </p>
-              <div className="mt-3 flex items-center space-x-1 text-xs font-black text-emerald-700">
+              <div className="mt-4 pt-3 border-t border-emerald-200/80 flex items-center justify-between text-xs font-black text-emerald-800">
                 <span>{tr("ගණනය කරන්න", "Calculate Now", "கணக்கிடு")}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => handleOpenTool('calendar')}
-              className="p-5 rounded-2xl bg-white hover:bg-teal-50/70 border-2 border-teal-200 text-left transition-all hover:scale-[1.02] shadow-sm group"
+              className="p-5 rounded-3xl bg-gradient-to-br from-white via-teal-50/80 to-teal-100/80 hover:to-teal-200/80 border-2 border-teal-400 hover:border-teal-600 text-left transition-all hover:scale-[1.02] shadow-md shadow-teal-600/10 group flex flex-col justify-between"
             >
-              <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center text-2xl mb-3 shadow-xs group-hover:scale-110 transition-transform">
-                🌾
+              <div>
+                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-teal-600 to-cyan-700 text-white flex items-center justify-center text-2xl mb-3 shadow-md shadow-teal-600/30 group-hover:scale-110 transition-transform">
+                  🌾
+                </div>
+                <strong className="text-base font-black text-slate-950 block group-hover:text-teal-800 transition-colors">
+                  {tr("කන්න දින දර්ශනය", "DOA Crop Calendar", "பயிர் காலண்டர்")}
+                </strong>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 font-medium">
+                  {tr("බිම් සැකසීමේ සිට අස්වැන්න දක්වා දිනෙන් දින පොහොර උපදෙස්", "Day-by-day fertilizer & water instructions for your crop", "தினசரி உர வழிகாட்டல்")}
+                </p>
               </div>
-              <strong className="text-base font-black text-slate-900 block group-hover:text-teal-800">
-                {tr("කන්න දින දර්ශනය", "DOA Crop Calendar", "பயிர் காலண்டர்")}
-              </strong>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                {tr("බිම් සැකසීමේ සිට අස්වැන්න දක්වා දිනෙන් දින පොහොර උපදෙස්", "Day-by-day fertilizer & water instructions for your crop", "தினசரி உர வழிகாட்டல்")}
-              </p>
-              <div className="mt-3 flex items-center space-x-1 text-xs font-black text-teal-700">
+              <div className="mt-4 pt-3 border-t border-teal-200/80 flex items-center justify-between text-xs font-black text-teal-800">
                 <span>{tr("දින දර්ශනය බලන්න", "Open Calendar", "காலண்டர்")}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </button>
 
             <button
               type="button"
-              onClick={() => handleOpenTool('procurement')}
-              className="p-5 rounded-2xl bg-white hover:bg-blue-50/70 border-2 border-blue-200 text-left transition-all hover:scale-[1.02] shadow-sm group"
+              onClick={() => handleOpenTool('govpassbook')}
+              className="p-5 rounded-3xl bg-gradient-to-br from-white via-blue-50/80 to-blue-100/80 hover:to-blue-200/80 border-2 border-blue-400 hover:border-blue-600 text-left transition-all hover:scale-[1.02] shadow-md shadow-blue-600/10 group flex flex-col justify-between"
             >
-              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center text-2xl mb-3 shadow-xs group-hover:scale-110 transition-transform">
-                🛒
+              <div>
+                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center text-2xl mb-3 shadow-md shadow-blue-600/30 group-hover:scale-110 transition-transform">
+                  🪪
+                </div>
+                <strong className="text-base font-black text-slate-950 block group-hover:text-blue-800 transition-colors">
+                  {tr("ඩිජිටල් ගොවි පොත & කෝටා", "Digital Passbook & Quotas", "உர புத்தகம்")}
+                </strong>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 font-medium">
+                  {tr("DAD ගොවි ලියාපදිංචිය, කන්න කෝටා සහ පෝලිම් රහිත QR වවුචරය", "DAD registry, seasonal quota & express depot QR pass", "உர ஒதுக்கீடு மற்றும் QR டோக்கன்")}
+                </p>
               </div>
-              <strong className="text-base font-black text-slate-900 block group-hover:text-blue-800">
-                {tr("ඔන්ලයින් ඇණවුම් & ගබඩා", "Online Orders & Depots", "உர முன்பதிவு")}
-              </strong>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                {tr("රජයේ ලක්පොහොර හා CCF ගබඩාවලින් සෘජුවම වෙන්කරවා ගන්න", "Direct booking from CCF and Lakpohora warehouses", "நேரடி முன்பதிவு")}
-              </p>
-              <div className="mt-3 flex items-center space-x-1 text-xs font-black text-blue-700">
-                <span>{tr("ඇණවුම් කරන්න", "Pre-order Now", "முன்பதிவு செய்")}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+              <div className="mt-4 pt-3 border-t border-blue-200/80 flex items-center justify-between text-xs font-black text-blue-800">
+                <span>{tr("ගොවි පොත බලන්න", "Open Passbook", "போர்டல்")}</span>
+                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </button>
 
             <button
               type="button"
               onClick={() => handleOpenTool('leafdoctor')}
-              className="p-5 rounded-2xl bg-white hover:bg-emerald-50/70 border-2 border-emerald-200 text-left transition-all hover:scale-[1.02] shadow-sm group"
+              className="p-5 rounded-3xl bg-gradient-to-br from-white via-amber-50/80 to-amber-100/80 hover:to-amber-200/80 border-2 border-amber-400 hover:border-amber-600 text-left transition-all hover:scale-[1.02] shadow-md shadow-amber-600/10 group flex flex-col justify-between"
             >
-              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl mb-3 shadow-xs group-hover:scale-110 transition-transform">
-                🍃
+              <div>
+                <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center text-2xl mb-3 shadow-md shadow-amber-600/30 group-hover:scale-110 transition-transform">
+                  🍃
+                </div>
+                <strong className="text-base font-black text-slate-950 block group-hover:text-amber-800 transition-colors">
+                  {t.tileLeafDoc}
+                </strong>
+                <p className="text-xs text-slate-600 mt-1 line-clamp-2 font-medium">
+                  {t.leafDocHelp}
+                </p>
               </div>
-              <strong className="text-base font-black text-slate-900 block group-hover:text-emerald-800">
-                {t.tileLeafDoc}
-              </strong>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                {t.leafDocHelp}
-              </p>
-              <div className="mt-3 flex items-center space-x-1 text-xs font-black text-emerald-700">
+              <div className="mt-4 pt-3 border-t border-amber-200/80 flex items-center justify-between text-xs font-black text-amber-800">
                 <span>{tr("රෝගය බලන්න", "Diagnose Leaf", "நோய் அறிதல்")}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
               </div>
             </button>
           </div>
@@ -651,43 +659,69 @@ export default function FarmerMode({ language = 'si', currentUser = null }) {
             )}
           </div>
 
-          {/* Master Tool Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {visibleTiles.map(tile => (
-              <button
-                key={tile.id}
-                type="button"
-                onClick={() => handleOpenTool(tile.id)}
-                className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md text-left transition-all hover:scale-[1.01] flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-3xl">{tile.icon}</span>
-                    <div className="flex items-center space-x-1.5">
-                      {tile.popular && (
-                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                          POPULAR
-                        </span>
-                      )}
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {tile.hub === 'operations' ? '🌾 මෙහෙයුම්' : (tile.hub === 'market' ? '💰 වෙළඳපොළ' : '🔬 කෘෂි විද්‍යාව')}
-                      </span>
-                    </div>
-                  </div>
-                  <strong className="text-sm sm:text-base font-black text-slate-900 block group-hover:text-emerald-700 transition-colors">
-                    {tile.label}
-                  </strong>
-                  <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                    {tile.desc}
-                  </p>
-                </div>
+          {/* Master Tool Grid with Vibrant Category Color Coding */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visibleTiles.map(tile => {
+              const isOps = tile.hub === 'operations';
+              const isMkt = tile.hub === 'market';
+              const isSci = tile.hub === 'science';
 
-                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-black text-slate-600 group-hover:text-emerald-700">
-                  <span>{tr("විවෘත කරන්න", "Launch Service", "தொடங்கு")}</span>
-                  <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
-                </div>
-              </button>
-            ))}
+              const cardBg = isOps 
+                ? 'bg-gradient-to-br from-white via-emerald-50/40 to-emerald-50/70 border-emerald-300 hover:border-emerald-500 hover:shadow-emerald-500/10'
+                : isMkt
+                ? 'bg-gradient-to-br from-white via-blue-50/40 to-blue-50/70 border-blue-300 hover:border-blue-500 hover:shadow-blue-500/10'
+                : 'bg-gradient-to-br from-white via-purple-50/40 to-purple-50/70 border-purple-300 hover:border-purple-500 hover:shadow-purple-500/10';
+
+              const badgeColor = isOps
+                ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                : isMkt
+                ? 'bg-blue-100 text-blue-900 border-blue-300'
+                : 'bg-purple-100 text-purple-900 border-purple-300';
+
+              const actionColor = isOps
+                ? 'text-emerald-800'
+                : isMkt
+                ? 'text-blue-800'
+                : 'text-purple-800';
+
+              return (
+                <button
+                  key={tile.id}
+                  type="button"
+                  onClick={() => handleOpenTool(tile.id)}
+                  className={`p-5 rounded-3xl border-2 text-left transition-all hover:scale-[1.02] shadow-sm hover:shadow-md flex flex-col justify-between group ${cardBg}`}
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-12 h-12 rounded-2xl bg-white shadow-xs border border-slate-200/80 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                        {tile.icon}
+                      </div>
+                      <div className="flex items-center space-x-1.5">
+                        {tile.popular && (
+                          <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-xs">
+                            ★ POPULAR
+                          </span>
+                        )}
+                        <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${badgeColor}`}>
+                          {tile.hub === 'operations' ? '🌾 මෙහෙයුම්' : (tile.hub === 'market' ? '💰 වෙළඳපොළ' : '🔬 කෘෂි විද්‍යාව')}
+                        </span>
+                      </div>
+                    </div>
+                    <strong className="text-base font-black text-slate-950 block group-hover:text-emerald-900 transition-colors leading-snug">
+                      {tile.label}
+                    </strong>
+                    <p className="text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed font-medium">
+                      {tile.desc}
+                    </p>
+                  </div>
+
+                  <div className={`mt-4 pt-3 border-t border-slate-200/80 flex items-center justify-between text-xs font-black ${actionColor}`}>
+                    <span>{tr("විවෘත කරන්න", "Launch Tool", "தொடங்கு")}</span>
+                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1.5 transition-transform" />
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
