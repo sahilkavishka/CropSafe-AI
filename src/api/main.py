@@ -56,6 +56,7 @@ from src.models.fertilizer_price_forecaster import price_forecasting_engine
 from src.models.supply_chain_network import SupplyChainNetworkEngine
 from src.models.fertilizer_online_procurement import FertilizerProcurementEngine, ProcurementOrderRequest
 from src.models.gov_fertilizer_registry import GovFertilizerRegistryEngine, GovTokenGenerationRequest
+from src.models.user_auth_engine import UserAuthEngine, LoginRequest
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -641,6 +642,22 @@ def verify_gov_collection_token(token_data: Dict[str, str]):
     """
     token_id = token_data.get("token_id", "")
     return GovFertilizerRegistryEngine.verify_token(token_id)
+
+@app.get("/api/auth/profiles")
+def get_auth_profiles():
+    """
+    Returns verified institutional demonstration profiles (Farmer, Warehouse Officer,
+    Chemist, Field Inspector, National Director) for 1-click evaluation.
+    """
+    return UserAuthEngine.get_all_demo_profiles()
+
+@app.post("/api/auth/login")
+def login_user(req: LoginRequest):
+    """
+    Authenticates user session via NIC (for farmers), Service ID / Badge ID,
+    or 1-click verified institutional role demo.
+    """
+    return UserAuthEngine.authenticate(req)
 
 if __name__ == "__main__":
 

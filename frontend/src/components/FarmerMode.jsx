@@ -63,7 +63,7 @@ import { translations } from '../i18n';
 
 const API_BASE = "http://localhost:8000";
 
-export default function FarmerMode({ language = 'si' }) {
+export default function FarmerMode({ language = 'si', currentUser = null }) {
   const t = translations[language] || translations.si;
 
   // Trilingual Text Helper (Guarantees Tamil, English, and Sinhala parity)
@@ -126,6 +126,20 @@ export default function FarmerMode({ language = 'si' }) {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  useEffect(() => {
+    if (currentUser && (currentUser.role === 'FARMER' || currentUser.nic)) {
+      setFarmerProfile(prev => ({
+        ...prev,
+        name: currentUser.full_name_si || currentUser.full_name_en || prev.name,
+        nic: currentUser.nic || prev.nic,
+        district: currentUser.district || prev.district,
+        ascDivision: currentUser.asc_division || prev.ascDivision,
+        landAcres: currentUser.land_acres || prev.landAcres,
+        crop: currentUser.crop || prev.crop
+      }));
+    }
+  }, [currentUser]);
 
   const handleSaveProfile = (e) => {
     e?.preventDefault();
@@ -443,23 +457,23 @@ export default function FarmerMode({ language = 'si' }) {
                 </div>
               </div>
 
-              {/* Dynamic Live Statistics Bar */}
+              {/* Authentic Farmer & Seasonal Quota Telemetry */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/15">
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
-                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("සක්‍රිය බෝග නිර්දේශ", "Active Crops", "பயிர்கள்")}</span>
-                  <span className="text-lg font-black text-white">{animatedStats.crops} {tr("වර්ග", "Crops", "வகைகள்")}</span>
+                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("ලියාපදිංචි ඉඩම", "Registered Land", "பதிவு நிலம்")}</span>
+                  <span className="text-base sm:text-lg font-black text-white">{farmerProfile.landAcres} {tr("අක්කර (වී)", "Acres (Paddy)", "ஏக்கர்")}</span>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
-                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("හඳුනාගත් ව්‍යාජ සාධක", "Frauds Caught", "மோசடிகள்")}</span>
-                  <span className="text-lg font-black text-amber-300">{animatedStats.adulterants} {tr("ක්‍රම", "Methods", "முறைகள்")}</span>
+                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("මාස් කන්න කෝටාව", "Maha Quota", "பருவ ஒதுக்கீடு")}</span>
+                  <span className="text-base sm:text-lg font-black text-emerald-300">යූරියා 6 | MOP 2</span>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
-                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("ජාතික ප්‍රමිතිය", "National Standard", "தேசிய தரம்")}</span>
-                  <span className="text-lg font-black text-emerald-300">{animatedStats.standards}</span>
+                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("ඉතිරි පොහොර ශේෂය", "Remaining Quota", "மீதமுள்ள உரம்")}</span>
+                  <span className="text-base sm:text-lg font-black text-amber-300">මිටි 4 {tr("ඉතිරියි", "Bags Left", "மீதம்")}</span>
                 </div>
                 <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
-                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("ආවරණය කළ දිස්ත්‍රික්ක", "Districts Covered", "மாவட்டங்கள்")}</span>
-                  <span className="text-lg font-black text-white">{animatedStats.districts} / 25</span>
+                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("සහනාධාර තත්ත්වය", "DBT Subsidy", "மானியம்")}</span>
+                  <span className="text-base sm:text-lg font-black text-white">BOC බැරවිය ✓</span>
                 </div>
               </div>
             </div>

@@ -1,225 +1,223 @@
 import React, { useState } from 'react';
 import { 
   Sprout, 
-  PhoneCall, 
-  CheckCircle,
-  AlertCircle,
-  Globe,
-  Bell,
-  ChevronRight,
-  Zap
+  Globe, 
+  Bell, 
+  ChevronDown, 
+  LogOut, 
+  ShieldCheck, 
+  User, 
+  Check, 
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
 import { translations } from '../i18n';
 
-const SHORTCUT_KEYS = ['1', '2', '3', '4', '5'];
-
 export default function Navbar({ 
-  currentTab, 
-  setCurrentTab, 
-  language, 
-  setLanguage, 
-  apiOnline 
+  currentUser,
+  onSwitchRole = () => {},
+  onLogout = () => {},
+  language = 'si', 
+  setLanguage = () => {}, 
+  apiOnline = true 
 }) {
   const t = translations[language] || translations.si;
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
 
-  const tabs = [
-    { id: 'farmer',    label: t.tabFarmer,    color: 'emerald' },
-    { id: 'chemist',   label: t.tabChemist,   color: 'blue' },
-    { id: 'warehouse', label: t.tabWarehouse, color: 'amber' },
-    { id: 'inspector', label: t.tabInspector, color: 'rose' },
-    { id: 'map',       label: t.tabMap,       color: 'purple' },
+  const tr = (si, en, ta) => {
+    if (language === 'ta') return ta || en || si;
+    if (language === 'en') return en || si;
+    return si;
+  };
+
+  const allRoles = [
+    { key: 'farmer', label: tr("👨🏽‍🌾 ලියාපදිංචි ගොවි මහතා (Farmer)", "Registered Farmer", "விவசாயி"), name: "කේ. එම්. බණ්ඩාර", icon: "👨🏽‍🌾" },
+    { key: 'warehouse', label: tr("🏢 රාජ්‍ය ගබඩා පාලක (Storekeeper)", "Warehouse Storekeeper", "களஞ்சிய அதிகாரி"), name: "පී. ඒ. ජයසිංහ", icon: "🏢" },
+    { key: 'chemist', label: tr("🔬 ප්‍රධාන රසායන විද්‍යාඥ (Chemist)", "Chief Lab Chemist", "வேதியியலாளர்"), name: "ආචාර්ය එන්. විජේසිංහ", icon: "🔬" },
+    { key: 'inspector', label: tr("⚖️ බලාත්මක කිරීමේ නිලධාරී (Inspector)", "Field Inspector", "ஆய்வு அதிகாரி"), name: "එස්. කේ. ද සිල්වා", icon: "⚖️" },
+    { key: 'director', label: tr("🏛️ ජාතික සැලසුම් අධ්‍යක්ෂ (Director)", "National Director", "தேசிய பணிப்பாளர்"), name: "කේ. ආර්. හේරත්", icon: "🏛️" }
   ];
 
-  // Farmer-relevant alerts
   const notifications = [
-    { icon: '🌧️', text: language === 'en' ? 'Heavy rain expected tomorrow. Delay fertilizer application.' : 'හෙට ප්‍රබල වැසි. පොහොර යෙදීම කල් දමන්න.', time: '5m', unread: true },
-    { icon: '📈', text: language === 'en' ? 'Urea open market price rising. Buy at ASC now.' : 'යූරියා විවෘත මිල ඉහළ යයි. ASC හරහා දැන් ගන්න.', time: '1h', unread: true },
-    { icon: '⚠️', text: language === 'en' ? 'Batch LP-2026-N09 under quality investigation.' : 'LP-2026-N09 කාණ්ඩය පරීක්ෂාවේ.', time: '3h', unread: true },
+    { icon: '🌧️', text: language === 'en' ? 'Heavy rain forecast for Anuradhapura tomorrow. Postpone urea broadcasting.' : 'හෙට අනුරාධපුරයට ප්‍රබල වැසි. යූරියා යෙදීම කල් දමන්න.', time: '10m', unread: true },
+    { icon: '🎫', text: language === 'en' ? 'New fast-track fertilizer token issued for Counter 02.' : 'කවුන්ටර 02 සඳහා නව QR පොහොර වවුචරයක් නිකුත් විය.', time: '1h', unread: true },
+    { icon: '🛡️', text: language === 'en' ? 'SLSI 644 Quality audit report ready for Batch LP-2026-N09.' : 'LP-2026-N09 පොහොර කාණ්ඩයේ SLSI 644 විගණන වාර්තාව සූදානම්.', time: '3h', unread: false }
   ];
 
   return (
-    <header className="sticky top-0 z-50 text-white shadow-xl" style={{
-      background: 'linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%)'
-    }}>
-      
-      {/* Top Main Bar */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 text-white shadow-xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex items-center justify-between gap-3">
         
         {/* Brand Logo & Name */}
-        <div 
-          onClick={() => setCurrentTab('farmer')} 
-          className="flex items-center space-x-3 cursor-pointer select-none group"
-        >
-          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shadow-md flex-shrink-0 group-hover:bg-white/25 transition-all backdrop-blur-sm">
-            <Sprout className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-100 group-hover:text-white transition-colors" />
+        <div className="flex items-center space-x-3 select-none">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md shadow-emerald-950/50 flex-shrink-0">
+            <Sprout className="w-6 h-6 text-slate-950 font-black" />
           </div>
           <div>
             <div className="flex items-center space-x-1.5">
-              <span className="text-xl sm:text-2xl font-black tracking-tight text-white font-sans leading-none">
-                Crop<span className="text-emerald-300">Safe</span>
+              <span className="text-xl font-black tracking-tight text-white leading-none">
+                Crop<span className="text-emerald-400">Safe</span>
               </span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 text-white font-black border border-white/20">AI</span>
-              <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 font-bold border border-emerald-400/30 hidden sm:inline">v2.0</span>
+              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-black border border-emerald-500/30">AI GovNet</span>
             </div>
-            <p className="text-[10px] text-emerald-200/80 font-medium hidden sm:block leading-none mt-0.5">
-              {t.subTitle}
+            <p className="text-[10px] text-slate-400 font-medium hidden sm:block leading-none mt-0.5">
+              {tr("ශ්‍රී ලංකා ජාතික පොහොර බුද්ධි පද්ධතිය", "National Fertilizer Intelligence System", "தேசிய உர நுண்ணறிவு தளம்")}
             </p>
           </div>
         </div>
 
-        {/* Right Controls */}
-        <div className="flex items-center space-x-1.5 sm:space-x-3">
+        {/* Right Section: Role Capsule, Role Switcher, Language & Logout */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
           
-          {/* API Status Indicator */}
-          <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg bg-black/15 border border-white/10 text-[10px] font-bold">
-            {apiOnline ? (
-              <>
-                <span className="status-dot-online" />
-                <span className="text-emerald-200">{t.apiOnline || 'Online'}</span>
-              </>
-            ) : (
-              <>
-                <span className="status-dot-offline" />
-                <span className="text-red-300">{t.apiOffline || 'Offline'}</span>
-              </>
-            )}
-          </div>
+          {/* Active User Capsule & Quick Switcher */}
+          {currentUser && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-left transition-all hover:border-slate-600 shadow-sm"
+              >
+                <span className="text-xl flex-shrink-0">{currentUser.avatar_icon || '👨🏽‍🌾'}</span>
+                <div className="hidden md:block leading-tight">
+                  <div className="flex items-center space-x-1.5">
+                    <span className="text-xs font-black text-white">{currentUser.full_name_si || currentUser.full_name_en}</span>
+                    <span className="text-[9px] px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
+                      {currentUser.role}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 block truncate max-w-[150px]">
+                    {currentUser.district_si || currentUser.asc_division || currentUser.facility_name_si || currentUser.agency || 'Sri Lanka'}
+                  </span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+              </button>
 
-          {/* Notification Bell */}
+              {/* Quick Switch Dropdown */}
+              {roleMenuOpen && (
+                <div className="absolute right-0 top-full mt-2 w-72 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-fadeIn">
+                  <div className="px-3 py-2 border-b border-slate-800 text-[11px] font-black text-slate-400 uppercase tracking-wider">
+                    {tr("භූමිකාව මාරු කරන්න (Switch Role)", "Switch Official Role", "பாத்திரத்தை மாற்றுக")}
+                  </div>
+                  <div className="space-y-1 py-1">
+                    {allRoles.map(r => {
+                      const isActive = currentUser.role?.toLowerCase().includes(r.key);
+                      return (
+                        <button
+                          key={r.key}
+                          type="button"
+                          onClick={() => {
+                            setRoleMenuOpen(false);
+                            onSwitchRole(r.key);
+                          }}
+                          className={`w-full px-3 py-2 rounded-xl text-left text-xs font-bold transition-all flex items-center justify-between ${
+                            isActive
+                              ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                              : 'text-slate-200 hover:bg-slate-800 hover:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span>{r.icon}</span>
+                            <div>
+                              <p className="leading-tight">{r.label}</p>
+                              <span className="text-[10px] text-slate-400 block font-normal">{r.name}</span>
+                            </div>
+                          </div>
+                          {isActive && <Check className="w-4 h-4 text-emerald-400" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="border-t border-slate-800 pt-1 mt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setRoleMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full px-3 py-2 rounded-xl text-left text-xs font-bold text-red-400 hover:bg-red-950/40 hover:text-red-300 flex items-center space-x-2 transition-all"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>{tr("ගිණුමෙන් ඉවත් වන්න (Logout)", "Sign Out of Portal", "வெளியேறுக")}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Notifications Bell */}
           <div className="relative">
             <button
               type="button"
               onClick={() => setNotifOpen(!notifOpen)}
-              className="relative p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 transition-all"
-              title={language === 'en' ? 'Farmer Alerts' : 'ගොවි දැනුම්දීම්'}
+              className="relative p-2 rounded-xl bg-slate-800 hover:bg-slate-750 border border-slate-700 text-slate-300 hover:text-white transition-all"
+              title={tr("දැනුම්දීම්", "Alerts", "அறிவிப்புகள்")}
             >
-              <Bell className="w-4 h-4 text-white" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-slate-900 text-[9px] font-black flex items-center justify-center animate-pulse-slow">
-                3
+              <Bell className="w-4 h-4" />
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-slate-950 text-[9px] font-black flex items-center justify-center">
+                2
               </span>
             </button>
 
-            {/* Notifications Dropdown */}
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-slideInUp">
-                <div className="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-900">
-                    {language === 'en' ? '🔔 Farmer Alerts' : '🔔 ගොවි දැනුම්දීම්'}
-                  </span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold">3 නව</span>
+              <div className="absolute right-0 top-full mt-2 w-72 sm:w-80 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl p-2 z-50 animate-fadeIn">
+                <div className="px-3 py-2 border-b border-slate-800 flex items-center justify-between">
+                  <span className="text-xs font-black text-white">🔔 {tr("ජාතික ගොවි දැනුම්දීම්", "Agrarian Alerts", "அறிவிப்புகள்")}</span>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">2 නව</span>
                 </div>
-                <div className="divide-y divide-slate-50">
-                  {notifications.map((n, i) => (
-                    <div key={i} className={`px-4 py-3 hover:bg-slate-50 transition-all cursor-pointer flex items-start space-x-3 ${n.unread ? 'bg-emerald-50/50' : ''}`}>
-                      <span className="text-xl flex-shrink-0">{n.icon}</span>
+                <div className="divide-y divide-slate-800/80 my-1">
+                  {notifications.map((n, idx) => (
+                    <div key={idx} className="p-2.5 hover:bg-slate-800/60 rounded-xl transition-all flex items-start space-x-2.5">
+                      <span className="text-lg flex-shrink-0">{n.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs text-slate-800 leading-relaxed font-medium">{n.text}</p>
-                        <span className="text-[10px] text-slate-400 font-bold">{n.time} {language === 'en' ? 'ago' : 'කළ'}</span>
+                        <p className="text-xs text-slate-200 leading-snug font-medium">{n.text}</p>
+                        <span className="text-[10px] text-slate-400 font-mono mt-1 block">{n.time} {tr("පෙර", "ago", "முன்")}</span>
                       </div>
-                      {n.unread && <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 mt-1" />}
                     </div>
                   ))}
-                </div>
-                <div className="px-4 py-2.5 border-t border-slate-100 text-center">
-                  <button onClick={() => setNotifOpen(false)} className="text-xs text-emerald-700 font-black hover:text-emerald-900">
-                    {language === 'en' ? 'Mark All Read' : 'ඔක්කොම කියවූ ලෙස සලකුණු කරන්න'}
-                  </button>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Trilingual Toggle */}
-          <div className="flex items-center bg-black/20 rounded-xl p-1 border border-white/10 shadow-inner">
-            <Globe className="w-3.5 h-3.5 text-emerald-300 ml-1.5 mr-1 hidden sm:block" />
+          {/* Trilingual Switcher */}
+          <div className="flex items-center bg-slate-800 rounded-xl p-0.5 border border-slate-700">
+            <Globe className="w-3.5 h-3.5 text-emerald-400 ml-1.5 mr-0.5 hidden sm:block" />
             {[
               { code: 'si', label: 'සිං' },
               { code: 'en', label: 'EN' },
               { code: 'ta', label: 'தமிழ்' }
-            ].map(lang => {
-              const isSelected = language === lang.code;
-              return (
-                <button
-                  key={lang.code}
-                  type="button"
-                  onClick={() => setLanguage(lang.code)}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all ${
-                    isSelected
-                      ? 'bg-white text-emerald-900 shadow-sm scale-105'
-                      : 'text-emerald-100 hover:text-white hover:bg-white/10'
-                  }`}
-                >
-                  {lang.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Hotline Button */}
-          <a
-            href="tel:1920"
-            className="flex items-center space-x-1.5 sm:space-x-2 px-3 sm:px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs sm:text-sm shadow-lg transition-all transform hover:scale-105 active:scale-95 hover:shadow-amber-500/40"
-            style={{ boxShadow: '0 4px 15px rgba(251,191,36,0.35)' }}
-          >
-            <PhoneCall className="w-4 h-4 text-amber-950 flex-shrink-0" />
-            <div className="text-left hidden sm:block">
-              <span className="block text-[9px] uppercase tracking-wider font-extrabold text-amber-900 leading-none">
-                {t.hotlineSub}
-              </span>
-              <span className="text-sm font-black leading-tight">
-                {t.hotline}
-              </span>
-            </div>
-            <span className="sm:hidden font-black text-base">1920</span>
-          </a>
-
-        </div>
-
-      </div>
-
-      {/* Navigation Tabs Bar */}
-      <div className="bg-black/20 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-4 flex space-x-1 overflow-x-auto py-1.5 no-scrollbar items-center">
-          {tabs.map((tab, idx) => {
-            const isActive = currentTab === tab.id;
-            return (
+            ].map(lang => (
               <button
-                key={tab.id}
-                onClick={() => setCurrentTab(tab.id)}
-                title={`Ctrl+${idx + 1}`}
-                className={`group flex-shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all duration-200 flex items-center space-x-1.5 relative ${
-                  isActive
-                    ? 'bg-white text-emerald-900 shadow-lg font-black'
-                    : 'text-emerald-100/90 hover:bg-white/15 hover:text-white'
+                key={lang.code}
+                type="button"
+                onClick={() => setLanguage(lang.code)}
+                className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                  language === lang.code
+                    ? 'bg-emerald-500 text-slate-950 font-black shadow-sm'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
-                <span>{tab.label}</span>
-                {isActive && (
-                  <span className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-white opacity-80" />
-                )}
-                {/* Keyboard shortcut tooltip */}
-                <span className="absolute -top-7 left-1/2 -translate-x-1/2 px-1.5 py-0.5 rounded bg-black/70 text-white text-[9px] font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-                  Ctrl+{idx + 1}
-                </span>
+                {lang.label}
               </button>
-            );
-          })}
-          
-          {/* Separator + API status mobile */}
-          <div className="ml-auto flex-shrink-0 flex items-center space-x-1.5 pl-2 sm:hidden">
-            {apiOnline ? (
-              <span className="status-dot-online" />
-            ) : (
-              <span className="status-dot-offline" />
-            )}
+            ))}
           </div>
+
+          {/* Logout Icon Button (Direct) */}
+          {currentUser && (
+            <button
+              type="button"
+              onClick={onLogout}
+              className="p-2 rounded-xl bg-slate-800 hover:bg-red-950/60 border border-slate-700 hover:border-red-500/50 text-slate-400 hover:text-red-300 transition-all hidden sm:flex"
+              title={tr("ඉවත් වන්න", "Sign Out", "வெளியேறுக")}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
+
         </div>
       </div>
-
-      {/* Thin gradient bottom line */}
-      <div className="h-px w-full" style={{ background: 'linear-gradient(90deg, #059669, #0891b2, #7c3aed, #059669)' }} />
-
     </header>
   );
 }
