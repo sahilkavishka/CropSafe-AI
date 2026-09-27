@@ -1283,8 +1283,16 @@ export default function FarmerMode({ language = 'si' }) {
       priority_triage_score: 85.0,
       urgency_level: "URGENT_RED_ALERT",
       recommended_enforcement: language === 'en'
-        ? "Immediate raid and surprise inspection dispatch by Regional Fertilizer Officer & CAA Flying Squad"
-        : "ප්‍රාදේශීය පොහොර නිලධාරී සහ පාරිභෝගික කටයුතු අධිකාරියේ පියාසර බලකාය මගින් ක්ෂණික වැටලීම් නියෝගය",
+        ? (whistleType === 'REGIONAL_SHORTAGE'
+            ? "Direct emergency buffer re-allocation by Department of Agrarian Development & Ceylon Fertilizer Co. (Lakpohora) Depot"
+            : whistleType === 'DISTRIBUTION_DELAY'
+            ? "Expedite Agrarian Services Centre (ASC) voucher clearance and emergency logistics dispatch"
+            : "Immediate raid and surprise inspection dispatch by Regional Fertilizer Officer & CAA Flying Squad")
+        : (whistleType === 'REGIONAL_SHORTAGE'
+            ? "ගොවිජන සංවර්ධන දෙපාර්තමේන්තුව සහ ලක්පොහොර මධ්‍යම සංචිතයෙන් හදිසි පොහොර තොග නිකුත් කිරීම"
+            : whistleType === 'DISTRIBUTION_DELAY'
+            ? "ගොවිජන සේවා මධ්‍යස්ථාන සහනාධාර කූපන් නිකුත් කිරීම සහ ප්‍රවාහන ප්‍රමාදයන් කඩිනම් කිරීම"
+            : "ප්‍රාදේශීය පොහොර නිලධාරී සහ පාරිභෝගික කටයුතු අධිකාරියේ පියාසර බලකාය මගින් ක්ෂණික වැටලීම් නියෝගය"),
       incident_details: {
         dealer_name: whistleDealer,
         location: whistleLocation,
@@ -4610,27 +4618,27 @@ export default function FarmerMode({ language = 'si' }) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {t.whistleDealerLabel || "වෙළඳසැල / මුදලාලිගේ නම:"}
+                  {tr("වෙළඳසැල / ගොවිජන සේවා මධ්‍යස්ථානයේ නම:", "Dealer / Agrarian Services Centre Name:", "வியாபாரி / விவசாய சேவை மைய பெயர்:")}
                 </label>
                 <input
                   type="text"
                   value={whistleDealer}
                   onChange={(e) => setWhistleDealer(e.target.value)}
                   className="w-full p-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:border-emerald-600 focus:outline-none"
-                  placeholder="උදා: පොලොන්නරුව ඇග්‍රෝ සෙන්ටර්"
+                  placeholder={tr("උදා: මැදිරිගිරිය ගොවිජන සේවා මධ්‍යස්ථානය හෝ පොලොන්නරුව ඇග්‍රෝ", "e.g. Medirigiriya ASC or Polonnaruwa Agro", "உதா: மெதிரிகிரிய விவசாய மையம்")}
                 />
               </div>
 
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {t.whistleLocationLabel || "නගරය / ප්‍රදේශය:"}
+                  {tr("නගරය / ප්‍රදේශය:", "Town / Region:", "நகரம் / பிரதேசம்:")}
                 </label>
                 <input
                   type="text"
                   value={whistleLocation}
                   onChange={(e) => setWhistleLocation(e.target.value)}
                   className="w-full p-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:border-emerald-600 focus:outline-none"
-                  placeholder="උදා: මැදිරිගිරිය, පොලොන්නරුව"
+                  placeholder={tr("උදා: මැදිරිගිරිය, පොලොන්නරුව", "e.g. Medirigiriya, Polonnaruwa", "உதா: மெதிரிகிரிய, பொலன்னறுவை")}
                 />
               </div>
             </div>
@@ -4638,26 +4646,28 @@ export default function FarmerMode({ language = 'si' }) {
             {/* Violation Type */}
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                {t.whistleTypeLabel || "වරදෙහි ස්වභාවය:"}
+                {tr("ගැටලුවෙහි / වරදෙහි ස්වභාවය:", "Nature of Issue / Violation:", "சிக்கலின் / குற்றத்தின் தன்மை:")}
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
                 {[
-                  { id: 'PRICE_GOUGING', label: t.whistleTypePrice || 'වැඩිමිල අය කිරීම', icon: '💰' },
-                  { id: 'ADULTERATION', label: t.whistleTypeAdulter || 'බාල / ව්‍යාජ පොහොර', icon: '⚠️' },
-                  { id: 'HOARDING', label: t.whistleTypeHoard || 'පොහොර සඟවා තැබීම', icon: '🔒' }
+                  { id: 'PRICE_GOUGING', label: tr('වැඩිමිල අය කිරීම', 'Price Gouging', 'அதிக விலை'), icon: '💰' },
+                  { id: 'ADULTERATION', label: tr('බාල / ව්‍යාජ පොහොර', 'Adulterated Fertilizer', 'போலி உரம்'), icon: '⚠️' },
+                  { id: 'HOARDING', label: tr('පොහොර සඟවා තැබීම', 'Hoarding & Withholding', 'பதுக்கல்'), icon: '🔒' },
+                  { id: 'REGIONAL_SHORTAGE', label: tr('ප්‍රාදේශීය පොහොර හිඟය', 'Regional Stockout', 'உர தட்டுப்பாடு'), icon: '📉' },
+                  { id: 'DISTRIBUTION_DELAY', label: tr('බෙදාහැරීමේ ප්‍රමාදය', 'Distribution Delay', 'விநியோக தாமதம்'), icon: '⏳' }
                 ].map(v => (
                   <button
                     key={v.id}
                     type="button"
                     onClick={() => setWhistleType(v.id)}
-                    className={`p-3 rounded-xl border text-left text-xs font-bold transition-all flex items-center space-x-2 ${
+                    className={`p-3 rounded-xl border text-left text-xs font-bold transition-all flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 ${
                       whistleType === v.id
-                        ? 'border-red-600 bg-red-50 text-red-950 font-black shadow-sm'
+                        ? 'border-red-600 bg-red-50 text-red-950 font-black shadow-sm ring-1 ring-red-400'
                         : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                   >
                     <span className="text-lg">{v.icon}</span>
-                    <span>{v.label}</span>
+                    <span className="leading-tight">{v.label}</span>
                   </button>
                 ))}
               </div>

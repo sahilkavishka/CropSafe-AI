@@ -182,7 +182,7 @@ class CreditRequest(BaseModel):
 class WhistleblowerRequest(BaseModel):
     dealer_name: str = "Commercial Dealer"
     location: str = "Dambulla Town, Matale District"
-    incident_type: str = "PRICE_GOUGING"  # 'PRICE_GOUGING', 'ADULTERATION', 'HOARDING'
+    incident_type: str = "PRICE_GOUGING"  # 'PRICE_GOUGING', 'ADULTERATION', 'HOARDING', 'REGIONAL_SHORTAGE', 'DISTRIBUTION_DELAY'
     fertilizer_type: str = "Urea"
     batch_no: str = "BATCH-NOT-SPECIFIED"
     gazetted_mrp: float = 2500.0

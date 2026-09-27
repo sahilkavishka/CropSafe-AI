@@ -63,21 +63,53 @@ class WhistleblowerIncidentEngine:
                 priority_score += 25.0
         elif incident_type == "HOARDING":
             priority_score += 35.0
+        elif incident_type == "REGIONAL_SHORTAGE":
+            priority_score += 40.0
+        elif incident_type == "DISTRIBUTION_DELAY":
+            priority_score += 30.0
 
         if len(evidence_files) >= 2:
             priority_score += 15.0
 
         priority_score = min(100.0, priority_score)
 
-        if priority_score >= 80.0:
+        if incident_type == "REGIONAL_SHORTAGE":
+            urgency = "URGENT_RED_ALERT" if priority_score >= 60.0 else "HIGH_PRIORITY_REVIEW"
+            target_action = "Direct emergency buffer re-allocation by Department of Agrarian Development & Ceylon Fertilizer Co. (Lakpohora) Depot"
+            statutory_provisions = [
+                "Department of Agrarian Development Act No. 46 of 2000 [ASC Mandate for Agricultural Inputs]",
+                "National Fertilizer Secretariat (NFS) National Buffer Stock Emergency Directive",
+                "Consumer Affairs Authority Act No. 9 of 2003, Section 12 [Withholding Distribution of Essential Commodities]"
+            ]
+        elif incident_type == "DISTRIBUTION_DELAY":
+            urgency = "HIGH_PRIORITY_REVIEW"
+            target_action = "Expedite Agrarian Services Centre (ASC) voucher clearance and emergency dispatch from district buffer hub"
+            statutory_provisions = [
+                "Department of Agrarian Development Act No. 46 of 2000",
+                "Treasury Fertilizer Subsidy Allocation Circular 2025/2026",
+                "National Fertilizer Secretariat Distribution Tracking Protocol"
+            ]
+        elif priority_score >= 80.0:
             urgency = "URGENT_RED_ALERT"
             target_action = "Immediate raid and surprise inspection dispatch by Regional Fertilizer Officer & CAA Flying Squad"
+            statutory_provisions = [
+                "Consumer Affairs Authority Act No. 9 of 2003, Section 18 [Sale above Gazetted MRP]",
+                "Regulation of Fertilizers Act No. 68 of 1988, Section 8 [Prohibition on Adulteration]",
+                "Public Security Ordinance / Essential Public Services Act (Emergency Fertilizer Regulations)"
+            ]
         elif priority_score >= 50.0:
             urgency = "HIGH_PRIORITY_REVIEW"
             target_action = "Queue for official undercover audit within 48 hours"
+            statutory_provisions = [
+                "Consumer Affairs Authority Act No. 9 of 2003, Section 18 [Sale above Gazetted MRP]",
+                "Regulation of Fertilizers Act No. 68 of 1988, Section 8 [Prohibition on Adulteration]"
+            ]
         else:
             urgency = "ROUTINE_MONITORING"
             target_action = "Flag dealer profile on Provincial Agrarian Watchlist"
+            statutory_provisions = [
+                "Consumer Affairs Authority Act No. 9 of 2003, Section 18 [Sale above Gazetted MRP]"
+            ]
 
         dossier = {
             "ticket_token": token_id,
@@ -98,11 +130,7 @@ class WhistleblowerIncidentEngine:
                 "narrative": narrative,
                 "evidence_attachments": evidence_files
             },
-            "statutory_provisions": [
-                "Consumer Affairs Authority Act No. 9 of 2003, Section 18 [Sale above Gazetted MRP]",
-                "Regulation of Fertilizers Act No. 68 of 1988, Section 8 [Prohibition on Adulteration]",
-                "Public Security Ordinance / Essential Public Services Act (Emergency Fertilizer Regulations)"
-            ]
+            "statutory_provisions": statutory_provisions
         }
 
         # Save HTML and Markdown dossiers
