@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, 
   FlaskConical, 
@@ -51,14 +51,12 @@ import {
   Lock,
   Unlock,
   QrCode,
-  VideoOff
+  VideoOff,
+  Share2
 } from 'lucide-react';
-import ThreeGranuleCanvas from './ThreeGranuleCanvas';
-import ThreePlantCanvas from './ThreePlantCanvas';
-import ThreeBagCanvas from './ThreeBagCanvas';
-import ThreeSoilCanvas from './ThreeSoilCanvas';
-import ThreeDroneFieldCanvas from './ThreeDroneFieldCanvas';
-import OnlineProcurementPortal from './OnlineProcurementPortal';
+import DailyOperationsHub from './farmer/DailyOperationsHub';
+import MarketProcurementHub from './farmer/MarketProcurementHub';
+import FieldScienceAdvisoryHub from './farmer/FieldScienceAdvisoryHub';
 import AgriPrescriptionModal from './AgriPrescriptionModal';
 import InteractiveTourModal from './InteractiveTourModal';
 import { translations } from '../i18n';
@@ -75,151 +73,27 @@ export default function FarmerMode({ language = 'si' }) {
     return si;
   };
 
-  // Category filter: 'all' | 'quality' | 'dosage' | 'finance' | 'advisory'
+  // --- Workspace & Navigation State ---
+  // Workspaces: 'home' | 'operations' | 'market' | 'science'
+  const [activeWorkspace, setActiveWorkspace] = useState('home');
+  const [activeTool, setActiveTool] = useState('dosage');
+
+  // Category filter on Home dashboard: 'all' | 'quality' | 'dosage' | 'finance' | 'advisory'
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Active Action Tab inside Farmer Mode ('home' by default for clean portal view)
-  const [activeTab, setActiveTab] = useState('home');
 
   // --- Home Dashboard Animated Stats & Tips ---
   const [animatedStats, setAnimatedStats] = useState({ crops: 0, adulterants: 0, standards: "SLSI 644", districts: 0 });
   const [tipIndex, setTipIndex] = useState(0);
   const [recentTools, setRecentTools] = useState([]);
 
-  // --- 1. DIY Screening State ---
-  const [test1Water, setTest1Water] = useState('fast_cold'); // 'fast_cold' vs 'slow_sediment'
-  const [test2Vinegar, setTest2Vinegar] = useState('no_bubbles'); // 'no_bubbles' vs 'has_bubbles'
-  const [test3Heat, setTest3Heat] = useState('white_melt'); // 'white_melt', 'clay_char', 'rock_ash'
-  const [screeningResult, setScreeningResult] = useState(null);
-  const [screeningLoading, setScreeningLoading] = useState(false);
-
-  // --- 2. Precision Dosage State ---
-  const [selectedCrop, setSelectedCrop] = useState('paddy');
-  const [landAcres, setLandAcres] = useState(1.0);
-  const [dosageResult, setDosageResult] = useState(null);
-  const [dosageLoading, setDosageLoading] = useState(false);
-
-  // --- 3. Tank Mix State ---
-  const [tankFertilizers, setTankFertilizers] = useState(['urea', 'mop']);
-  const [tankResult, setTankResult] = useState(null);
-
-  // --- 4. Leaf Doctor State ---
-  const [selectedSymptom, setSelectedSymptom] = useState('yellow_lower');
-  const [leafResult, setLeafResult] = useState(null);
-
-  // --- 5. Weather State ---
-  const [selectedDistrict, setSelectedDistrict] = useState('Anuradhapura');
-  const [weatherData, setWeatherData] = useState(null);
-
-  // --- 6. Organic Recipe State ---
-  const [organicAcres, setOrganicAcres] = useState(1.0);
-  const [recipeKey, setRecipeKey] = useState('jeevamrutha');
-
-  // --- 7. 3D Granule State ---
-  const [granuleType, setGranuleType] = useState('urea');
-
-  // --- 8. AI Farmer Chat State ---
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState([]);
-  const [chatLoading, setChatLoading] = useState(false);
-
-  // --- 9. Soil Dolomite / Acidity State ---
-  const [soilPh, setSoilPh] = useState(4.8);
-  const [soilTexture, setSoilTexture] = useState('loam_podzolic');
-  const [dolomiteAcres, setDolomiteAcres] = useState(1.0);
-  const [dolomiteResult, setDolomiteResult] = useState(null);
-  const [dolomiteLoading, setDolomiteLoading] = useState(false);
-
-  // --- 10. Paddy Straw In-situ Decomposition State ---
-  const [strawAcres, setStrawAcres] = useState(1.0);
-  const [grainYield, setGrainYield] = useState(4.5);
-  const [strawResult, setStrawResult] = useState(null);
-  const [strawLoading, setStrawLoading] = useState(false);
-
-  // --- 11. Drone Multispectral NDVI Field State ---
-  const [droneArea, setDroneArea] = useState(1.0);
-  const [droneResult, setDroneResult] = useState(null);
-  const [droneScanning, setDroneScanning] = useState(false);
-
-  // --- 12. Bag Authenticity / Hologram Scanner State ---
-  const [bagBrand, setBagBrand] = useState('ceylon_fertilizer_lakpohora');
-  const [hologramScore, setHologramScore] = useState(0.88);
-  const [microprintScore, setMicroprintScore] = useState(0.90);
-  const [stitchType, setStitchType] = useState('double_chainstitch');
-  const [sealTampered, setSealTampered] = useState(false);
-  const [bagResult, setBagResult] = useState(null);
-  const [bagLoading, setBagLoading] = useState(false);
-
-  // --- 13. Voice Recognition State ---
-  const [isListening, setIsListening] = useState(false);
-
-  // --- 14. Printable Agronomic Prescription State ---
-  const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
-  const [prescriptionData, setPrescriptionData] = useState(null);
-
-  // --- 15. Agrarian Micro-Credit Scorecard State ---
-  const [creditLandAcres, setCreditLandAcres] = useState(2.0);
-  const [creditCrop, setCreditCrop] = useState('paddy');
-  const [creditTenure, setCreditTenure] = useState('swarnabhoomi_permit');
-  const [creditIrrig, setCreditIrrig] = useState('major_irrigation_canal');
-  const [creditExp, setCreditExp] = useState(15);
-  const [creditYield, setCreditYield] = useState(4.5);
-  const [creditDebt, setCreditDebt] = useState(20000.0);
-  const [creditInsurance, setCreditInsurance] = useState(true);
-  const [creditResult, setCreditResult] = useState(null);
-  const [creditLoading, setCreditLoading] = useState(false);
-
-  // --- 16. Whistleblower & Price Gouging State ---
-  const [whistleDealer, setWhistleDealer] = useState('දඹුල්ල කෘෂි වෙළඳසැල');
-  const [whistleLocation, setWhistleLocation] = useState('දඹුල්ල, මාතලේ දිස්ත්‍රික්කය');
-  const [whistleType, setWhistleType] = useState('PRICE_GOUGING');
-  const [whistleFertType, setWhistleFertType] = useState('Urea');
-  const [whistleMrp, setWhistleMrp] = useState(2500.0);
-  const [whistleCharged, setWhistleCharged] = useState(3950.0);
-  const [whistleNarrative, setWhistleNarrative] = useState('නියමිත රජයේ මිල රු. 2,500 ක් වන යූරියා මිටිය රු. 3,950 කට අලෙවි කර නිල බිල්පතක් දීම ප්‍රතික්ෂේප කළේය.');
-  const [whistleResult, setWhistleResult] = useState(null);
-  const [whistleLoading, setWhistleLoading] = useState(false);
-  const [whistleCopied, setWhistleCopied] = useState(false);
-
-  // --- 17. Ancient Ellangawa Cascade Protection State ---
-  const [ellangawaTank, setEllangawaTank] = useState('Thirappane Maha Wewa');
-  const [ellangawaBuffer, setEllangawaBuffer] = useState(true);
-  const [ellangawaResult, setEllangawaResult] = useState(null);
-  const [ellangawaLoading, setEllangawaLoading] = useState(false);
-
   // --- Accessibility & Sunlight Mode ---
   const [fontSize, setFontSize] = useState('normal'); // 'normal' | 'large' | 'xlarge'
   const [sunlightMode, setSunlightMode] = useState(false);
 
-  // --- 19. Soil Salinity & Gypsum State ---
-  const [salinityEc, setSalinityEc] = useState(6.5);
-  const [salinityPh, setSalinityPh] = useState(7.8);
-  const [salinityEsp, setSalinityEsp] = useState(12.0);
-  const [salinityAcres, setSalinityAcres] = useState(1.0);
-  const [salinityResult, setSalinityResult] = useState(null);
-  const [salinityLoading, setSalinityLoading] = useState(false);
-
-  // --- 20. Government Fertilizer Subsidy E-Wallet State ---
-  const [subsidyNic, setSubsidyNic] = useState('198425600123');
-  const [subsidyAsc, setSubsidyAsc] = useState('Tambuttegama ASC');
-  const [subsidyResult, setSubsidyResult] = useState(null);
-  const [subsidyLoading, setSubsidyLoading] = useState(false);
-
-  // --- 21. Crop Stage & Growth Calendar State ---
-  const [calendarPaddyType, setCalendarPaddyType] = useState('3.5_month');
-  const [selectedCropStage, setSelectedCropStage] = useState(1);
-
-  // --- 22. Fertilizer Market Price Forecast State ---
-  const [forecastFert, setForecastFert] = useState('urea');
-  const [forecastHorizon, setForecastHorizon] = useState(3);
-  const [forecastUsdLkr, setForecastUsdLkr] = useState(305.0);
-  const [forecastEnergyChange, setForecastEnergyChange] = useState(8.5);
-  const [forecastFreight, setForecastFreight] = useState(12.0);
-  const [forecastSeason, setForecastSeason] = useState('Maha');
-  const [forecastResult, setForecastResult] = useState(null);
-  const [forecastLoading, setForecastLoading] = useState(false);
-  const [showMacroLevers, setShowMacroLevers] = useState(false);
+  // --- Printable Agronomic Prescription State ---
+  const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
+  const [prescriptionData, setPrescriptionData] = useState(null);
 
   // --- Persistent Farmer Profile State ---
   const [farmerProfile, setFarmerProfile] = useState(() => {
@@ -259,139 +133,9 @@ export default function FarmerMode({ language = 'si' }) {
     try {
       localStorage.setItem('cropsafe_farmer_profile', JSON.stringify(tempProfile));
     } catch (err) {}
-    setLandAcres(tempProfile.landAcres);
-    setSelectedDistrict(tempProfile.district);
-    setSelectedCrop(tempProfile.crop);
-    setSubsidyNic(tempProfile.nic);
-    setSubsidyAsc(tempProfile.ascDivision);
     playTone('chime');
     setShowProfileModal(false);
   };
-
-  // --- 23. Fertilizer Carbon LCA & Green Credits State ---
-  const [carbonUreaKg, setCarbonUreaKg] = useState(100.0);
-  const [carbonTspKg, setCarbonTspKg] = useState(50.0);
-  const [carbonMopKg, setCarbonMopKg] = useState(50.0);
-  const [carbonCompostKg, setCarbonCompostKg] = useState(300.0);
-  const [carbonBiocharKg, setCarbonBiocharKg] = useState(50.0);
-  const [carbonLandHa, setCarbonLandHa] = useState(1.0);
-  const [carbonResult, setCarbonResult] = useState(null);
-  const [carbonLoading, setCarbonLoading] = useState(false);
-
-  const handleCalculateCarbonLCA = async () => {
-    setCarbonLoading(true);
-    playTone('ding');
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/carbon`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          urea_kg: carbonUreaKg,
-          tsp_kg: carbonTspKg,
-          mop_kg: carbonMopKg,
-          compost_kg: carbonCompostKg,
-          biochar_kg: carbonBiocharKg,
-          land_area_ha: carbonLandHa
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCarbonResult(data);
-        playTone('chime');
-      } else {
-        throw new Error("Carbon API offline");
-      }
-    } catch (e) {
-      // Robust scientific offline calculation fallback
-      const scope1 = (carbonUreaKg * 0.733) + (carbonUreaKg * 0.46 * 0.01 * (44 / 28) * 298 * 0.05);
-      const scope2_3 = (carbonUreaKg * 2.647) + (carbonTspKg * 1.217) + (carbonMopKg * 0.687);
-      const compost_offset = carbonCompostKg * 0.18;
-      const biochar_offset = carbonBiocharKg * 2.5;
-      const gross = scope1 + scope2_3;
-      const net = Math.max(0, gross - (compost_offset + biochar_offset));
-      const grade = net < 150 ? 'A' : (net < 300 ? 'B' : (net < 500 ? 'C' : 'D'));
-      const creditsLkr = Math.round((compost_offset + biochar_offset) * 12.5);
-      setCarbonResult({
-        total_gross_footprint_kg_co2e: Math.round(gross * 10) / 10,
-        net_carbon_footprint_kg_co2e: Math.round(net * 10) / 10,
-        carbon_sequestration_offset_kg_co2e: Math.round((compost_offset + biochar_offset) * 10) / 10,
-        carbon_intensity_grade: grade,
-        carbon_credit_earnings_lkr: creditsLkr,
-        carbon_credit_earnings_usd: Math.round(creditsLkr / 305 * 10) / 10,
-        emission_breakdown: {
-          urea_manufacturing_transport: Math.round(carbonUreaKg * 2.647),
-          field_n2o_hydrolysis: Math.round(scope1),
-          tsp_mining_transport: Math.round(carbonTspKg * 1.217),
-          mop_mining_transport: Math.round(carbonMopKg * 0.687)
-        }
-      });
-      playTone('chime');
-    } finally {
-      setCarbonLoading(false);
-    }
-  };
-
-  // --- Live Smartphone & Evidence Photo Capture State ---
-  const [cameraActive, setCameraActive] = useState(false);
-  const [cameraScanning, setCameraScanning] = useState(false);
-  const [cameraError, setCameraError] = useState(null);
-  const [capturedPhotoUrl, setCapturedPhotoUrl] = useState(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-
-  const startCamera = async () => {
-    setCameraError(null);
-    setCameraActive(true);
-    playTone('ding');
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-    } catch (err) {
-      console.warn("Camera access denied or unavailable:", err);
-      setCameraError(language === 'en' ? 'Camera access not available. You can use file upload to attach bag photos.' : 'කැමරාව විවෘත කළ නොහැක. කරුණාකර පහත ගැලරියෙන් ඡායාරූපයක් තෝරන්න.');
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = videoRef.current.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
-    setCameraActive(false);
-    setCameraScanning(false);
-  };
-
-  const captureCameraFrame = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    setCameraScanning(true);
-    playTone('chime');
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // Save authentic photo evidence
-    try {
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      setCapturedPhotoUrl(dataUrl);
-    } catch(err) {
-      console.warn("Could not capture photo evidence:", err);
-    }
-
-    setTimeout(() => {
-      stopCamera();
-    }, 400);
-  };
-
 
   // Web Audio Chime generator for tactile feedback
   const playTone = (type = 'ding') => {
@@ -403,124 +147,30 @@ export default function FarmerMode({ language = 'si' }) {
       const gain = ctx.createGain();
       osc.connect(gain);
       gain.connect(ctx.destination);
-      if (type === 'ding') {
-        osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
-        gain.gain.setValueAtTime(0.12, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.25);
-      } else if (type === 'chime') {
+
+      if (type === 'chime') {
         osc.frequency.setValueAtTime(523.25, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(783.99, ctx.currentTime + 0.2);
-        gain.gain.setValueAtTime(0.14, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880.00, ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-        osc.start(ctx.currentTime);
+        osc.start();
         osc.stop(ctx.currentTime + 0.35);
-      } else if (type === 'warn') {
+      } else if (type === 'buzz') {
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        osc.frequency.setValueAtTime(180, ctx.currentTime);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-        osc.start(ctx.currentTime);
+        osc.start();
         osc.stop(ctx.currentTime + 0.25);
+      } else {
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
       }
-    } catch {
-      // AudioContext blocked or unavailable
-    }
+    } catch (e) {}
   };
-
-  const paddyStages = [
-    {
-      id: 0,
-      stageNumber: 1,
-      title: tr("බිම් සැකසීම සහ වැපිරීම (දින 0)", "Land Preparation & Sowing (Day 0)", "நிலம் தயாரித்தல் & விதைத்தல் (நாள் 0)"),
-      shortTitle: tr("බිම් සැකසීම", "Basal / Day 0", "நிலம் தயாரிப்பு"),
-      days: tr("දින 0", "Day 0", "நாள் 0"),
-      icon: "🌱",
-      fertilizer: tr("මූලික පොහොර (Basal): සම්පූර්ණ TSP (කළු පොහොර) + 35% MOP (රතු පොහොර) + කාබනික කොම්පෝස්ට්", "Basal Dressing: 100% TSP + 35% MOP + Organic Compost", "அடிப்படை உரம்: 100% TSP + 35% MOP + இயற்கை உரம்"),
-      water: tr("මඩ මට්ටමට පමණක් ජලය තබන්න. වැඩි ජලය බැහැර කරන්න.", "Keep muddy saturated soil. Drain excess ponding.", "சேற்று மட்டத்தில் நீர் வைக்கவும்."),
-      action: tr("අවසන් හෑමේදී හෝ වැපිරීමට පෙර පොහොර පසට හොඳින් කලවම් කරන්න.", "Incorporate thoroughly into topsoil during final plowing.", "இறுதி உழவின் போது மண்ணுடன் கலக்கவும்."),
-      watch: tr("කුරුලු හා ගොළුබෙලි හානි පිළිබඳව අවධානයෙන් සිටින්න.", "Watch for snail attacks and bird damage.", "நத்தை மற்றும் பறவை பாதிப்பை கண்காணிக்கவும்.")
-    },
-    {
-      id: 1,
-      stageNumber: 2,
-      title: tr("ගොබ ඇදීම සහ මුල් අවධිය (දින 14-21)", "Tillering & Early Vegetative (Day 14-21)", "தூர்கட்டும் பருவம் (நாள் 14-21)"),
-      shortTitle: tr("පළමු ඉහිරවීම", "Top Dressing 1", "முதல் உரம்"),
-      days: tr("දින 14 - 21", "Days 14-21", "நாள் 14-21"),
-      icon: "🌾",
-      fertilizer: tr("1 වන ඉහිරවීම (Top Dressing 1): සම්පූර්ණ යූරියා ප්‍රමාණයෙන් 45%", "Top Dressing 1: 45% of total Urea recommendation", "முதல் மேலுரம்: 45% யூரியா"),
-      water: tr("කුඹුරේ අඟල් 1-2 ක නොගැඹුරු ජල මට්ටමක් පවත්වා ගන්න.", "Maintain 1-2 inches shallow water depth.", "1-2 அங்குல ஆழத்தில் நீர் வைத்திருக்கவும்."),
-      action: tr("උදෑසන පින්න වියළුණු පසු (පෙ.ව. 8.00 - 10.30) යූරියා යොදන්න. දින 3ක් ජලය බැස නොයන සේ තබාගන්න.", "Apply between 8-10:30 AM after dew dries. Retain water for 3 days.", "பனி காய்ந்த பின் காலையில் இடவும். 3 நாட்களுக்கு நீரை தேக்கி வைக்கவும்."),
-      watch: tr("කොළ හකුලන දළඹුවා සහ ගොක්මැස්සා හානි පරික්ෂා කරන්න.", "Monitor for leaf folder caterpillars and gall midge.", "இலை சுருட்டு புழுவை கண்காணிக்கவும்.")
-    },
-    {
-      id: 2,
-      stageNumber: 3,
-      title: tr("උපරිම පඳුරු දැමීම (දින 35-42)", "Maximum Tillering Stage (Day 35-42)", "அதிகபட்ச தூர்கட்டுதல் (நாள் 35-42)"),
-      shortTitle: tr("පඳුරු දැමීම", "Max Tillering", "அதிக தூர்கள்"),
-      days: tr("දින 35 - 42", "Days 35-42", "நாள் 35-42"),
-      icon: "🌿",
-      fertilizer: tr("පත්‍ර කහවීම ඇත්නම් පමණක් යූරියා දියර ස්ප්‍රේ (1%) හෝ සින්ක් සල්ෆේට් යොදන්න", "If yellowing, apply 1% Urea foliar spray or Zinc Sulphate", "இலை மஞ்சள் நிறமடைந்தால் 1% யூரியா தெளிக்கவும்"),
-      water: tr("දින 2-3 කට වරක් ජලය මාරු කර පස වාතාශ්‍රය කරන්න.", "Aerate soil with intermittent wet & dry irrigation.", "மண்ணை காற்றோட்டமாக வைத்திருக்க நீரை மாற்றி வைக்கவும்."),
-      action: tr("වල් පැලෑටි සම්පූර්ණයෙන් ඉවත් කර බෝගයට හිරු එළිය ලබා දෙන්න.", "Complete second weeding to eliminate nutrient competition.", "களைகளை முற்றிலும் அகற்றவும்."),
-      watch: tr("කොළ පාළුව (Blast) රෝගී පැල්ලම් ඇත්දැයි කොළ පරීක්ෂා කරන්න.", "Inspect leaves for spindle-shaped Blast lesions.", "இலை கருகல் நோயை பரிசோதிக்கவும்.")
-    },
-    {
-      id: 3,
-      stageNumber: 4,
-      title: tr("කරල් කළල අවධිය / බඩ පිපීම (දින 55-65)", "Panicle Initiation & Booting (Day 55-65)", "கதிர் உருவாகும் பருவம் (நாள் 55-65)"),
-      shortTitle: tr("දෙවන ඉහිරවීම", "Top Dressing 2", "இரண்டாம் உரம்"),
-      days: tr("දින 55 - 65", "Days 55-65", "நாள் 55-65"),
-      icon: "🌾",
-      fertilizer: tr("2 වන ඉහිරවීම (Top Dressing 2): යූරියා 55% + MOP (රතු පොහොර) 65%", "Top Dressing 2: 55% Urea + 65% MOP (Potash) for heavy panicles", "இரண்டாம் மேலுரம்: 55% யூரியா + 65% MOP"),
-      water: tr("අඟල් 2-3 ක ප්‍රමාණවත් ජල මට්ටමක් අනිවාර්යයෙන්ම පවත්වා ගන්න.", "Critical stage: Maintain 2-3 inches continuous water depth.", "2-3 அங்குல நீர் மட்டத்தை கட்டாயம் பராமரிக்கவும்."),
-      action: tr("පොටෑසියම් මගින් කරල් සවිමත් වී බරැති ධාන්‍ය ලබාදේ. පොහොර යෙදීමට පෙර වල් නෙළන්න.", "Potassium strengthens stem and promotes grain weight filling.", "பொட்டாசியம் தானியத்தின் எடையை அதிகரிக்கும்."),
-      watch: tr("දුඹුරු පැළ මැක්කා (BPH) ගොයම් ගස් පාමුල සිටීදැයි පරීක්ෂා කරන්න.", "Check plant base for Brown Planthopper (BPH) colonies.", "பயிர் அடிப்பகுதியில் புகையான் உள்ளதா என பார்க்கவும்.")
-    },
-    {
-      id: 4,
-      stageNumber: 5,
-      title: tr("කරල් පැසීම සහ අස්වැන්න (දින 75-100)", "Grain Ripening & Harvest (Day 75-100)", "முதிர்ச்சி & அறுவடை (நாள் 75-100)"),
-      shortTitle: tr("කරල් පැසීම", "Ripening", "அறுவடை"),
-      days: tr("දින 75 - 100", "Days 75-100", "நாள் 75-100"),
-      icon: "🌾",
-      fertilizer: tr("කිසිදු රසායනික පොහොරක් නොයොදන්න! ස්වභාවිකව පැසීමට ඉඩ හරින්න.", "No further fertilizer needed! Allow natural grain hardening.", "உரம் இட தேவையில்லை! இயற்கையாக முதிர விடவும்."),
-      water: tr("අස්වැන්න නෙළීමට සති 2කට පෙර කුඹුරේ ජලය සම්පූර්ණයෙන්ම බස්සන්න.", "Drain field completely 10-14 days before harvest.", "அறுவடைக்கு 10-14 நாட்களுக்கு முன் நீரை முற்றிலும் வடிக்கவும்."),
-      action: tr("කරල් වලින් 85% ක් රන්වන් පැහැ වූ පසු අස්වැන්න නෙළන්න.", "Harvest when 85% of panicles turn golden yellow.", "85% கதிர்கள் தங்க நிறமானதும் அறுவடை செய்யவும்."),
-      watch: tr("ධාන්‍ය තෙතමනය 14% දක්වා වේලා ගබඩා කරන්න.", "Dry paddy grains to 14% moisture before storage.", "14% ஈரப்பதத்திற்கு காயவைத்து சேமிக்கவும்.")
-    }
-  ];
-
-  // Reset or update localized defaults on language change
-  useEffect(() => {
-    setChatMessages([
-      {
-        sender: 'bot',
-        text: t.chatInitBot
-      }
-    ]);
-    // Clear screening banner if present so language updates cleanly
-    if (screeningResult) {
-      setScreeningResult(null);
-    }
-  }, [language]);
-
-  useEffect(() => {
-    if (activeTab === 'priceforecast' && !forecastResult) {
-      handleFetchPriceForecast();
-    }
-
-    // Save recent tools logic
-    if (activeTab !== 'home') {
-      setRecentTools(prev => {
-        const newTools = [activeTab, ...prev.filter(t => t !== activeTab)].slice(0, 3);
-        try { localStorage.setItem('recentFarmerTools', JSON.stringify(newTools)); } catch(e) {}
-        return newTools;
-      });
-    }
-  }, [activeTab]);
 
   useEffect(() => {
     // Load recent tools on mount
@@ -540,7 +190,7 @@ export default function FarmerMode({ language = 'si' }) {
 
   useEffect(() => {
     // Animate stats on load
-    if (activeTab === 'home') {
+    if (activeWorkspace === 'home') {
       let start = 0;
       const duration = 1500;
       const incrementTime = 50;
@@ -563,909 +213,85 @@ export default function FarmerMode({ language = 'si' }) {
       }, incrementTime);
       return () => clearInterval(timer);
     }
-  }, [activeTab]);
+  }, [activeWorkspace]);
 
-  // ==========================================
-  // ACTION HANDLERS
-  // ==========================================
+  // Open Tool and Route to Appropriate Workspace
+  const handleOpenTool = (toolId) => {
+    const operationsTools = ['dosage', 'calendar', 'screening', 'bagscan', 'tankmix', 'granule3d'];
+    const marketTools = ['procurement', 'distributors', 'priceforecast', 'subsidy', 'credit', 'carbonlca'];
+    const scienceTools = ['leafdoctor', 'chat', 'weather', 'organic', 'dolomite', 'straw', 'salinity', 'ellangawa', 'drone', 'whistleblower'];
 
-  // 19. Diagnose Soil Salinity & Gypsum Requirement
-  const handleDiagnoseSalinity = async (ec = salinityEc, ph = salinityPh, esp = salinityEsp, acres = salinityAcres) => {
-    setSalinityLoading(true);
-    setSalinityEc(ec);
-    setSalinityPh(ph);
-    setSalinityEsp(esp);
-    setSalinityAcres(acres);
-    try {
-      const ha = acres * 0.404686;
-      const res = await fetch(`${API_BASE}/api/soil/salinity`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ec_e_ds_m: ec,
-          soil_ph: ph,
-          esp_pct: esp,
-          ec_water_ds_m: 0.8,
-          land_area_ha: ha
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSalinityResult(data);
-        setSalinityLoading(false);
-        return;
-      }
-    } catch {
-      // fallback
-    }
-
-    const isSaline = ec >= 4.0;
-    const isSodic = esp >= 15.0 || ph >= 8.5;
-    setSalinityResult({
-      inputs: { ec_e_ds_m: ec, soil_ph: ph, esp_pct: esp, land_area_ha: acres * 0.404686 },
-      classification: {
-        soil_class: isSaline && !isSodic ? "SALINE_SOIL" : (isSodic && !isSaline ? "SODIC_SOIL" : (isSaline && isSodic ? "SALINE_SODIC_SOIL" : "NORMAL")),
-        soil_class_si: isSaline && !isSodic ? "ලවණ සහිත කිවුල් පස (Saline Soil)" : (isSodic && !isSaline ? "ක්ෂාරීය සෝඩියම් පස (Sodic Soil)" : "ලවණ-ක්ෂාරීය මිශ්‍ර පස (Saline-Sodic)"),
-        severity_color: isSaline ? "ORANGE" : "GREEN"
-      },
-      leaching_hydrology: {
-        leaching_fraction: 0.15,
-        leaching_water_depth_mm: Math.round(ec * 8.5),
-        leaching_advice_si: `මූල මණ්ඩලයෙන් ලවණ සෝදා හැරීමට අඟල් ${((ec * 8.5) / 25.4).toFixed(1)} ක ජල මට්ටමක් බැඳ දින 3ක් තබා බැසයාමට හරින්න.`
-      },
-      chemical_amendments: {
-        gypsum_needed: isSodic,
-        gypsum_kg_per_acre: isSodic ? Math.round(esp * 45) : 0,
-        gypsum_tons_total: isSodic ? Number(((esp * 45 * acres) / 1000).toFixed(2)) : 0,
-        amendment_advice_si: isSodic ? `හෙක්ටයාරයකට ජිප්සම් කි.ග්‍රෑ. ${Math.round(esp * 45)} ක් යොදා සෝඩියම් විෂවීම පාලනය කරන්න.` : "ජිප්සම් අවශ්‍ය නොවේ. පිරිසිදු ජලයෙන් ලවණ සෝදා හැරීම ප්‍රමාණවත්ය."
-      },
-      crop_recommendations: {
-        suitability_level_si: isSaline ? "ලවණතාවයට ඔරොත්තු දෙන බෝග පමණි" : "ඕනෑම සාමාන්‍ය බෝගයක් සුදුසුයි",
-        paddy_varieties_si: "පොක්කාලි (Pokkali), At 354, Bg 310, Bg 358 ලවණතාවයට ඔරොත්තු දෙන වී ප්‍රභේද",
-        vegetables_si: "බීට්රූට්, නිවිති, රාබු (ලවණ සහිත පසට වඩාත් සුදුසුයි)",
-        notes_si: "කාබනික කොම්පෝස්ට් හෝ බයෝචාර් (Biochar) යෙදීම මගින් ලවණතාවය නිසා මුල් පිලිස්සීම 60% කින් අඩු කරගත හැක."
-      }
-    });
-    setSalinityLoading(false);
-  };
-
-  // 20. Claim Government Subsidy & View Ledger
-  const handleCheckSubsidy = async () => {
-    setSubsidyLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/subsidy`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          farmer_nic: subsidyNic,
-          asc_center: subsidyAsc,
-          urea_bags_claimed: 2,
-          tsp_bags_claimed: 1,
-          mop_bags_claimed: 1
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setSubsidyResult(data);
-        setSubsidyLoading(false);
-        return;
-      }
-    } catch {
-      // fallback
-    }
-
-    setSubsidyResult({
-      farmer_nic: subsidyNic,
-      asc_center: subsidyAsc,
-      government_subsidy_quota_lkr: 15000.0,
-      bags_entitled: { urea: 3, tsp: 1, mop: 1 },
-      bags_claimed_today: { urea: 2, tsp: 1, mop: 1 },
-      remaining_quota_lkr: 5000.0,
-      carbon_credit_bonus_lkr: 1250.0,
-      voucher_status: "ACTIVE_VERIFIED",
-      voucher_code: `ASC-${(farmerProfile?.district || 'LK').substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`,
-      status_si: "රජයේ පොහොර සහනාධාරය සක්‍රියයි - ශේෂය රු. 5,000",
-      advice_si: "ඔබගේ ජාතික හැඳුනුම්පත ගොවිජන සේවා මධ්‍යස්ථානයට (ASC) ඉදිරිපත් කර ඉතිරි යූරියා මිටිය සහ රු. 1,250 ක හරිත කාබන් දීමනාව ලබාගන්න."
-    });
-    setSubsidyLoading(false);
-  };
-
-  // 1. Run DIY Screening
-  const handleCheckFertilizer = async () => {
-    setScreeningLoading(true);
-    const isFake = test1Water === 'slow_sediment' || test2Vinegar === 'has_bubbles' || test3Heat === 'rock_ash';
-    const isSuspicious = test3Heat === 'clay_char';
-
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/screening`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sample_type: 'urea',
-          dissolution_time_sec: test1Water === 'fast_cold' ? 45.0 : 150.0,
-          endothermic_chill_c: test1Water === 'fast_cold' ? 16.0 : 28.0,
-          effervescence_bubbles: test2Vinegar === 'has_bubbles',
-          spoon_residue_type: test3Heat === 'white_melt' ? 'white_biuret_melt' : (test3Heat === 'clay_char' ? 'clay_charred' : 'rock_dust_ash')
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setScreeningResult({
-          is_genuine: data.sample_verdict === "STANDARD_COMPLIANT",
-          confidence: data.purity_confidence_pct,
-          adulterants: data.detected_adulterants,
-          title: data.sample_verdict === "STANDARD_COMPLIANT" ? t.genuineTitle : t.fakeTitle,
-          description: data.sample_verdict === "STANDARD_COMPLIANT" ? t.genuineDesc : t.fakeDesc
-        });
-      } else {
-        throw new Error();
-      }
-    } catch {
-      // Localized fallback
-      if (isFake) {
-        setScreeningResult({
-          is_genuine: false,
-          confidence: 25.0,
-          adulterants: test2Vinegar === 'has_bubbles' ? ["Dolomite / Limestone (Carbonate)"] : ["Gypsum / Insoluble Sand"],
-          title: t.fakeTitle,
-          description: t.fakeDesc
-        });
-      } else if (isSuspicious) {
-        setScreeningResult({
-          is_genuine: false,
-          confidence: 48.0,
-          adulterants: ["Organic Residue / Clay Filler"],
-          title: t.fakeTitle,
-          description: t.fakeDesc
-        });
-      } else {
-        setScreeningResult({
-          is_genuine: true,
-          confidence: 98.5,
-          adulterants: [],
-          title: t.genuineTitle,
-          description: t.genuineDesc
-        });
-      }
-    } finally {
-      setScreeningLoading(false);
-    }
-  };
-
-  // 2. Calculate Dosage
-  const handleCalculateDosage = async (crop = selectedCrop, acres = landAcres) => {
-    setDosageLoading(true);
-    setSelectedCrop(crop);
-    setLandAcres(acres);
-
-    try {
-      const ha = acres * 0.404686;
-      const res = await fetch(`${API_BASE}/api/farmer/dosage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          crop_type: crop,
-          land_area_ha: ha,
-          soil_zone: 'Dry_Zone',
-          current_growth_stage: 'basal'
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setDosageResult(data);
-      } else {
-        throw new Error();
-      }
-    } catch {
-      const ureaBags = Math.ceil(acres * 2.2);
-      const mopBags = Math.ceil(acres * 1.0);
-      const tspBags = Math.ceil(acres * 0.9);
-      setDosageResult({
-        crop_key: crop,
-        bags_50kg_required: {
-          Urea_Bags: ureaBags,
-          MOP_Bags: mopBags,
-          TSP_Bags: tspBags,
-          Total_Bags: ureaBags + mopBags + tspBags
-        },
-        cost_breakdown_lkr: {
-          farmer_savings_lkr: Math.round(acres * 14200)
-        }
-      });
-    } finally {
-      setDosageLoading(false);
-    }
-  };
-
-  // 3. Tank Mix Check (Live API Call with WALES sequence)
-  const handleCheckTankMix = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/tankmix`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fertilizers: tankFertilizers,
-          water_volume_liters: 16.0
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const isSafe = data.overall_verdict === "COMPATIBLE_SAFE";
-        setTankResult({
-          safe: isSafe,
-          title: isSafe 
-            ? (language === 'en' ? "✅ Safe! These fertilizers are compatible to mix." : (language === 'ta' ? "✅ பாதுகாப்பானது! இவற்றை ஒன்றாக கலக்கலாம்." : "✅ ආරක්ෂිතයි! මෙම පොහොර වර්ග එකට කලවම් කළ හැක."))
-            : (language === 'en' ? "❌ Danger! Chemical Antagonism Detected!" : (language === 'ta' ? "❌ ஆபத்து! ரசாயன முரண்பாடு உள்ளது!" : "❌ අන්තරායයි! දිය නොවන අවක්ෂේප හෝ විෂ වායු හැදේ!")),
-          detail: data.scientific_rationale_si || (language === 'en' ? "Adhere to the WALES tank-mix dissolution sequence." : "ස්ප්‍රේ නොසලය හිරවීම වැළැක්වීමට WALES අනුපිළිවෙල අනුව දියකරන්න.")
-        });
-        return;
-      }
-    } catch {
-      // Local fallback
-    }
-
-    const hasCa = tankFertilizers.includes('calcium_nitrate');
-    const hasTSP = tankFertilizers.includes('tsp');
-    const hasCopper = tankFertilizers.includes('copper');
-    const hasUrea = tankFertilizers.includes('urea');
-
-    if (hasCa && hasTSP) {
-      setTankResult({
-        safe: false,
-        title: language === 'en' 
-          ? "❌ Danger! Do not mix Calcium Nitrate with TSP!" 
-          : (language === 'ta' ? "❌ ஆபத்து! கால்சியம் நைட்ரேட் மற்றும் TSP ஐ ஒன்றாக கலக்காதீர்கள்!" : "❌ අන්තරායයි! කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න එපා!"),
-        detail: language === 'en'
-          ? "Forms insoluble Calcium Phosphate precipitate. Spray nozzles will severely clog and crops cannot absorb phosphorus."
-          : (language === 'ta' ? "கால்சியம் பாஸ்பேட் படிவுகள் உருவாகி ஸ்ப்ரே நாசில்களை அடைக்கும்." : "කැල්සියම් නයිට්රේට් සහ TSP එකට මිශ්‍ර කළ විට දිය නොවන සුදු කැටි හැදේ. ස්ප්‍රේ නොසලය මුළුමනින්ම හිරවන අතර ශාකයට පොස්පරස් උරාගත නොහැක.")
-      });
-    } else if (hasCopper && hasUrea) {
-      setTankResult({
-        safe: false,
-        title: language === 'en'
-          ? "⚠️ Warning! Do not mix Copper Fungicide with Urea!"
-          : (language === 'ta' ? "⚠️ எச்சரிக்கை! தாமிர பூஞ்சைக் கொல்லியை யூரியாவுடன் கலக்காதீர்கள்!" : "⚠️ අනතුරු ඇඟවීමයි! කොපර් සහ යූරියා මිශ්‍ර නොකරන්න!"),
-        detail: language === 'en'
-          ? "Releases toxic free ammonia vapor and causes severe foliar scorch."
-          : (language === 'ta' ? "நச்சு வாயு வெளியாகி இலைகள் கருகிவிடும்." : "කොපර් දිලීර නාශක යූරියා සමඟ දැමූ විට ඇමෝනියා වායුව පිටවී ගොයමේ කොළ පිළිස්සී යයි.")
-      });
+    if (operationsTools.includes(toolId)) {
+      setActiveWorkspace('operations');
+      setActiveTool(toolId);
+    } else if (marketTools.includes(toolId)) {
+      setActiveWorkspace('market');
+      setActiveTool(toolId === 'distributors' ? 'procurement' : toolId);
+    } else if (scienceTools.includes(toolId)) {
+      setActiveWorkspace('science');
+      setActiveTool(toolId);
     } else {
-      setTankResult({
-        safe: true,
-        title: language === 'en'
-          ? "✅ Safe! These fertilizers are compatible to mix."
-          : (language === 'ta' ? "✅ பாதுகாப்பானது! இவற்றை ஒன்றாக கலக்கலாம்." : "✅ ආරක්ෂිතයි! මේවා එකට කලවම් කළ හැක."),
-        detail: language === 'en'
-          ? "No adverse chemical antagonism detected. You can safely dissolve and spray."
-          : (language === 'ta' ? "எந்தவித ரசாயன பாதிப்பும் இல்லை. பாதுகாப்பாக தெளிக்கலாம்." : "මෙම පොහොර වර්ග එකිනෙක ගැටෙන්නේ නැත. සාමාන්‍ය පරිදි වතුරට දියකර ස්ප්‍රේ කරන්න.")
-      });
-    }
-  };
-
-  // 4. Leaf Doctor (Live API Call)
-  const handleDiagnoseLeaf = async (symptomKey) => {
-    setSelectedSymptom(symptomKey);
-    const symptomMap = {
-      yellow_lower: { pos: "older_leaves", desc: "uniform_yellowing", veins: false },
-      scorch_edges: { pos: "older_leaves", desc: "marginal_scorch", veins: false },
-      purple_leaves: { pos: "older_leaves", desc: "purplish_bronze_discoloration", veins: false },
-      veins_green: { pos: "older_leaves", desc: "interveinal_chlorosis", veins: true }
-    };
-    const q = symptomMap[symptomKey] || symptomMap.yellow_lower;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/deficiency`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          crop_type: selectedCrop || 'paddy',
-          leaf_position: q.pos,
-          symptom_description: q.desc,
-          is_veins_green: q.veins
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const top = data.top_diagnosis;
-        setLeafResult({
-          title: language === 'en' ? top.element_name : (language === 'ta' ? top.name_ta : top.name_si),
-          cause: data.field_action_alert_si || top.paddy_specific,
-          solution: language === 'en' ? top.immediate_remedy.foliar_spray_en : top.immediate_remedy.foliar_spray_si
-        });
-        return;
-      }
-    } catch {
-      // Local fallback
+      setActiveWorkspace('home');
+      setActiveTool('home');
     }
 
-    const remedies = {
-      yellow_lower: {
-        title: language === 'en' ? "Nitrogen (N) Deficiency" : (language === 'ta' ? "நைட்ரஜன் (N) குறைபாடு" : "නයිට්‍රජන් (N) ඌනතාවය"),
-        cause: language === 'en' ? "Nitrogen leaching due to rain or low basal application." : (language === 'ta' ? "மண்ணில் நைட்ரஜன் சத்து குறைவு." : "පසේ යූරියා සේදී යාම හෝ මූලික යෙදුම මදිවීම නිසා පහළ කොළ ඒකාකාරීව කහ වේ."),
-        solution: language === 'en' ? "Dissolve 160g Urea in a 16L knapsack sprayer (1.0% foliar spray) and spray early morning. Leaves recover in 3-4 days." : (language === 'ta' ? "16L ஸ்ப்ரே டேங்கில் 160g யூரியாவை கரைத்து காலையில் தெளிக்கவும்." : "වතුර ලීටර් 16 ක ස්ප්‍රේ ටැංකියකට යූරියා ග්‍රෑම් 160ක් දියකර උදෑසන ගොයමට ඉසින්න. දින 3-4 කින් කොළ නැවත තද කොළ පැහැයට හැරේ.")
-      },
-      scorch_edges: {
-        title: language === 'en' ? "Potassium (K) Deficiency" : (language === 'ta' ? "பொட்டாசியம் (K) குறைபாடு" : "පොටෑසියම් (K) ඌනතාවය"),
-        cause: language === 'en' ? "Lack of available potash resulting in marginal leaf scorch." : (language === 'ta' ? "பொட்டாஷ் சத்து குறைபாடு." : "පොටෑෂ් මදිවීම නිසා කොළ වල දාර වේලී පිච්චී ගොස් ඇත."),
-        solution: language === 'en' ? "Apply MOP (Muriate of Potash) fertilizer to soil and maintain adequate irrigation." : (language === 'ta' ? "MOP சிவப்பு உரத்தை மண்ணில் இட்டு தேவையான ஈரப்பதத்தை பராமரிக்கவும்." : "MOP රතු පොහොර පසට යොදන්න. ප්‍රමාණවත් තරම් වතුර කුඹුරේ රඳවා ගන්න.")
-      },
-      purple_leaves: {
-        title: language === 'en' ? "Phosphorus (P) Deficiency" : (language === 'ta' ? "பாஸ்பரஸ் (P) குறைபாடு" : "පොස්පරස් (P) ඌනතාවය"),
-        cause: language === 'en' ? "Poor root development and purple bronzing of older leaves." : (language === 'ta' ? "வேர் வளர்ச்சி குறைபாடு." : "මුල් ඇදීම බාල වී කොළ දම් හෝ තද රතු පැහැයට හැරී ඇත."),
-        solution: language === 'en' ? "Apply Triple Superphosphate (TSP) or Rock Phosphate mixed with organic compost." : (language === 'ta' ? "TSP உரத்தை உரமாக இட்டு மண்ணுடன் கலக்கவும்." : "TSP කළු පොහොර හෝ රොක් පොස්පේට් දමා පස් කරන්න.")
-      },
-      veins_green: {
-        title: language === 'en' ? "Magnesium (Mg) Deficiency" : (language === 'ta' ? "மெக்னீசியம் (Mg) குறைபாடு" : "මැග්නීසියම් (Mg) ඌනතාවය"),
-        cause: language === 'en' ? "Interveinal chlorosis where veins remain green while leaf turns yellow." : (language === 'ta' ? "இடை நரம்பு மஞ்சள் நிறமாதல்." : "නහර කොළ පැහැව තිබියදී අතරමැද කහ පැහැ වී ඇත."),
-        solution: language === 'en' ? "Dissolve 80g Magnesium Sulphate (Epsom salt) in 16L water and foliar spray." : (language === 'ta' ? "80g மெக்னீசியம் சல்பேட் (எப்சம் உப்பு) கரைத்து தெளிக்கவும்." : "මැග්නීසියම් සල්ෆේට් (එප්සම් ලුණු) ග්‍රෑම් 80ක් වතුර ලීටර් 16 ට දියකර ඉසින්න.")
-      }
-    };
-    setLeafResult(remedies[symptomKey]);
-  };
-
-  // 5. Weather (Live API Call)
-  const handleFetchWeather = async (dist = selectedDistrict) => {
-    setSelectedDistrict(dist);
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/weather?district=${encodeURIComponent(dist)}&target_crop=Paddy`);
-      if (res.ok) {
-        const data = await res.json();
-        const days = data.forecast_evaluation.map(d => ({
-          day: d.day,
-          rain: `${d.rainfall_mm} mm`,
-          status: d.rainfall_mm > 20 ? "🌧️ තද වැසි" : (d.rainfall_mm > 5 ? "⛅ මද වැසි" : "☀️ හොඳ අව්ව"),
-          canSpray: d.status_tier === "OPTIMAL_GREEN_WINDOW"
-        }));
-        setWeatherData({
-          district: dist,
-          advice: language === 'en'
-            ? `Recommended application window: ${data.optimal_application_day}. Minimum leaching risk: ${data.minimum_nutrient_loss_risk_pct}%.`
-            : `පොහොර යෙදීමට සුදුසුම දිනය: ${data.optimal_application_day}. අවම සේදීයාම් අවදානම: ${data.minimum_nutrient_loss_risk_pct}%.`,
-          days
-        });
-        return;
-      }
-    } catch {
-      // Local fallback
-    }
-
-    const isEn = language === 'en';
-    const isTa = language === 'ta';
-    setWeatherData({
-      district: dist,
-      advice: isEn 
-        ? "Heavy rain expected today and tomorrow. 70% of nitrogen will leach away if applied today. Postpone until Wednesday."
-        : (isTa ? "இன்றும் நாளையும் கனமழை எதிர்பார்க்கப்படுகிறது. உரம் இடுவதை புதன்கிழமை வரை தள்ளி வைக்கவும்." : "අද සහ හෙට තද වැසි අපේක්ෂා කෙරේ. අද යූරියා යෙදුවහොත් 70% ක්ම සේදී යයි. බදාදා වන තෙක් පොහොර යෙදීම කල් තබන්න."),
-      days: [
-        { day: isEn ? "Today" : (isTa ? "இன்று" : "අද"), rain: "42 mm", status: isEn ? "🌧️ Heavy Rain" : (isTa ? "🌧️ கனமழை" : "🌧️ තද වැසි"), canSpray: false },
-        { day: isEn ? "Tomorrow" : (isTa ? "நாளை" : "හෙට"), rain: "25 mm", status: isEn ? "🌧️ Rainy" : (isTa ? "🌧️ மிதமான மழை" : "🌧️ වැසි සහිතයි"), canSpray: false },
-        { day: isEn ? "Day 3" : (isTa ? "3 ஆம் நாள்" : "අනිද්දා"), rain: "5 mm", status: isEn ? "⛅ Light Rain" : (isTa ? "⛅ லேசான மழை" : "⛅ මද වැසි"), canSpray: false },
-        { day: isEn ? "Wednesday" : (isTa ? "புதன்கிழமை" : "බදාදා"), rain: "1 mm", status: isEn ? "☀️ Sunny" : (isTa ? "☀️ தெளிவான வெயில்" : "☀️ හොඳ අව්ව"), canSpray: true },
-        { day: isEn ? "Thursday" : (isTa ? "வியாழக்கிழமை" : "බ්‍රහස්පතින්දා"), rain: "0 mm", status: isEn ? "☀️ Ideal" : (isTa ? "☀️ உகந்தது" : "☀️ ප්‍රශස්තයි"), canSpray: true }
-      ]
+    setRecentTools(prev => {
+      const newTools = [toolId, ...prev.filter(t => t !== toolId)].slice(0, 3);
+      try { localStorage.setItem('recentFarmerTools', JSON.stringify(newTools)); } catch(e) {}
+      return newTools;
     });
+
+    playTone('ding');
   };
 
-  // 6. AI Chat Send (Live API Call to Voice Engine)
-  const handleSendChat = async (text = chatInput) => {
-    if (!text.trim()) return;
-    const userMsg = { sender: 'user', text };
-    setChatMessages(prev => [...prev, userMsg]);
-    setChatInput('');
-    setChatLoading(true);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/voice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query_text: text })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const reply = language === 'en'
-          ? (data.speech_synthesis_transcript?.english_translation || "Verified by CropSafe AI Agronomic Knowledge Engine.")
-          : (data.speech_synthesis_transcript?.sinhala_response || "කෘෂිකර්ම දෙපාර්තමේන්තු නිර්දේශයන්ට අනුකූලව සකසන ලද නිල පිළිතුරකි.");
-        setChatMessages(prev => [...prev, { sender: 'bot', text: reply }]);
-        setChatLoading(false);
-        return;
-      }
-    } catch {
-      // Local fallback
-    }
-
-    setTimeout(() => {
-      let botReply = language === 'en'
-        ? "To test Urea at home, drop a teaspoon into clean water. Genuine Urea dissolves rapidly within 60 seconds and feels icy cold. If it effervesces with vinegar, it contains marble or limestone filler."
-        : "යූරියා බාලදැයි නිවසේදීම සොයාගැනීමට වතුර වීදුරුවකට යූරියා තේ හැන්දක් දමන්න. එය විනාඩියෙන් දියවී වීදුරුව අයිස් මෙන් සීතල විය යුතුය. විනාකිරි දැමූ විට පෙණ නගී නම් එය ගල් කුඩු කලවම් කළ ව්‍යාජ පොහොරකි.";
-      if (text.includes("මූලික") || text.includes("basal")) {
-        botReply = "වී වගාවේ මූලික පොහොර යෙදිය යුත්තේ අවසන් හෑමේදී හෝ පැළ සිටුවීමට දිනකට පෙරය. මූලික පොහොර ලෙස TSP සම්පූර්ණයෙන්ද, යූරියා සහ MOP වලින් කොටසක්ද පසට කලවම් කරන්න.";
-      } else if (text.includes("කැල්සියම්") || text.includes("calcium")) {
-        botReply = "නැත, කිසිසේත්ම කැල්සියම් නයිට්රේට් සහ TSP එකට කලවම් කරන්න එපා! ඒවා එකතු වූ විට නොදියවෙන සුදු කැටි හැදී ස්ප්‍රේ නොසලය හිරවේ.";
-      }
-      setChatMessages(prev => [...prev, { sender: 'bot', text: botReply }]);
-      setChatLoading(false);
-    }, 350);
-  };
-
-  // 7. Calculate Dolomite (Live API Call)
-  const handleCalculateDolomite = async (ph = soilPh, acres = dolomiteAcres, texture = soilTexture) => {
-    setDolomiteLoading(true);
-    setSoilPh(ph);
-    setDolomiteAcres(acres);
-    setSoilTexture(texture);
-    const ha = acres * 0.404686;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/soil/dolomite?current_ph=${ph}&target_ph=6.2&soil_texture=${texture}&land_area_ha=${ha}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDolomiteResult(data);
-      } else {
-        throw new Error();
-      }
-    } catch {
-      const deficit = Math.max(0, 6.2 - ph);
-      const kgTotal = Math.round(deficit * 1250 * ha);
-      const bags = Math.ceil(kgTotal / 50);
-      setDolomiteResult({
-        current_ph: ph,
-        hazard_assessment: ph < 5.0 ? "CRITICAL_ACIDITY_NUTRIENT_LOCKUP" : "MILD_ACIDITY",
-        dolomite_recommendation: {
-          dolomite_kg_total: kgTotal,
-          bags_50kg_count: bags,
-          estimated_cost_lkr: bags * 1200
-        },
-        application_protocol_si: "අවසන් බිම් සැකසීමට (අවසන් හෑමට) සති 2 කට පෙර ඩොලමයිට් පසට දමා කලවම් කරන්න. රසායනික පොහොර දැමීමට පෙර පසේ ඇඹුල් ගතිය පාලනය වේ."
-      });
-    } finally {
-      setDolomiteLoading(false);
-    }
-  };
-
-  // 8. Calculate Straw Decomposition (Live API Call)
-  const handleCalculateStraw = async (acres = strawAcres, yieldTons = grainYield) => {
-    setStrawLoading(true);
-    setStrawAcres(acres);
-    setGrainYield(yieldTons);
-    const ha = acres * 0.404686;
-
-    try {
-      const res = await fetch(`${API_BASE}/api/soil/straw-decompose?land_area_ha=${ha}&grain_yield_tons=${yieldTons}`);
-      if (res.ok) {
-        const data = await res.json();
-        setStrawResult(data);
-      } else {
-        throw new Error();
-      }
-    } catch {
-      const strawTons = (yieldTons * 0.9 * ha).toFixed(1);
-      const k2oKg = Math.round(strawTons * 16.5);
-      const mopBags = Math.ceil(k2oKg / 30);
-      setStrawResult({
-        straw_biomass_total_tons: strawTons,
-        nutrients_recycled_to_soil_kg: {
-          potassium_k2o_kg: k2oKg,
-          silica_sio2_kg: Math.round(strawTons * 55),
-          organic_carbon_kg: Math.round(strawTons * 380)
-        },
-        economic_benefits: {
-          equivalent_mop_bags_saved: mopBags,
-          cost_savings_lkr: mopBags * 19500
-        }
-      });
-    } finally {
-      setStrawLoading(false);
-    }
-  };
-
-  // 9. Run Drone Multispectral Scan (Live API Call)
-  const handleRunDroneScan = async () => {
-    setDroneScanning(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/drone/scan?grid_size=4&area_ha=${droneArea * 0.404686}&crop=paddy`);
-      if (res.ok) {
-        const data = await res.json();
-        setDroneResult(data);
-      } else {
-        throw new Error();
-      }
-    } catch {
-      setDroneResult({
-        canopy_indices_summary: {
-          mean_ndvi: 0.68,
-          canopy_nitrogen_status: "MODERATE_DEFICIENT_ZONES_DETECTED"
-        },
-        spatial_zone_distribution: {
-          healthy_green_pct: 62.5,
-          moderate_stress_pct: 25.0,
-          severe_deficiency_pct: 12.5
-        },
-        variable_rate_prescription: {
-          urea_saved_kg: 28.5,
-          money_saved_lkr: 11400,
-          zone_recommendation: "රතු හා කහ පැහැති කොටුවලට පමණක් අමතර යූරියා කි.ග්‍රෑ. 30ක් යොදන්න. කොළ පැහැති නිරෝගී කලාප වලට පොහොර යෙදීමෙන් වළකින්න."
-        }
-      });
-    } finally {
-      setDroneScanning(false);
-    }
-  };
-
-  // 10. Verify Bag Packaging Authenticity (Live API Call)
-  const handleVerifyBag = async () => {
-    setBagLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/inspector/packaging-scan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          brand_key: bagBrand,
-          hologram_diffraction_score: hologramScore,
-          microprint_sharpness_score: microprintScore,
-          stitch_type_detected: stitchType,
-          seal_tamper_flag: sealTampered
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setBagResult(data);
-      } else {
-        throw new Error();
-      }
-    } catch {
-      const isAuthentic = hologramScore > 0.75 && microprintScore > 0.75 && stitchType === 'double_chainstitch' && !sealTampered;
-      setBagResult({
-        authenticity_score_pct: isAuthentic ? 94.5 : 32.0,
-        verdict: isAuthentic ? "GENUINE_AUTHENTIC" : "COUNTERFEIT_ADULTERATED",
-        verdict_si: isAuthentic ? "ප්‍රමිතියෙන් යුතු නියම රජයේ පොහොර උරයකි" : "අවධානයයි! ව්‍යාජ හෝ මුද්‍රාව කැඩූ හොර උරයකි",
-        action_advice_si: isAuthentic 
-          ? "මෙම උරයේ හොලෝග්‍රෑම් හා ද්විත්ව මැහුම් රටාව නියම ප්‍රමිතියට ඇත. ආරක්ෂිතව භාවිත කළ හැක."
-          : "මෙම උරයේ ආරක්ෂිත ලකුණු ව්‍යාජයි. වහාම ගොවිජන නිලධාරීට හෝ 1920 අමතා පැමිණිලි කරන්න."
-      });
-    } finally {
-      setBagLoading(false);
-    }
-  };
-
-  // 13. Voice Speech-to-Text Recognition
-  const handleStartVoice = () => {
-    const SpeechRecognition = typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition);
-    if (!SpeechRecognition) {
-      alert(language === 'en' ? "Voice recognition is not supported in this browser. Please use Chrome/Edge." : "ඔබගේ බ්‍රවුසරය හඬ හඳුනාගැනීම සඳහා සහය නොදක්වයි. කරුණාකර Google Chrome හෝ Edge භාවිතා කරන්න.");
-      return;
-    }
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = language === 'en' ? 'en-US' : (language === 'ta' ? 'ta-LK' : 'si-LK');
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          setChatInput(transcript);
-          handleSendChat(transcript);
-        }
-      };
-      recognition.onerror = () => {
-        setIsListening(false);
-      };
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-      recognition.start();
-    } catch {
-      setIsListening(false);
-    }
-  };
-
-  // 14. Voice Text-to-Speech Output
-  const handleSpeakText = (text) => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = language === 'en' ? 'en-US' : (language === 'ta' ? 'ta-IN' : 'si-LK');
-      utterance.rate = 0.95;
-      utterance.pitch = 1.0;
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-
-  // 15. Open Official Printable Prescription Card
-  const handleOpenPrescription = () => {
-    const ureaBags = dosageResult?.bags_50kg_required?.Urea_Bags || Math.ceil(landAcres * 2.2);
-    const mopBags = dosageResult?.bags_50kg_required?.MOP_Bags || Math.ceil(landAcres * 1.0);
-    const tspBags = dosageResult?.bags_50kg_required?.TSP_Bags || Math.ceil(landAcres * 0.9);
-    const savings = dosageResult?.cost_breakdown_lkr?.farmer_savings_lkr || Math.round(landAcres * 14200);
-
+  const handleLaunchPrescriptionModal = (rxData) => {
     const docId = `DOA-RX-2026-${Date.now().toString().slice(-6)}`;
-
     setPrescriptionData({
       docId,
       issueDate: new Date().toLocaleDateString(language === 'en' ? 'en-US' : 'si-LK', { year: 'numeric', month: 'long', day: 'numeric' }),
       issueTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      crop: selectedCrop,
-      landAcres,
-      landHa: (landAcres * 0.404686).toFixed(2),
-      ureaBags,
-      mopBags,
-      tspBags,
-      totalBags: ureaBags + mopBags + tspBags,
-      savingsLkr: savings,
+      crop: rxData.crop || farmerProfile.crop,
+      landAcres: rxData.landAcres || farmerProfile.landAcres,
+      landHa: ((rxData.landAcres || farmerProfile.landAcres) * 0.404686).toFixed(2),
+      ureaBags: rxData.ureaBags || 2,
+      mopBags: rxData.mopBags || 1,
+      tspBags: rxData.tspBags || 1,
+      totalBags: (rxData.ureaBags || 2) + (rxData.mopBags || 1) + (rxData.tspBags || 1),
+      savingsLkr: rxData.savingsLkr || 14200,
       verificationHash: `DOA-AGR-VERIFIED-${docId}`
     });
     setShowPrescriptionModal(true);
   };
 
-  // 16. Calculate Agrarian Micro-Credit Scorecard
-  const handleCalculateCredit = async () => {
-    setCreditLoading(true);
-    const ha = creditLandAcres * 0.404686;
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/credit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          farmer_nic: "198512345678",
-          farmer_name: language === 'en' ? "Respected Cultivator" : "ගරු ගොවි මහතා",
-          land_area_ha: ha,
-          crop_type: creditCrop,
-          land_tenure: creditTenure,
-          irrigation_source: creditIrrig,
-          farming_experience_years: Number(creditExp),
-          historical_yield_avg_tons_ha: Number(creditYield),
-          existing_seasonal_debt_lkr: Number(creditDebt),
-          has_aaib_crop_insurance: creditInsurance
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setCreditResult(data);
-        setCreditLoading(false);
-        return;
-      }
-    } catch {
-      // Local fallback
-    }
-
-    const baseScore = creditTenure === 'freehold_deed' ? 95 : (creditTenure === 'swarnabhoomi_permit' ? 90 : 70);
-    const irrigScore = creditIrrig === 'major_irrigation_canal' ? 100 : (creditIrrig === 'deep_agro_well' ? 85 : 65);
-    const compScore = Math.min(850, Math.round(300 + ((baseScore * 0.2 + irrigScore * 0.2 + creditYield * 15 + (creditInsurance ? 15 : 5)) / 100) * 550));
-    const isApproved = compScore >= 640;
-    const maxCredit = Math.round(ha * 85000 * (compScore >= 740 ? 1.15 : 1.0));
-
-    setCreditResult({
-      scorecard_results: {
-        agrarian_credit_score: compScore,
-        risk_tier: compScore >= 740 ? "PRIME_LOW_RISK" : (compScore >= 640 ? "STANDARD_ACCEPTABLE" : "CAUTION_HIGH_RISK"),
-        risk_tier_si: compScore >= 740 ? "ප්‍රමුඛ අඩු අවදානම් (Prime Low-Risk)" : "සම්මත පිළිගත හැකි අවදානම (Standard Acceptable)",
-        approval_status: isApproved ? "APPROVED" : "CONDITIONAL",
-        estimated_default_probability_pct: ((850 - compScore) / 10.5).toFixed(1),
-        color_indicator: compScore >= 740 ? "GREEN" : (compScore >= 640 ? "YELLOW" : "RED")
-      },
-      underwriting_terms: {
-        max_approved_credit_line_lkr: maxCredit,
-        concessionary_apr_pct: compScore >= 740 ? 6.5 : 9.5,
-        eligible_for_cbsl_subsidy: compScore >= 640
-      },
-      pillar_subscores: {
-        land_tenure_score: baseScore,
-        irrigation_resilience_score: irrigScore,
-        yield_and_experience_score: Math.min(100, Math.round(creditYield * 18)),
-        debt_to_income_dti_score: 90,
-        crop_insurance_score: creditInsurance ? 100 : 40
-      }
-    });
-    setCreditLoading(false);
-  };
-
-  // 17. Submit Whistleblower Complaint
-  const handleSubmitWhistleblower = async () => {
-    setWhistleLoading(true);
-    try {
-      const res = await fetch(`${API_BASE}/api/farmer/whistleblower`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dealer_name: whistleDealer,
-          location: whistleLocation,
-          incident_type: whistleType,
-          fertilizer_type: whistleFertType,
-          batch_no: "UNSPECIFIED-RETAIL-BAG",
-          gazetted_mrp: Number(whistleMrp),
-          charged_price: Number(whistleCharged),
-          narrative: whistleNarrative,
-          evidence_files: capturedPhotoUrl ? ["field_captured_evidence.jpg"] : ["retail_receipt_photo.jpg"]
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setWhistleResult(data);
-        setWhistleLoading(false);
-        return;
-      }
-    } catch {
-      // Local fallback
-    }
-
-    const token = `DOA-WB-2026-${Date.now().toString().slice(-6)}`;
-    const gougingPct = Math.round(((whistleCharged - whistleMrp) / whistleMrp) * 100);
-    setWhistleResult({
-      ticket_token: token,
-      status: "INCIDENT_LOGGED_ENCRYPTED",
-      priority_triage_score: 85.0,
-      urgency_level: "URGENT_RED_ALERT",
-      recommended_enforcement: language === 'en'
-        ? (whistleType === 'REGIONAL_SHORTAGE'
-            ? "Direct emergency buffer re-allocation by Department of Agrarian Development & Ceylon Fertilizer Co. (Lakpohora) Depot"
-            : whistleType === 'DISTRIBUTION_DELAY'
-            ? "Expedite Agrarian Services Centre (ASC) voucher clearance and emergency logistics dispatch"
-            : "Immediate raid and surprise inspection dispatch by Regional Fertilizer Officer & CAA Flying Squad")
-        : (whistleType === 'REGIONAL_SHORTAGE'
-            ? "ගොවිජන සංවර්ධන දෙපාර්තමේන්තුව සහ ලක්පොහොර මධ්‍යම සංචිතයෙන් හදිසි පොහොර තොග නිකුත් කිරීම"
-            : whistleType === 'DISTRIBUTION_DELAY'
-            ? "ගොවිජන සේවා මධ්‍යස්ථාන සහනාධාර කූපන් නිකුත් කිරීම සහ ප්‍රවාහන ප්‍රමාදයන් කඩිනම් කිරීම"
-            : "ප්‍රාදේශීය පොහොර නිලධාරී සහ පාරිභෝගික කටයුතු අධිකාරියේ පියාසර බලකාය මගින් ක්ෂණික වැටලීම් නියෝගය"),
-      incident_details: {
-        dealer_name: whistleDealer,
-        location: whistleLocation,
-        category: whistleType,
-        fertilizer_type: whistleFertType,
-        gazetted_mrp_lkr: whistleMrp,
-        charged_price_lkr: whistleCharged,
-        price_gouging_excess_pct: gougingPct,
-        narrative: whistleNarrative
-      }
-    });
-    setWhistleLoading(false);
-  };
-
-  // 18. Assess Ancient Ellangawa Cascade Tank
-  const handleAssessEllangawa = async (tank = ellangawaTank, buffer = ellangawaBuffer) => {
-    setEllangawaLoading(true);
-    setEllangawaTank(tank);
-    setEllangawaBuffer(buffer);
-    try {
-      const res = await fetch(`${API_BASE}/api/soil/ellangawa?tank_name=${encodeURIComponent(tank)}&has_buffer=${buffer}`);
-      if (res.ok) {
-        const data = await res.json();
-        setEllangawaResult(data);
-        setEllangawaLoading(false);
-        return;
-      }
-    } catch {
-      // Local fallback
-    }
-
-    setEllangawaResult({
-      tank_name: tank,
-      cascade_basin: "Malwathu Oya Basin",
-      has_kattakaduwa_buffer: buffer,
-      annual_nitrogen_load_kg: buffer ? 280.0 : 890.0,
-      annual_phosphorus_load_kg: buffer ? 35.0 : 125.0,
-      trophic_status: buffer ? "MESOTROPHIC_HEALTHY" : "EUTROPHIC_ALGAL_BLOOM_RISK",
-      trophic_status_si: buffer ? "මධ්‍ය පෝෂී - සෞඛ්‍ය සම්පන්න වැවක් (ආරක්ෂිතයි)" : "අධි පෝෂී - විෂ ඇල්ගී පිපිරීම් අවදානම!",
-      buffer_filter_efficiency_pct: buffer ? 82.5 : 0.0,
-      action_advice_si: buffer
-        ? "කටුකැලෑව හා පෙරහන මගින් 82% ක් කාන්දු අවශෝෂණය වේ. ගමේ වැවේ ජලය සුරක්ෂිතයි."
-        : "අවධානයයි! බෆර් කලාපය නොමැති බැවින් පොහොර වැවට සේදී විෂ ඇල්ගී බෝවිය හැක. කටුකැලෑව වහාම ප්‍රතිස්ථාපනය කරන්න."
-    });
-    setEllangawaLoading(false);
-  };
-
-  // 19. Fertilizer Market Price Forecast
-  const handleFetchPriceForecast = async (
-    fert = forecastFert,
-    horizon = forecastHorizon,
-    usd = forecastUsdLkr,
-    energy = forecastEnergyChange,
-    freight = forecastFreight,
-    season = forecastSeason
-  ) => {
-    setForecastLoading(true);
-    setForecastFert(fert);
-    setForecastHorizon(horizon);
-    setForecastUsdLkr(usd);
-    setForecastEnergyChange(energy);
-    setForecastFreight(freight);
-    setForecastSeason(season);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/market/price-forecast`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          fertilizer_type: fert,
-          forecast_horizon_months: Number(horizon),
-          usd_lkr_rate: Number(usd),
-          global_energy_change_pct: Number(energy),
-          freight_surcharge_pct: Number(freight),
-          season: season
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setForecastResult(data);
-        setForecastLoading(false);
-        return;
-      }
-    } catch {
-      // Local fallback
-    }
-
-    const baseMrp = fert === 'urea' ? 2500 : (fert === 'npk' ? 4800 : 4500);
-    const baseOpen = fert === 'urea' ? 3350 : (fert === 'npk' ? 6200 : (fert === 'tsp' ? 5600 : 5400));
-    const diff = Math.round(baseOpen * 0.069);
-    const projectedOpen = baseOpen + diff;
-    setForecastResult({
-      commodity: fert.toUpperCase(),
-      fertilizer_name_si: fert === 'urea' ? 'යූරියා (Urea 46% N)' : (fert === 'tsp' ? 'TSP කළු පොහොර' : (fert === 'mop' ? 'MOP රතු පොහොර' : 'මිශ්‍ර පොහොර (NPK)')),
-      forecast_horizon_months: horizon,
-      season: season,
-      current_subsidized_mrp_lkr: baseMrp,
-      current_open_market_lkr: baseOpen,
-      projected_open_market_lkr: projectedOpen,
-      projected_change_pct: 6.9,
-      projected_change_amount_lkr: diff,
-      savings_with_subsidy_lkr: projectedOpen - baseMrp,
-      trend: "RISING_BULLISH",
-      trend_si: "ඉහළ යාමේ ප්‍රවණතාවක් (මිල වැඩිවේ)",
-      trend_en: "Upward Bullish (Price Rising)",
-      trend_ta: "விலை உயரும் போக்கு",
-      recommendation_si: `ඉදිරි මාස ${horizon} තුළ මිල රු. ${diff} කින් ඉහළ යාමට නියමිත බැවින්, කන්නය ඇරඹීමට පෙර (ඉදිරි සති 2 ඇතුළත) මිලදී ගැනීමෙන් බෑගයකට උපරිම මුදලක් ඉතිරි කරගත හැක.`,
-      recommendation_en: `Open market price projected to increase over next ${horizon} months. Early procurement recommended.`,
-      best_buying_window: "ඉදිරි සති 2-3 තුළ (ප්‍රමාද නොවී මිලදී ගන්න)",
-      price_drivers_breakdown: {
-        natural_gas_energy_pct: 40.0,
-        usd_lkr_exchange_rate_pct: 30.0,
-        freight_maritime_pct: 20.0,
-        local_demand_cycle_pct: 10.0
-      },
-      monthly_trajectory: [
-        { month: 'Jun 2026', is_projected: false, subsidized_mrp: baseMrp, open_market_price: baseOpen - 180 },
-        { month: 'Jul 2026', is_projected: false, subsidized_mrp: baseMrp, open_market_price: baseOpen - 120 },
-        { month: 'Aug 2026', is_projected: false, subsidized_mrp: baseMrp, open_market_price: baseOpen - 60 },
-        { month: 'Sep 2026', is_projected: false, subsidized_mrp: baseMrp, open_market_price: baseOpen },
-        { month: 'Oct 2026', is_projected: true, subsidized_mrp: baseMrp, open_market_price: baseOpen + 112 },
-        { month: 'Nov 2026', is_projected: true, subsidized_mrp: baseMrp, open_market_price: baseOpen + 159 },
-        { month: 'Dec 2026', is_projected: true, subsidized_mrp: baseMrp, open_market_price: projectedOpen }
-      ]
-    });
-    setForecastLoading(false);
-  };
-
-  // Complete List of All Agricultural Services Categorized
+  // Master Tile Registry for Home Navigation
   const allTiles = [
-    // 1. Quality & Anti-Fraud (පොහොර තත්ත්ව ආරක්ෂාව)
-    { id: 'screening', cat: 'quality', label: tr("සරල ක්ෂේත්‍ර පරීක්ෂාව", "Quick DIY Field Test", "எளிய கள பரிசோதனை"), icon: '🔍', desc: tr("වතුරෙන් හා ගින්දරෙන් ගෙදරදීම බාල පොහොර අල්ලමු", "Test fertilizer at home with water/heat", "வீட்டிலேயே போலி உரத்தை கண்டறியுங்கள்") },
-    { id: 'bagscan', cat: 'quality', label: tr("උරයේ මුද්‍රාව හා සාක්ෂි", "Bag Packaging & Evidence", "உரப்பை தரம் & ஆதாரம்"), icon: '🛡️', desc: tr("ලේබල්, කාණ්ඩ අංක ඡායාරූප හා DOA පරීක්ෂාව", "Capture bag label photos & 5-point checklist", "உரப்பை லேபிள் புகைப்பட ஆதாரம்") },
-    { id: 'whistleblower', cat: 'quality', label: tr("හොර පොහොර හා මිල වංචා පැමිණිලි", "Report Fraud / Whistleblower", "போலி உரம் முறைப்பாடு"), icon: '🚨', desc: tr("වැඩි මිලට හෝ බාල පොහොර විකුණන අයට එරෙහිව CAA නීතිමය පියවර", "Report price gouging and adulteration to CAA & DOA", "அதிக விலை மற்றும் போலி உரம் முறைப்பாடு") },
+    // 1. Daily Operations Hub (දෛනික මෙහෙයුම්)
+    { id: 'dosage', hub: 'operations', cat: 'dosage', label: t.tileDosage, icon: '⚖️', desc: t.dosageHelp, popular: true },
+    { id: 'calendar', hub: 'operations', cat: 'dosage', label: tr("වී වර්ධන අවධි හා කන්න දින දර්ශනය", "DOA Paddy Growth Stage Calendar", "நெல் வளர்ச்சி காலண்டர்"), icon: '🌾', desc: tr("බිම් සැකසීමේ සිට අස්වැන්න දක්වා දිනෙන් දින පොහොර හා ජල නිර්දේශ", "Day-by-day fertilizer and water depth advice from Basal to Milk stage", "விதைப்பு முதல் அறுவடை வரை தினசரி உர வழிகாட்டல்"), popular: true },
+    { id: 'screening', hub: 'operations', cat: 'quality', label: t.tileScreening, icon: '🔍', desc: t.screeningHelp, popular: true },
+    { id: 'bagscan', hub: 'operations', cat: 'quality', label: tr("පොහොර උරයේ මුද්‍රණ හා හොලෝග්‍රෑම් ස්කෑනරය", "Bag Packaging & Security Scanner", "உர பை சரிபார்ப்பு"), icon: '📦', desc: tr("රජයේ ලක්පොහොර හා CCF උරවල හොලෝග්‍රෑම්, ද්විත්ව මැහුම් පරීක්ෂාව", "Authenticity check for diffraction hologram, microprint & chainstitch", "ஹோலோகிராம் மற்றும் இரட்டை தையல் பரிசோதனை") },
+    { id: 'tankmix', hub: 'operations', cat: 'dosage', label: t.tileTankMix, icon: '🧪', desc: t.tankMixHelp },
+    { id: 'granule3d', hub: 'operations', cat: 'quality', label: t.tileGranule3D, icon: '🧊', desc: t.granule3DHelp },
 
-    // 2. Crop Dosage & Field Planning (බෝග වගාව සහ පොහොර මාත්‍රාව)
-    { id: 'dosage', cat: 'dosage', label: tr("DOA නිල පොහොර මාත්‍රා ගණකය", "Official Fertilizer Dosage Calculator", "அதிகாரப்பூர்வ உர அளவு கணக்கீடு"), icon: '⚖️', desc: tr("බෝගය හා අක්කර ගණන අනුව අවශ්‍ය යූරියා, TSP, MOP මිටි ප්‍රමාණය", "Exact 50kg bags needed based on DOA guidelines", "பயிர் மற்றும் நிலத்திற்கு தேவையான உர மூட்டைகள்") },
-    { id: 'calendar', cat: 'dosage', label: tr("කන්න සැලසුම හා බෝග දින දර්ශනය", "Crop Stage Fertilizer Calendar", "பயிர் வளர்ச்சி காலண்டர்"), icon: '📅', desc: tr("ගොයමේ වයසට (දින 14, 28, 45) අදාළ නියම පොහොර උපදෙස", "Stage-by-stage top-dressing fertilizer schedule", "பயிர் வயதுக்கேற்ற மேலுர கால அட்டவணை") },
-    { id: 'leafdoctor', cat: 'dosage', label: tr("3D කොළ රෝග හා ඌනතා වෛද්‍යවරයා", "3D Leaf Deficiency Doctor", "3D இலை நோய் மருத்துவர்"), icon: '🌿', desc: tr("කොළ කහවීම, දම්වීම 3D වී ගස කරකවා බලා නිවැරදි පොහොර තෝරමු", "Inspect leaf discoloration to detect N, P, K deficiencies", "இலை மாற்றங்களை பார்த்து உர பற்றாக்குறையை அறிய") },
-    { id: 'tankmix', cat: 'dosage', label: tr("දියර පොහොර හා පත්‍ර ඉසින මිශ්‍රණය", "Foliar Liquid Spray Tank Mix", "திரவ உரம் கலவை"), icon: '💧', desc: tr("ලීටර් 16 නැප්සැක් ස්ප්‍රේ ටැංකියට නියම දියර පොහොර මාත්‍රාව", "Safe foliar dilution ratio for knapsack sprayers", "ஸ்ப்ரே டேங்கிற்கு தேவையான சரியான திரவ அளவு") },
-    { id: 'straw', cat: 'dosage', label: tr("පිදුරු දිරවීමෙන් MOP පොටෑෂ් ඉතිරිය", "Paddy Straw Potassium Recycling", "வைக்கோல் உரம் சேமிப்பு"), icon: '🌾', desc: tr("පිදුරු කුඹුරට පෙරළා MOP පොහොර 50% ක් මුදල් ඉතිරි කරගන්න", "Recycle straw to save 50% MOP fertilizer costs", "வைக்கோல் மூலம் 50% MOP உர செலவை சேமிக்க") },
+    // 2. Market & Procurement Hub (වෙළඳපොළ සහ ප්‍රසම්පාදන)
+    { id: 'procurement', hub: 'market', cat: 'finance', label: tr("ඔන්ලයින් පොහොර මිලදී ගැනීම් හා පෙර-ඇණවුම්", "Online Fertilizer Procurement & Pre-orders", "ஆன்லைன் உர கொள்முதல்"), icon: '🛒', desc: tr("රජයේ හා බලපත්‍රලාභී සමාගම්වලින් සෘජුවම සහන මිලට පොහොර වෙන්කරවා ගැනීම", "Reserve verified fertilizers directly from state and licensed private distributors", "அரசு மற்றும் தனியார் நிறுவனங்களிடம் இருந்து நேரடி உர கொள்முதல்"), popular: true },
+    { id: 'priceforecast', hub: 'market', cat: 'finance', label: tr("පොහොර වෙළඳපොළ මිල අනාවැකි (මාස 6)", "6-Month Fertilizer Market Price Forecaster", "உர சந்தை விலை கணிப்பு"), icon: '📈', desc: tr("ගෝලීය බොරතෙල්, USD/LKR හා නැව් ගාස්තු අනුව ඉදිරි මාසවල මිල පුරෝකථනය", "Econometric retail price trend prediction to spot the most profitable buy window", "எதிர்கால உர விலை மாற்றங்களை முன்கூட்டியே அறிந்து சேமிக்கவும்") },
+    { id: 'distributors', hub: 'market', cat: 'finance', label: tr("පොහොර බෙදාහරින ආයතන හා ගබඩා නාමාවලිය", "Distributors & Warehouses Directory", "உர விநியோகஸ்தர்கள் மற்றும் களஞ்சியங்கள்"), icon: '🏢', desc: tr("CCF, ලක්පොහොර, බෝවර්, CIC, හේලීස්, ලැන්කම් ගබඩා තොරතුරු හා දුරකථන", "Authorized state and private distributor warehouses, capacity & contacts", "அரசு மற்றும் தனியார் உர நிறுவன களஞ்சியங்கள்") },
+    { id: 'subsidy', hub: 'market', cat: 'finance', label: tr("රජයේ පොහොර සහනාධාර ඊ-පසුම්බිය", "Govt Subsidy E-Wallet", "அரசு மானிய மின்-பை"), icon: '💳', desc: tr("රු. 15,000 සහනාධාර වවුචර ශේෂය සහ කාබන් දීමනාව", "Check Rs. 15,000 quota and green carbon bonus", "ரூ. 15,000 மானிய இருப்பு மற்றும் கார்பன் நிதி") },
+    { id: 'credit', hub: 'market', cat: 'finance', label: tr("සහන කෘෂි ණය ශ්‍රේණිය", "Agrarian Concessionary Credit Score", "விவசாய கடன் தகுதி"), icon: '🏦', desc: tr("6.5% අඩු පොලී කෘෂි ණය සඳහා සුදුසුකම් පරීක්ෂාව", "Scorecard for CBSL supported 6.5% agricultural loans", "6.5% குறைந்த வட்டி விவசாய கடன் மதிப்பீடு") },
+    { id: 'carbonlca', hub: 'market', cat: 'finance', label: tr("කාබන් පියසටහන හා Green Credits", "Carbon LCA & Green Credits", "கார்பன் தடம் & கிரெடிட்"), icon: '🌱', desc: tr("හරිතාගාර වායු විමෝචනය අවම කර කාබන් මුදල් දීමනා ගණනය", "Measure CO2 footprint and carbon credit offset rewards", "CO2 தடம் மற்றும் கார்பன் வரவு மதிப்பீடு") },
 
-    // 3. Prices, Subsidies & Finance (මිල ගණන්, සහනාධාර සහ ගොවි ආර්ථිකය)
-    { id: 'priceforecast', cat: 'finance', label: tr("පොහොර වෙළඳපොළ මිල පුරෝකථනය", "Market Price Trend Forecaster", "உர சந்தை விலை கணிப்பு"), icon: '📈', desc: tr("ඉදිරි මාස 6 මිල ප්‍රවණතා හා ලාභදායී මිලදී ගැනීමේ කාලය", "6-Month fertilizer price trend & best buying window", "அடுத்த 6 மாத உர விலை போக்கு கணிப்பு") },
-    { id: 'procurement', cat: 'finance', label: tr("ඔන්ලයින් පොහොර ඇණවුම් හා වෙන්කර ගැනීම", "Online Fertilizer Pre-Order & Quota", "ஆன்லைன் உர முன்பதிவு"), icon: '🛒', desc: tr("රජයේ සහනාධාර කූපන් හෝ වාණිජ පොහොර ගබඩාවෙන් වෙන්කරවා ගනිමු", "Reserve subsidized quota bags or certified commercial fertilizer at nearest depot", "அரசு மானிய அல்லது வர்த்தக உரங்களை முன்பதிவு செய்யுங்கள்") },
-    { id: 'distributors', cat: 'finance', label: tr("පොහොර බෙදාහරින ආයතන හා ගබඩා නාමාවලිය", "Distributors & Warehouses Directory", "உர விநியோகஸ்தர்கள் மற்றும் களஞ்சியங்கள்"), icon: '🏢', desc: tr("CCF, ලක්පොහොර, බෝවර්, CIC, හේලීස්, ලැන්කම් ගබඩා තොරතුරු හා දුරකථන", "Authorized state and private distributor warehouses, capacity & contacts", "அரசு மற்றும் தனியார் உர நிறுவன களஞ்சியங்கள்") },
-    { id: 'subsidy', cat: 'finance', label: tr("රජයේ පොහොර සහනාධාර ඊ-පසුම්බිය", "Govt Subsidy E-Wallet", "அரசு மானிய மின்-பை"), icon: '💳', desc: tr("රු. 15,000 සහනාධාර වවුචර ශේෂය සහ කාබන් දීමනාව", "Check Rs. 15,000 quota and green carbon bonus", "ரூ. 15,000 மானிய இருப்பு மற்றும் கார்பன் நிதி") },
-    { id: 'credit', cat: 'finance', label: tr("සහන කෘෂි ණය ශ්‍රේණිය", "Agrarian Concessionary Credit Score", "விவசாய கடன் தகுதி"), icon: '🏦', desc: tr("6.5% අඩු පොලී කෘෂි ණය සඳහා සුදුසුකම් පරීක්ෂාව", "Scorecard for CBSL supported 6.5% agricultural loans", "6.5% குறைந்த வட்டி விவசாய கடன் மதிப்பீடு") },
-    { id: 'carbonlca', cat: 'finance', label: tr("කාබන් පියසටහන හා Green Credits", "Carbon LCA & Green Credits", "கார்பன் தடம் & கிரெடிட்"), icon: '🌱', desc: tr("හරිතාගාර වායු විමෝචනය අවම කර කාබන් මුදල් දීමනා ගණනය", "Measure CO2 footprint and carbon credit offset rewards", "CO2 தடம் மற்றும் கார்பன் வரவு மதிப்பீடு") },
-
-    // 4. Weather, Soil & Advisory (කාලගුණය, පස සහ ගොවි උපදෙස්)
-    { id: 'chat', cat: 'advisory', label: tr("CropSafe AI ගොවි සහයක (හඬින් හා ලිවීමෙන්)", "Farmer AI Voice & Chat Assistant", "விவசாய AI குரல் & அரட்டை"), icon: '💬', desc: tr("ඕනෑම කෘෂි ගැටලුවකට සිංහලෙන් හෝ දෙමළෙන් ක්ෂණික පිළිතුරු", "Instant expert answers in Sinhala, Tamil, or English", "சிங்களம் அல்லது தமிழில் உடனடி விவசாய ஆலோசனைகள்") },
-    { id: 'weather', cat: 'advisory', label: tr("කාලගුණය හා පොහොර යෙදීමට සුදුසු දින", "Agronomic Weather Advisory", "வானிலை & உரம் இடல்"), icon: '🌧️', desc: tr("වැස්සට පොහොර සේදීයාම වළක්වා නිවැරදි දින තෝරාගනිමු", "Rain risk forecasting to prevent fertilizer runoff washouts", "மழையால் உரம் வீணாவதை தடுக்கும் வானிலை அறிவுரை") },
-    { id: 'organic', cat: 'advisory', label: tr("කාබනික පොහොර හා ජීවාමෘත වට්ටෝරු", "Organic Bio-Fertilizer Recipes", "இயற்கை திரவ உரம்"), icon: '🍯', desc: tr("ජීවාමෘත, පංචගව්‍ය හා කොහොඹ කෘමිනාශක නිවසේදීම හදමු", "Home preparation of Jeevamrutha, Panchagavya & Neem extracts", "ஜீவாமிர்தம், பஞ்சகவ்யா தயாரிக்கும் முறைகள்") },
-    { id: 'dolomite', cat: 'advisory', label: tr("පසෙහි ආම්ලිකතාවය හා ඩොලමයිට්", "Soil Acidity & Dolomite Guide", "மண் அமிலத்தன்மை & டோலமைட்"), icon: '🧪', desc: tr("පස ඇඹුල් වීම (pH < 5.5) සුවපත් කර අස්වැන්න වැඩි කරමු", "Neutralize soil acidity to unlock trapped phosphorus", "மண் அமிலத்தன்மையை குறைத்து விளைச்சலை அதிகரிக்க") },
-    { id: 'salinity', cat: 'advisory', label: tr("කිවුල් / ලවණ පස් සුවපත් කිරීම", "Soil Salinity & Gypsum Remediation", "உவர் மண் சீரமைப்பு"), icon: '🌊', desc: tr("ජිප්සම් යොදා කිවුල් කුඹුරු යථා තත්ත්වයට පත් කිරීම", "Gypsum and leaching calculator for coastal/dry zone soils", "ஜிப்சம் மூலம் உவர் நிலத்தை சீரமைக்கும் முறை") },
-    { id: 'ellangawa', cat: 'advisory', label: tr("එල්ලංගා වැව හා ජල පෝෂක සංරක්ෂණය", "Cascade Runoff Protection", "பாரம்பரிய குளம் பாதுகாப்பு"), icon: '🏛️', desc: tr("පුරාණ වැව් පද්ධතිය රැකගෙන පොහොර සේදීයාම වැළැක්වීම", "Ancient village cascade system watershed protection", "பாரம்பரிய குளங்களை பாதுகாத்து உரம் வீணாவதை தடுக்க") }
+    // 3. Field Science & Advisory Hub (කෘෂි විද්‍යාව සහ උපදෙස්)
+    { id: 'leafdoctor', hub: 'science', cat: 'advisory', label: t.tileLeafDoc, icon: '🍃', desc: t.leafDocHelp, popular: true },
+    { id: 'chat', hub: 'science', cat: 'advisory', label: tr("CropSafe AI ගොවි සහයක (හඬින් හා ලිවීමෙන්)", "Farmer AI Voice & Chat Assistant", "விவசாய AI குரல் & அரட்டை"), icon: '💬', desc: tr("ඕනෑම කෘෂි ගැටලුවකට සිංහලෙන් හෝ දෙමළෙන් ක්ෂණික පිළිතුරු", "Instant expert answers in Sinhala, Tamil, or English", "சிங்களம் அல்லது தமிழில் உடனடி விவசாய ஆலோசனைகள்") },
+    { id: 'weather', hub: 'science', cat: 'advisory', label: tr("කාලගුණය හා පොහොර යෙදීමට සුදුසු දින", "Agronomic Weather Advisory", "வானிலை & உரம் இடல்"), icon: '🌧️', desc: tr("වැස්සට පොහොර සේදීයාම වළක්වා නිවැරදි දින තෝරාගනිමු", "Rain risk forecasting to prevent fertilizer runoff washouts", "மழையால் உரம் வீணாவதை தடுக்கும் வானிலை அறிவுரை") },
+    { id: 'organic', hub: 'science', cat: 'advisory', label: tr("කාබනික පොහොර හා ජීවාමෘත වට්ටෝරු", "Organic Bio-Fertilizer Recipes", "இயற்கை திரவ உரம்"), icon: '🍯', desc: tr("ජීවාමෘත, පංචගව්‍ය හා කොහොඹ කෘමිනාශක නිවසේදීම හදමු", "Home preparation of Jeevamrutha, Panchagavya & Neem extracts", "ஜீவாமிர்தம், பஞ்சகவ்யா தயாரிக்கும் முறைகள்") },
+    { id: 'dolomite', hub: 'science', cat: 'advisory', label: tr("පසෙහි ආම්ලිකතාවය හා ඩොලමයිට්", "Soil Acidity & Dolomite Guide", "மண் அமிலத்தன்மை & டோலமைட்"), icon: '🧪', desc: tr("පස ඇඹුල් වීම (pH < 5.5) සුවපත් කර අස්වැන්න වැඩි කරමු", "Neutralize soil acidity to unlock trapped phosphorus", "மண் அமிலத்தன்மையை குறைத்து விளைச்சலை அதிகரிக்க") },
+    { id: 'straw', hub: 'science', cat: 'advisory', label: tr("පිදුරු දිරවීමෙන් MOP 50% ඉතිරිකර ගැනීම", "Rice Straw K2O In-situ Recycling", "வைக்கோல் மறுசுழற்சி"), icon: '🌾', desc: tr("පිදුරු ගිනි නොතබා පසට යටකර පොටෑසියම් ස්වාභාවිකව ලබාගැනීම", "In-situ straw decomposition saves up to 50% imported MOP Potash", "வைக்கோலை மண்ணில் மக்க வைப்பதன் மூலம் MOP உரத்தில் 50% சேமிக்கலாம்") },
+    { id: 'salinity', hub: 'science', cat: 'advisory', label: tr("කිවුල් / ලවණ පස් සුවපත් කිරීම", "Soil Salinity & Gypsum Remediation", "உவர் மண் சீரமைப்பு"), icon: '🌊', desc: tr("ජිප්සම් යොදා කිවුල් කුඹුරු යථා තත්ත්වයට පත් කිරීම", "Gypsum and leaching calculator for coastal/dry zone soils", "ஜிப்சம் மூலம் உவர் நிலத்தை சீரமைக்கும் முறை") },
+    { id: 'ellangawa', hub: 'science', cat: 'advisory', label: tr("එල්ලංගා වැව හා ජල පෝෂක සංරක්ෂණය", "Cascade Runoff Protection", "பாரம்பரிய குளம் பாதுகாப்பு"), icon: '🏛️', desc: tr("පුරාණ වැව් පද්ධතිය රැකගෙන පොහොර සේදීයාම වැළැක්වීම", "Ancient village cascade system watershed protection", "பாரம்பரிய குளங்களை பாதுகாத்து உரம் வீணாவதை தடுக்க") },
+    { id: 'drone', hub: 'science', cat: 'advisory', label: tr("ත්‍රිමාණ ඩ්‍රෝන ක්ෂේත්‍ර සෞඛ්‍ය ස්කෑනරය", "3D Drone Multispectral NDVI Health Scanner", "ட்ரோன் ஆய்வு"), icon: '🛸', desc: tr("චන්ද්‍රිකා සහ ඩ්‍රෝන NDVI මගින් පොහොර හිඟ ප්‍රදේශ හඳුනාගැනීම", "Spot nitrogen deficiency zones via vegetation index sensors", "சென்சார்கள் மூலம் பயிர் வளர்ச்சி குறைபாடுகளை கண்டறிய") },
+    { id: 'whistleblower', hub: 'science', cat: 'advisory', label: tr("නීතිවිරෝධී මිල හා ව්‍යාජ පොහොර පැමිණිලි (CAA)", "CAA Whistleblower & Price Gouging Portal", "விலை புகார் அளிப்பு"), icon: '📢', desc: tr("වැඩි මිලට පොහොර විකිණීම හා ව්‍යාජ ජාවාරම්කරුවන් පාරිභෝගික අධිකාරියට වාර්තා කිරීම", "Report black market prices and counterfeit dealers anonymously", "அதிக விலைக்கு உரம் விற்பனை செய்பவர்கள் மீது புகார் அளிக்க") }
   ];
 
   const visibleTiles = allTiles.filter(tile => {
@@ -1481,51 +307,38 @@ export default function FarmerMode({ language = 'si' }) {
     <div className={`space-y-6 pb-20 ${sunlightMode ? 'contrast-125 filter' : ''} ${fontSize === 'large' ? 'text-base' : (fontSize === 'xlarge' ? 'text-lg' : '')}`}>
       
       {/* ========================================================================= */}
-      {/* 1. TOP NAVIGATION BAR WHEN INSIDE A TOOL (BREADCRUMB & BACK BUTTON)       */}
+      {/* 1. MASTER WORKSPACE SEGMENTED SWITCHER                                     */}
       {/* ========================================================================= */}
-      {activeTab !== 'home' && (
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl border border-emerald-200 shadow-sm animate-fadeIn">
+      <div className="bg-white/80 backdrop-blur-md p-2 rounded-2xl border border-emerald-200/80 shadow-xs flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+        {[
+          { id: 'home', label: tr("🏠 ප්‍රධාන පුවරුව", "🏠 All Hubs", "🏠 முதன்மை"), desc: "Portal Overview" },
+          { id: 'operations', label: tr("🌾 දෛනික මෙහෙයුම්", "🌾 Daily Operations", "🌾 தினசரி செயல்பாடுகள்"), desc: "Dosage, Calendar, Screening" },
+          { id: 'market', label: tr("💰 වෙළඳපොළ සහ ඇණවුම්", "💰 Market & Orders", "💰 சந்தை & முன்பதிவு"), desc: "Procurement, Forecast, Subsidy" },
+          { id: 'science', label: tr("🔬 කෘෂි විද්‍යාව සහ උපදෙස්", "🔬 Field Science & AI", "🔬 விவசாய அறிவியல்"), desc: "Leaf Doctor, Chatbot, Soil" }
+        ].map((ws) => (
           <button
+            key={ws.id}
             type="button"
-            onClick={() => setActiveTab('home')}
-            className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs sm:text-sm shadow transition-all transform hover:scale-[1.02]"
+            onClick={() => {
+              setActiveWorkspace(ws.id);
+              playTone('ding');
+            }}
+            className={`px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm whitespace-nowrap transition-all flex items-center space-x-2 ${
+              activeWorkspace === ws.id
+                ? 'bg-emerald-700 text-white shadow-md transform scale-[1.02]'
+                : 'bg-transparent text-slate-700 hover:bg-emerald-50 hover:text-emerald-900'
+            }`}
           >
-            <span className="text-base font-black">←</span>
-            <span>{tr("ආපසු ප්‍රධාන මෙනුවට", "Back to Main Menu", "முதன்மை மெனுவுக்கு")}</span>
+            <span>{ws.label}</span>
           </button>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-xs font-bold text-slate-500 hidden md:inline">
-              {tr("වෙනත් සේවාවකට මාරුවෙන්න:", "Switch Tool:", "வேறு சேவை:")}
-            </span>
-            <select
-              value={activeTab}
-              onChange={(e) => setActiveTab(e.target.value)}
-              className="p-2 sm:p-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-bold bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            >
-              {allTiles.map(tile => (
-                <option key={tile.id} value={tile.id}>
-                  {tile.icon} {tile.label}
-                </option>
-              ))}
-            </select>
-            <a
-              href="tel:1920"
-              className="px-3 py-2 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-950 font-black text-xs border border-amber-300 transition-all flex items-center space-x-1"
-            >
-              <PhoneCall className="w-3.5 h-3.5 text-amber-800" />
-              <span>1920</span>
-            </a>
-          </div>
-        </div>
-      )}
+        ))}
+      </div>
 
       {/* ========================================================================= */}
-      {/* 2. THE GRAND FARMER HOME PORTAL (SHOWN BY DEFAULT WHEN activeTab === 'home') */}
+      {/* 2. GRAND FARMER HOME PORTAL (activeWorkspace === 'home')                   */}
       {/* ========================================================================= */}
-      {activeTab === 'home' && (
+      {activeWorkspace === 'home' && (
         <div className="space-y-6 animate-fadeIn">
-
           {/* Offline Mode Indicator Banner */}
           {isOffline && (
             <div className="bg-amber-500 text-slate-950 p-3 px-4 rounded-2xl font-bold text-xs flex items-center justify-between shadow-md">
@@ -1539,7 +352,7 @@ export default function FarmerMode({ language = 'si' }) {
             </div>
           )}
           
-          {/* --- Consolidated Farmer Identity & Welcome Banner --- */}
+          {/* Consolidated Farmer Identity & Welcome Banner */}
           <div className={`clean-card overflow-hidden bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-900 text-white shadow-lg ${sunlightMode ? 'border-2 border-slate-900' : 'border-0'}`}>
             <div className="p-5 sm:p-7 relative z-10 space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -1574,7 +387,6 @@ export default function FarmerMode({ language = 'si' }) {
 
                 {/* Hotline, Demo Tour & Accessibility Controls */}
                 <div className="flex items-center flex-wrap gap-2.5 self-start md:self-auto">
-                  {/* Interactive Demo Tour Button */}
                   <button
                     type="button"
                     onClick={() => { playTone('ding'); setShowTourModal(true); }}
@@ -1585,7 +397,6 @@ export default function FarmerMode({ language = 'si' }) {
                     <span>{tr("ආදර්ශන චාරිකාව", "Demo Tour", "மாதிரி உலா")}</span>
                   </button>
 
-                  {/* Emergency Hotline */}
                   <a
                     href="tel:1920"
                     className="px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs shadow-md flex items-center space-x-1.5 transition-all hover:scale-105 active:scale-95"
@@ -1606,8 +417,8 @@ export default function FarmerMode({ language = 'si' }) {
                         key={f.id}
                         type="button"
                         onClick={() => setFontSize(f.id)}
-                        className={`px-2 py-1 rounded-lg text-xs font-black transition-all ${
-                          fontSize === f.id ? 'bg-white text-emerald-950 shadow-xs' : 'text-emerald-100 hover:bg-white/10'
+                        className={`px-2 py-1 rounded-lg text-xs font-bold transition-all ${
+                          fontSize === f.id ? 'bg-white text-emerald-950 shadow-sm' : 'text-white/80 hover:text-white'
                         }`}
                       >
                         {f.label}
@@ -1615,4678 +426,411 @@ export default function FarmerMode({ language = 'si' }) {
                     ))}
                   </div>
 
-                  {/* Sunlight Mode */}
+                  {/* Sunlight Contrast Mode Toggle */}
                   <button
                     type="button"
                     onClick={() => setSunlightMode(!sunlightMode)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all flex items-center space-x-1 border ${
-                      sunlightMode
-                        ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-md'
-                        : 'bg-black/25 text-emerald-100 border-white/20 hover:bg-white/10'
+                    className={`p-2 rounded-xl border transition-all ${
+                      sunlightMode 
+                        ? 'bg-amber-300 text-slate-950 border-amber-400 shadow-md font-black' 
+                        : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
                     }`}
+                    title={tr("හිරු එළිය වැඩි මාදිලිය (Outdoor Sunlight Mode)", "Outdoor High Contrast", "சூரிய ஒளி முறை")}
                   >
-                    <span>☀️</span>
-                    <span className="hidden sm:inline">{tr("හිරු එළිය", "Sunlight", "சூரிய ஒளி")}</span>
+                    <Sun className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* Rotating Agronomic Tip Bar */}
-              <div className="bg-black/20 p-2.5 px-3.5 rounded-xl border border-white/15 flex items-center justify-between gap-2 backdrop-blur-sm text-xs text-emerald-100">
-                <div className="flex items-center space-x-2 overflow-hidden">
-                  <span className="text-amber-300 font-bold flex-shrink-0 animate-bounce">💡 {tr("දවසේ කෘෂි උපදෙස:", "Daily Tip:", "நாளாந்த குறிப்பு:")}</span>
-                  <span className="font-medium truncate text-emerald-50">
-                    {[
-                      tr("යූරියා ජලයට දැමූ විට තත්පර 60ක් ඇතුළත දියවිය යුතු අතර ජලය සීතල විය යුතුය.", "Urea must dissolve within 60 seconds in water and make it cold.", "யூரியா 60 வினாடிகளில் நீரில் கரைய வேண்டும்."),
-                      tr("කන්නයේ පළමු සතිවල TSP සහ MOP මූලික පොහොර ලෙස යෙදීම අනිවාර්යයි.", "Apply TSP and MOP as basal fertilizers in early crop stages.", "ஆரம்ப நாட்களில் TSP மற்றும் MOP இடவும்."),
-                      tr("පිදුරු කුඹුරට පෙරළා දිරවීමට හැරීමෙන් MOP රතු පොහොර 50% ක් ඉතිරි කරගත හැක.", "Save 50% MOP fertilizer costs by recycling and decomposing paddy straw.", "வைக்கோலை மட்கச் செய்வதன் மூலம் 50% MOP சேமிக்கலாம்.")
-                    ][tipIndex]}
-                  </span>
+              {/* Dynamic Live Statistics Bar */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-white/15">
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
+                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("සක්‍රිය බෝග නිර්දේශ", "Active Crops", "பயிர்கள்")}</span>
+                  <span className="text-lg font-black text-white">{animatedStats.crops} {tr("වර්ග", "Crops", "வகைகள்")}</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleSpeakText(
-                    [
-                      "යූරියා ජලයට දැමූ විට තත්පර හැටක් ඇතුළත දියවිය යුතු අතර ජලය සීතල විය යුතුය.",
-                      "කන්නයේ පළමු සතිවල ටී එස් පී සහ එම් ඕ පී මූලික පොහොර ලෙස යෙදීම අනිවාර්යයි.",
-                      "පිදුරු කුඹුරට පෙරළා දිරවීමට හැරීමෙන් එම් ඕ පී රතු පොහොර සියයට පනහක් ඉතිරි කරගත හැක."
-                    ][tipIndex]
-                  )}
-                  className="text-emerald-200 hover:text-white p-1 rounded hover:bg-white/10 flex-shrink-0"
-                  title="හඬින් අසන්න"
-                >
-                  <Volume2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* --- The 3 Core Daily Farmer Action Hubs --- */}
-          <div>
-            <div className="flex items-center justify-between mb-3 px-1">
-              <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center space-x-2">
-                <span>⭐</span>
-                <span>{tr("ගොවීන් නිතරම භාවිතා කරන ප්‍රධාන සේවාවන් 3", "Top 3 Most Used Farmer Services", "முக்கிய 3 விவசாய சேவைகள்")}</span>
-              </h2>
-              <span className="text-xs text-slate-500 font-bold hidden sm:inline">
-                {tr("ක්ෂණික විසඳුම් සඳහා තෝරන්න", "Select for quick access", "விரைவு அணுகல்")}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Hub 1: Quality & Anti-Fraud */}
-              <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shadow-inner">
-                      🔍
-                    </span>
-                    <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-emerald-950/40 text-emerald-200 border border-emerald-400/30">
-                      {tr("තත්ත්ව පරීක්ෂාව", "Anti-Fraud", "போலி எதிர்ப்பு")}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-black text-white leading-tight">
-                    {tr("පොහොර බාලද පරීක්ෂා කරමු", "Fertilizer Quality Check", "போலி உர பரிசோதனை")}
-                  </h3>
-                  <p className="text-xs text-emerald-100 mt-1.5 leading-relaxed">
-                    {tr("වතුරෙන්/ගින්දරෙන් ගෙදරදීම ගල් කුඩු හා බාල පොහොර අල්ලන්න, ලේබල් සාක්ෂි තබාගන්න සහ වැඩි මිල වංචා පැමිණිලි කරන්න.", "Test fertilizer at home with water or heat to detect adulterants, capture photo evidence, and file fraud reports.", "நீர் மூலம் போலி உரங்களை வீட்டிலேயே கண்டறிந்து முறைப்பாடு செய்யுங்கள்.")}
-                  </p>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
+                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("හඳුනාගත් ව්‍යාජ සාධක", "Frauds Caught", "மோசடிகள்")}</span>
+                  <span className="text-lg font-black text-amber-300">{animatedStats.adulterants} {tr("ක්‍රම", "Methods", "முறைகள்")}</span>
                 </div>
-                <div className="space-y-2 pt-2 border-t border-white/20">
-                  <button
-                    type="button"
-                    onClick={() => { playTone('ding'); setActiveTab('screening'); }}
-                    className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-emerald-50 text-emerald-900 font-black text-xs shadow-xs transition-all flex items-center justify-between group"
-                  >
-                    <span>🔍 {tr("සරල DIY පරීක්ෂාව (තත්පර 30)", "DIY Quick Test (30s)", "எளிய பரிசோதனை")}</span>
-                    <span className="group-hover:translate-x-1 transition-transform">➔</span>
-                  </button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('bagscan'); }}
-                      className="py-2 px-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-[11px] transition-all text-center truncate"
-                    >
-                      🛡️ {tr("ලේබල් සාක්ෂි", "Bag Evidence", "ஆதாரம்")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('whistleblower'); }}
-                      className="py-2 px-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-[11px] transition-all text-center truncate"
-                    >
-                      🚨 {tr("වංචා පැමිණිලි", "Report Fraud", "முறைப்பாடு")}
-                    </button>
-                  </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
+                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("ජාතික ප්‍රමිතිය", "National Standard", "தேசிய தரம்")}</span>
+                  <span className="text-lg font-black text-emerald-300">{animatedStats.standards}</span>
                 </div>
-              </div>
-
-              {/* Hub 2: Dosage & Cost Calculator */}
-              <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-amber-600 to-orange-700 text-white shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shadow-inner">
-                      ⚖️
-                    </span>
-                    <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-amber-950/40 text-amber-200 border border-amber-400/30">
-                      {tr("මාත්‍රාව හා මිල", "Dosage & Price", "அளவு & விலை")}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-black text-white leading-tight">
-                    {tr("පොහොර මිටි ගණන හා වියදම", "Dosage & Cost Calculator", "உர அளவு & செலவு")}
-                  </h3>
-                  <p className="text-xs text-amber-100 mt-1.5 leading-relaxed">
-                    {tr("බෝගය හා අක්කර ගණන අනුව DOA නිර්දේශිත නියම යූරියා, MOP, TSP මිටි ගණන, වියදම සහ ඉදිරි මාසවල මිල ප්‍රවණතා බලන්න.", "Calculate exact 50kg bags needed based on DOA guidelines, view cost savings, and forecast 6-month market price trends.", "நிலத்திற்கு தேவையான உர மூட்டைகளையும் பண சேமிப்பையும் அறியவும்.")}
-                  </p>
-                </div>
-                <div className="space-y-2 pt-2 border-t border-white/20">
-                  <button
-                    type="button"
-                    onClick={() => { playTone('ding'); setActiveTab('dosage'); }}
-                    className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-amber-50 text-amber-950 font-black text-xs shadow-xs transition-all flex items-center justify-between group"
-                  >
-                    <span>⚖️ {tr("මිටි ගණකය (Dosage Calculator)", "Calculate Bags Needed", "உர அளவு கணக்கிட")}</span>
-                    <span className="group-hover:translate-x-1 transition-transform">➔</span>
-                  </button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('priceforecast'); }}
-                      className="py-2 px-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-[11px] transition-all text-center truncate"
-                    >
-                      📈 {tr("මිල පුරෝකථනය", "Price Forecast", "விலை கணிப்பு")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('calendar'); }}
-                      className="py-2 px-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-[11px] transition-all text-center truncate"
-                    >
-                      📅 {tr("කන්න සැලසුම", "Crop Calendar", "காலண்டர்")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Hub 3: Crop Care, Weather & Subsidy */}
-              <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-800 text-white shadow-md hover:shadow-xl transition-all flex flex-col justify-between space-y-4">
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-2xl shadow-inner">
-                      🌿
-                    </span>
-                    <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-blue-950/40 text-blue-200 border border-blue-400/30">
-                      {tr("බෝග සුවය & සහනාධාර", "Crop & Subsidy", "பயிர் & மானியம்")}
-                    </span>
-                  </div>
-                  <h3 className="text-lg font-black text-white leading-tight">
-                    {tr("බෝග සුවය, කාලගුණය හා සහනාධාර", "Crop Health & Subsidies", "பயிர் நலம் & மானியம்")}
-                  </h3>
-                  <p className="text-xs text-blue-100 mt-1.5 leading-relaxed">
-                    {tr("කොළ කහවීම් 3D බෝග වෛද්‍යවරයාගෙන් පරීක්ෂා කර, අද කාලගුණය අනුව පොහොර යොදන දින සහ රජයේ සහනාධාර කෝටාව බලන්න.", "Inspect leaf deficiency symptoms in 3D, check weather rain risk before applying fertilizer, and monitor your subsidy e-wallet.", "இலை நோய்களை கண்டறிந்து வானிலை மற்றும் மானியத்தை சரிபார்க்கவும்.")}
-                  </p>
-                </div>
-                <div className="space-y-2 pt-2 border-t border-white/20">
-                  <button
-                    type="button"
-                    onClick={() => { playTone('ding'); setActiveTab('leafdoctor'); }}
-                    className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-blue-50 text-blue-950 font-black text-xs shadow-xs transition-all flex items-center justify-between group"
-                  >
-                    <span>🌿 {tr("3D කොළ රෝග වෛද්‍යවරයා", "3D Leaf Doctor", "3D பயிர் மருத்துவர்")}</span>
-                    <span className="group-hover:translate-x-1 transition-transform">➔</span>
-                  </button>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('subsidy'); }}
-                      className="py-2 px-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-[11px] transition-all text-center truncate"
-                    >
-                      💳 {tr("සහනාධාරය (රු.15k)", "Rs.15k Subsidy", "மானிய மின்-பை")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('weather'); }}
-                      className="py-2 px-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-[11px] transition-all text-center truncate"
-                    >
-                      🌦️ {tr("අද කාලගුණය", "Weather Risk", "வானிலை")}
-                    </button>
-                  </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 text-center border border-white/10">
+                  <span className="text-[10px] text-emerald-200 uppercase font-bold block">{tr("ආවරණය කළ දිස්ත්‍රික්ක", "Districts Covered", "மாவட்டங்கள்")}</span>
+                  <span className="text-lg font-black text-white">{animatedStats.districts} / 25</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* --- Online Fertilizer Procurement & Distributors Action Banner --- */}
-          <div className="clean-card p-5 sm:p-6 bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 text-white rounded-3xl shadow-lg border border-emerald-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-2xl sm:text-3xl border border-emerald-400/30 flex-shrink-0">
+          {/* Rotating Agronomic Tip Banner */}
+          <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-white border border-emerald-200 rounded-2xl p-3.5 px-4 flex items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center space-x-2.5">
+              <span className="text-lg animate-bounce">💡</span>
+              <p className="text-xs sm:text-sm font-bold text-slate-800">
+                <span className="text-emerald-800 font-black mr-1">{tr("අද දවසේ කෘෂි උපදෙස:", "Daily Tip:", "இன்றைய குறிப்பு:")}</span>
+                {[
+                  tr("යූරියා ජලයට දැමූ විට විනාඩියකින් සම්පූර්ණයෙන් සීතල වෙමින් දියවිය යුතුය. අඩියේ වැලි හෝ කුඩු නොතිබිය යුතුය.", "Genuine Urea dissolves cold in water within 60 seconds with 0 sediment.", "யூரியா 60 வினாடிகளில் குளிர்ந்து கரைய வேண்டும்."),
+                  tr("කන්නයේ පළමු දිනවල TSP සහ MOP මූලික පොහොර ලෙස යෙදිය යුතු අතර වැපිරීමේදී යූරියා නොයොදන්න.", "Apply TSP and MOP as basal fertilizers at land prep; never broadcast Urea at sowing.", "விதைப்பின் போது யூரியா இட வேண்டாம்; TSP மற்றும் MOP இடவும்."),
+                  tr("පිදුරු කුඹුරේම දිරවීමට සැලැස්වීමෙන් මිල අධික MOP රතු පොහොර අවශ්‍යතාවයෙන් 50% ක් ඉතිරි කරගත හැක.", "Recycling paddy straw in-situ saves up to 50% of expensive imported MOP potash.", "வைக்கோலை மக்க வைப்பதன் மூலம் MOP உரத்தில் 50% சேமிக்கலாம்.")
+                ][tipIndex]}
+              </p>
+            </div>
+            <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full flex-shrink-0">
+              DOA ADVISORY
+            </span>
+          </div>
+
+          {/* 4 Hero Quick-Action Workspace Launchers */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <button
+              type="button"
+              onClick={() => handleOpenTool('dosage')}
+              className="p-5 rounded-2xl bg-white hover:bg-emerald-50/70 border-2 border-emerald-200 text-left transition-all hover:scale-[1.02] shadow-sm group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl mb-3 shadow-xs group-hover:scale-110 transition-transform">
+                ⚖️
+              </div>
+              <strong className="text-base font-black text-slate-900 block group-hover:text-emerald-800">
+                {t.tileDosage}
+              </strong>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                {t.dosageHelp}
+              </p>
+              <div className="mt-3 flex items-center space-x-1 text-xs font-black text-emerald-700">
+                <span>{tr("ගණනය කරන්න", "Calculate Now", "கணக்கிடு")}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenTool('calendar')}
+              className="p-5 rounded-2xl bg-white hover:bg-teal-50/70 border-2 border-teal-200 text-left transition-all hover:scale-[1.02] shadow-sm group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center text-2xl mb-3 shadow-xs group-hover:scale-110 transition-transform">
+                🌾
+              </div>
+              <strong className="text-base font-black text-slate-900 block group-hover:text-teal-800">
+                {tr("කන්න දින දර්ශනය", "DOA Crop Calendar", "பயிர் காலண்டர்")}
+              </strong>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                {tr("බිම් සැකසීමේ සිට අස්වැන්න දක්වා දිනෙන් දින පොහොර උපදෙස්", "Day-by-day fertilizer & water instructions for your crop", "தினசரி உர வழிகாட்டல்")}
+              </p>
+              <div className="mt-3 flex items-center space-x-1 text-xs font-black text-teal-700">
+                <span>{tr("දින දර්ශනය බලන්න", "Open Calendar", "காலண்டர்")}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenTool('procurement')}
+              className="p-5 rounded-2xl bg-white hover:bg-blue-50/70 border-2 border-blue-200 text-left transition-all hover:scale-[1.02] shadow-sm group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center text-2xl mb-3 shadow-xs group-hover:scale-110 transition-transform">
                 🛒
               </div>
-              <div className="space-y-1">
-                <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
-                  <span>නවතම රාජ්‍ය සහ වාණිජ ඊ-සේවාව (New E-Procurement)</span>
-                </div>
-                <h3 className="text-base sm:text-lg font-black text-white">
-                  {tr("ඔන්ලයින් පොහොර ඇණවුම් හා ගබඩාවෙන් වෙන්කර ගැනීම", "Online Fertilizer Pre-Order & Depot Reservation", "ஆன்லைன் உர முன்பதிவு & களஞ்சிய ஒதுக்கீடு")}
-                </h3>
-                <p className="text-xs text-emerald-100/80 leading-relaxed max-w-xl">
-                  {tr(
-                    "රජයේ සහනාධාර කූපනයට (රු. 2,500) හෝ නිල ගැසට් මිලට CCF, ලක්පොහොර, බෝවර්, CIC, හේලීස් වෙතින් පොහොර වෙන්කරවා ගෙන ආසන්නතම ගබඩාවෙන් පෝලිම් නැතිව ලබාගන්න.",
-                    "Reserve subsidized quota bags (Rs. 2,500) or certified commercial fertilizer from verified distributors with zero depot queues.",
-                    "அரசு மானிய அல்லது வர்த்தக உரங்களை வரிசையின்றி களஞ்சியத்தில் பெற்றுக்கொள்ள முன்பதிவு செய்யுங்கள்."
-                  )}
-                </p>
+              <strong className="text-base font-black text-slate-900 block group-hover:text-blue-800">
+                {tr("ඔන්ලයින් ඇණවුම් & ගබඩා", "Online Orders & Depots", "உர முன்பதிவு")}
+              </strong>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                {tr("රජයේ ලක්පොහොර හා CCF ගබඩාවලින් සෘජුවම වෙන්කරවා ගන්න", "Direct booking from CCF and Lakpohora warehouses", "நேரடி முன்பதிவு")}
+              </p>
+              <div className="mt-3 flex items-center space-x-1 text-xs font-black text-blue-700">
+                <span>{tr("ඇණවුම් කරන්න", "Pre-order Now", "முன்பதிவு செய்")}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </div>
-            </div>
+            </button>
 
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 self-start md:self-auto flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => { playTone('ding'); setActiveTab('procurement'); }}
-                className="py-3 px-5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs sm:text-sm shadow-md transition-all hover:scale-105 active:scale-95 flex items-center space-x-1.5"
-              >
-                <span>🛒 {tr("ඔන්ලයින් ඇණවුම් කරන්න", "Pre-Order Online", "முன்பதிவு செய்")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => { playTone('ding'); setActiveTab('distributors'); }}
-                className="py-3 px-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all"
-              >
-                <span>🏢 {tr("බෙදාහරින්නන් හා ගබඩා", "Distributors & Depots", "நிறுவன விபரங்கள்")}</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => handleOpenTool('leafdoctor')}
+              className="p-5 rounded-2xl bg-white hover:bg-emerald-50/70 border-2 border-emerald-200 text-left transition-all hover:scale-[1.02] shadow-sm group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl mb-3 shadow-xs group-hover:scale-110 transition-transform">
+                🍃
+              </div>
+              <strong className="text-base font-black text-slate-900 block group-hover:text-emerald-800">
+                {t.tileLeafDoc}
+              </strong>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2">
+                {t.leafDocHelp}
+              </p>
+              <div className="mt-3 flex items-center space-x-1 text-xs font-black text-emerald-700">
+                <span>{tr("රෝගය බලන්න", "Diagnose Leaf", "நோய் அறிதல்")}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </div>
+            </button>
           </div>
 
-          {/* --- Unified Search & Voice AI Assistant Row --- */}
-          <div className="clean-card p-4 sm:p-5 bg-white border border-emerald-200/80 shadow-sm space-y-3">
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-              {/* Search Input */}
+          {/* Search & Category Filter Header */}
+          <div className="space-y-3 pt-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="relative flex-1">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={tr("ඕනෑම සේවාවක්, පොහොරක් හෝ ගැටලුවක් මෙතැනින් සොයන්න...", "Search any tool, crop, or fertilizer question...", "எந்த சேவையையும் இங்கு தேடுங்கள்...")}
-                  className="w-full pl-10 pr-8 py-2.5 rounded-xl border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-xs sm:text-sm font-medium text-slate-800 bg-slate-50/50"
+                  placeholder={tr("ඕනෑම කෘෂි සේවාවක් නමෙන් සොයන්න (උදා: මාත්‍රාව, ඩොලමයිට්, ඇණවුම්)...", "Search any agricultural service or tool...", "சேவைகளை தேடுக...")}
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-xs"
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs font-bold"
-                  >
-                    ✕
-                  </button>
-                )}
               </div>
 
-              {/* Voice AI Assistant Button */}
-              <button
-                type="button"
-                onClick={handleStartVoice}
-                className={`py-2.5 px-4 rounded-xl font-black text-xs shadow-sm flex items-center justify-center space-x-2 transition-all flex-shrink-0 ${
-                  isListening 
-                    ? 'bg-rose-600 text-white animate-pulse' 
-                    : 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                }`}
-              >
-                {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                <span>{isListening ? tr("සවන් දෙමින්...", "Listening...", "கேட்கிறது...") : tr("🎙️ හඬින් අසන්න", "Voice Ask", "குரல் மூலம்")}</span>
-              </button>
-            </div>
-
-            {/* Quick Suggestion Chips */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-              <span className="text-[11px] font-bold text-slate-500">{tr("නිතර අසන ප්‍රශ්න:", "Quick Questions:", "கேள்விகள்:")}</span>
-              {[
-                { q: "යූරියා පොහොර බාලද කියලා ගෙදරදීම බලන්නේ කොහොමද?", label: "🔍 යූරියා බාලද බලමු?" },
-                { q: "අක්කර 1ක කුඹුරකට යූරියා මිටි කීයක් ඕනද?", label: "⚖️ අක්කරේට මිටි කීයද?" },
-                { q: "ගොයමේ කොළ කහවෙලා. මොකද්ද හේතුව?", label: "🌿 කොළ කහවෙලා ඇයි?" },
-                { q: "ජීවාමෘත සාදාගන්නේ කොහොමද?", label: "🍯 ජීවාමෘත හදමු" }
-              ].map((item, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    setChatInput(item.q);
-                    setActiveTab('chat');
-                    handleSendChat(item.q);
-                  }}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200/70 text-[11px] font-medium transition-all"
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* --- All 20 Agricultural Services Categorized Directory --- */}
-          <div className="space-y-4 pt-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 flex items-center space-x-2">
-                  <span>📁</span>
-                  <span>{tr("සියලුම කෘෂි සේවාවන් සහ මෙවලම්", "All Agricultural Services Directory", "அனைத்து விவசாய சேவைகள்")}</span>
-                </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {tr("අවශ්‍ය කාණ්ඩය තෝරා පහසුවෙන් මෙවලම විවෘත කරන්න", "Filter by category or search above to find any tool", "வகை வாரியாக சேவைகளை தேர்ந்தெடுக்கவும்")}
-                </p>
-              </div>
-
-              {/* Category Filter Tabs */}
-              <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none">
+              {/* Category Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
                 {[
-                  { id: 'all', label: tr('සියල්ල', 'All', 'அனைத்தும்') },
-                  { id: 'quality', label: tr('🛡️ ආරක්ෂාව', '🛡️ Quality', '🛡️ தரம்') },
-                  { id: 'dosage', label: tr('🌾 මාත්‍රාව', '🌾 Dosage', '🌾 அளவு') },
-                  { id: 'finance', label: tr('💰 මිල & ණය', '💰 Finance', '💰 நிதி') },
-                  { id: 'advisory', label: tr('🌦️ කාලගුණය & පස', '🌦️ Advisory', '🌦️ ஆலோசனை') }
-                ].map(cat => {
-                  const count = cat.id === 'all' ? allTiles.length : allTiles.filter(t => t.cat === cat.id).length;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setSelectedCategory(cat.id)}
-                      className={`px-3 py-1.5 rounded-xl font-bold text-xs whitespace-nowrap transition-all flex items-center space-x-1.5 ${
-                        selectedCategory === cat.id
-                          ? 'bg-emerald-700 text-white shadow-xs'
-                          : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      <span>{cat.label}</span>
-                      <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-black ${
-                        selectedCategory === cat.id ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Grid of Clean Service Cards */}
-            {visibleTiles.length === 0 ? (
-              <div className="clean-card p-10 text-center space-y-3 bg-white border border-slate-200 text-slate-500">
-                <span className="text-3xl block">🔍</span>
-                <p className="text-sm font-bold">
-                  {tr("ඔබ සෙවූ වචනයට අදාළ සේවාවක් හමු නොවීය.", "No tools found matching your search.", "சேவைகள் எதுவும் கிடைக்கவில்லை.")}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => { setSearchQuery(''); setSelectedCategory('all'); }}
-                  className="px-4 py-2 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs hover:bg-emerald-200 transition-colors"
-                >
-                  {tr("සියලුම සේවාවන් පෙන්වන්න", "Show All Tools", "அனைத்தையும் காட்டு")}
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3.5">
-                {visibleTiles.map(tile => (
+                  { id: 'all', label: tr("සියල්ල", "All", "அனைத்தும்"), count: allTiles.length },
+                  { id: 'quality', label: tr("තත්ත්ව පරීක්ෂණ", "Quality", "தரம்"), count: allTiles.filter(t => t.cat === 'quality').length },
+                  { id: 'dosage', label: tr("මාත්‍රා & කන්න", "Dosage & Stages", "அளவு"), count: allTiles.filter(t => t.cat === 'dosage').length },
+                  { id: 'finance', label: tr("වෙළඳපොළ & මුදල්", "Market & Finance", "நிதி"), count: allTiles.filter(t => t.cat === 'finance').length },
+                  { id: 'advisory', label: tr("පස & උපදෙස්", "Soil & Advisory", "ஆலோசனை"), count: allTiles.filter(t => t.cat === 'advisory').length }
+                ].map(cat => (
                   <button
-                    key={tile.id}
-                    onClick={() => { playTone('ding'); setActiveTab(tile.id); }}
-                    className="p-4 rounded-2xl border text-left transition-all bg-white text-slate-800 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/40 shadow-xs hover:shadow-md flex flex-col justify-between group"
+                    key={cat.id}
+                    type="button"
+                    onClick={() => { setSelectedCategory(cat.id); playTone('ding'); }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all flex items-center space-x-1.5 ${
+                      selectedCategory === cat.id
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    }`}
                   >
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-2xl group-hover:scale-110 transition-transform">{tile.icon}</span>
-                        <span className="text-[10px] uppercase font-bold text-slate-400 group-hover:text-emerald-700 transition-colors">
-                          {tile.cat}
-                        </span>
-                      </div>
-                      <span className="text-sm font-black text-slate-900 block leading-snug group-hover:text-emerald-800 transition-colors">
-                        {tile.label}
-                      </span>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                        {tile.desc}
-                      </p>
-                    </div>
-                    <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-bold text-emerald-700">
-                      <span>{tr("විවෘත කරන්න", "Open Tool", "திறக்க")}</span>
-                      <span className="group-hover:translate-x-1 transition-transform">➔</span>
-                    </div>
+                    <span>{cat.label}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                      selectedCategory === cat.id ? 'bg-emerald-500 text-slate-950 font-black' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {cat.count}
+                    </span>
                   </button>
                 ))}
               </div>
-            )}
-          </div>
-
-          {/* --- Verified Platform Capabilities Bar (At bottom as an honest trust footer) --- */}
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 shadow-xs">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-              {[
-                { label: tr("ප්‍රධාන බෝග ආවරණය", "Crops Covered", "பயிர்கள் வகை"), val: `${animatedStats.crops}+`, icon: "🌾", color: "text-emerald-700" },
-                { label: tr("ව්‍යාජ සංයුති හඳුනාගැනීම", "Adulterants Screened", "போலி கலவைகள்"), val: `${animatedStats.adulterants} Profiles`, icon: "🧪", color: "text-rose-700" },
-                { label: tr("ප්‍රමිති අනුකූලතාවය", "National Standards", "தேசிய தரநிலைகள்"), val: animatedStats.standards, icon: "🏛️", color: "text-amber-700" },
-                { label: tr("දිවයිනේ දිස්ත්‍රික්ක", "Islandwide Districts", "மாவட்டங்கள்"), val: animatedStats.districts, icon: "🛡️", color: "text-blue-700" }
-              ].map((stat, idx) => (
-                <div key={idx} className="p-2.5 rounded-xl bg-white border border-slate-100 shadow-xs flex items-center justify-center space-x-2.5">
-                  <span className="text-xl">{stat.icon}</span>
-                  <div className="text-left">
-                    <div className={`text-sm font-black ${stat.color}`}>{stat.val}</div>
-                    <div className="text-[10px] font-bold text-slate-500 uppercase">{stat.label}</div>
-                  </div>
-                </div>
-              ))}
             </div>
-          </div>
 
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE: PADDY GROWTH STAGE & FERTILIZER CALENDAR                */}
-      {/* ================================================================ */}
-      {activeTab === 'calendar' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6 animate-fadeIn">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
-              <Calendar className="w-3.5 h-3.5 text-emerald-700" />
-              <span>{tr("කෘෂිකර්ම දෙපාර්තමේන්තු කන්න දින දර්ශනය", "DOA Certified Crop Calendar", "அரசு அங்கீகரிக்கப்பட்ட பயிர் காலண்டர்")}</span>
-            </div>
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-              {tr("🌾 වී වගා කන්න සැලසුම සහ වර්ධන අවධි පොහොර දින දර්ශනය", "Paddy Growth Stage & Fertilizer Calendar", "நெல் பயிர் வளர்ச்சி மற்றும் உர காலண்டர்")}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {tr("ඔබේ ගොයමේ වයස හෝ වර්ධන අවධිය තෝරන්න. අද දිනයේ යෙදිය යුතු නියම පොහොර, ජල මට්ටම සහ රෝග පාලන උපදෙස් ලබාගන්න.", "Select your rice crop age or stage to view today's exact fertilizer recommendation, water depth, and disease prevention rules.", "பயிரின் வயதை தேர்வு செய்து இன்றைய உர பரிந்துரையை பெறவும்.")}
-            </p>
-          </div>
-
-          {/* Variety Selector */}
-          <div className="space-y-2">
-            <label className="text-xs font-black text-slate-700 block">
-              {tr("වී ප්‍රභේදයේ කල් පිරීමේ කාලය තෝරන්න:", "Select Rice Crop Duration:", "நெல் ரகத்தை தேர்வு செய்யவும்:")}
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[
-                { id: '3.5_month', label: tr("මාස 3 1/2 ප්‍රභේද", "3.5 Months (105 Days)", "3.5 மாத ரகம்"), desc: "Bg 352, At 362, Bw 367" },
-                { id: '3_month', label: tr("මාස 3 කෙටි ප්‍රභේද", "3 Months (90 Days)", "3 மாத ரகம்"), desc: "Bg 300, Ld 365, Bg 310" },
-                { id: '4_month', label: tr("මාස 4 - 4 1/2 ප්‍රභේද", "4 Months (120 Days)", "4 மாத ரகம்"), desc: "Bg 379-2, Bg 403, At 401" },
-                { id: 'traditional', label: tr("සාම්ප්‍රදායික දේශීය වී", "Traditional Heenati", "பாரம்பரிய நெல்"), desc: "සුවඳැල්, කළුහීනටි, පච්චපෙරුමාල්" }
-              ].map(v => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => { playTone('ding'); setCalendarPaddyType(v.id); }}
-                  className={`p-3 rounded-2xl border text-left transition-all ${
-                    calendarPaddyType === v.id
-                      ? 'bg-emerald-50 border-emerald-600 text-emerald-950 ring-2 ring-emerald-500/20 shadow-xs'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
-                  }`}
-                >
-                  <strong className="text-xs font-black block">{v.label}</strong>
-                  <span className="text-[11px] text-slate-500 block mt-0.5">{v.desc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Stage Progress Timeline Bar */}
-          <div className="space-y-3">
-            <label className="text-xs font-black text-slate-700 block">
-              {tr("ගොයම මේ වන විට පවතින අවධිය මත ක්ලික් කරන්න:", "Click on your current crop growth stage:", "பயிரின் தற்போதைய நிலையை கிளிக் செய்யவும்:")}
-            </label>
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
-              {paddyStages.map((stage) => {
-                const isActive = selectedCropStage === stage.id;
-                return (
-                  <button
-                    key={stage.id}
-                    type="button"
-                    onClick={() => { playTone('chime'); setSelectedCropStage(stage.id); }}
-                    className={`p-3.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between ${
-                      isActive
-                        ? 'bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-emerald-600 shadow-md ring-2 ring-emerald-400 transform scale-[1.02]'
-                        : 'bg-white border-slate-200 text-slate-800 hover:border-emerald-300 hover:bg-emerald-50/40'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl">{stage.icon}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
-                        isActive ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {stage.days}
-                      </span>
-                    </div>
-                    <div>
-                      <span className={`text-[10px] uppercase font-bold block ${isActive ? 'text-emerald-200' : 'text-slate-400'}`}>
-                        පියවර {stage.stageNumber}
-                      </span>
-                      <strong className="text-xs sm:text-sm font-black block leading-tight mt-0.5">
-                        {stage.shortTitle}
-                      </strong>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Active Stage Detailed Guidance Card */}
-          {selectedCropStage !== null && paddyStages[selectedCropStage] && (() => {
-            const curStage = paddyStages[selectedCropStage];
-            return (
-              <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-50/80 via-white to-green-50 border-2 border-emerald-300 shadow-md space-y-5 animate-fadeIn">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/80 pb-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="w-12 h-12 rounded-2xl bg-emerald-600 text-white text-2xl flex items-center justify-center shadow-md flex-shrink-0">
-                      {curStage.icon}
-                    </span>
-                    <div>
-                      <div className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-md bg-emerald-200 text-emerald-900 text-[11px] font-black">
-                        <span>පියවර {curStage.stageNumber} • {curStage.days}</span>
-                      </div>
-                      <h3 className="text-lg sm:text-xl font-black text-slate-900 mt-1">
-                        {curStage.title}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Audio Readout Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleSpeakText(`${curStage.title}. ${curStage.fertilizer}. ${curStage.water}. ${curStage.action}`)}
-                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow transition-all flex items-center space-x-1.5 flex-shrink-0"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    <span>{tr("හඬින් අසන්න (Listen)", "Listen Aloud", "குரலில் கேட்க")}</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Fertilizer Box */}
-                  <div className="p-4 rounded-2xl bg-white border border-emerald-200 shadow-xs space-y-2">
-                    <div className="flex items-center space-x-2 text-emerald-800 font-black text-xs">
-                      <span className="text-lg">⚖️</span>
-                      <span>{tr("අද දිනයේ යෙදිය යුතු පොහොර නිර්දේශය", "Fertilizer to Apply Today", "இன்று இடவேண்டிய உரம்")}</span>
-                    </div>
-                    <p className="text-sm font-black text-slate-900 leading-snug">
-                      {curStage.fertilizer}
-                    </p>
-                    <div className="pt-2">
+            {/* Recently Used Tools Bar */}
+            {recentTools.length > 0 && (
+              <div className="flex items-center space-x-2 text-xs text-slate-500 pt-1">
+                <span className="font-bold flex items-center space-x-1">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{tr("මෑතකදී භාවිත කළ මෙවලම්:", "Recently Used:", "சமீபத்தில் பயன்படுத்தியவை:")}</span>
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {recentTools.map(rtId => {
+                    const tile = allTiles.find(t => t.id === rtId);
+                    if (!tile) return null;
+                    return (
                       <button
+                        key={rtId}
                         type="button"
-                        onClick={() => { playTone('chime'); setActiveTab('dosage'); }}
-                        className="px-3 py-1.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-900 text-xs font-black transition-all flex items-center space-x-1"
+                        onClick={() => handleOpenTool(rtId)}
+                        className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-900 font-bold border border-emerald-200 text-[11px] transition-all"
                       >
-                        <span>{tr("කුඹුරේ අක්කර ගණනට මිටි හදමු", "Calculate Bags for Acreage", "மூட்டைகளை கணக்கிட")}</span>
-                        <span>➔</span>
+                        {tile.icon} {tile.label}
                       </button>
-                    </div>
-                  </div>
-
-                  {/* Water Management Box */}
-                  <div className="p-4 rounded-2xl bg-white border border-cyan-200 shadow-xs space-y-2">
-                    <div className="flex items-center space-x-2 text-cyan-800 font-black text-xs">
-                      <span className="text-lg">💧</span>
-                      <span>{tr("ජල කළමනාකරණය (Water Depth)", "Water Management", "நீர் மேலாண்மை")}</span>
-                    </div>
-                    <p className="text-sm font-bold text-slate-800 leading-snug">
-                      {curStage.water}
-                    </p>
-                  </div>
-
-                  {/* Application Method & Timing */}
-                  <div className="p-4 rounded-2xl bg-white border border-amber-200 shadow-xs space-y-2">
-                    <div className="flex items-center space-x-2 text-amber-800 font-black text-xs">
-                      <span className="text-lg">⏰</span>
-                      <span>{tr("යොදන වේලාව සහ ක්‍රමය (Timing & Application)", "Timing & Method", "நேரம் & முறை")}</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                      {curStage.action}
-                    </p>
-                  </div>
-
-                  {/* Pest & Disease Alert */}
-                  <div className="p-4 rounded-2xl bg-white border border-rose-200 shadow-xs space-y-2">
-                    <div className="flex items-center space-x-2 text-rose-800 font-black text-xs">
-                      <span className="text-lg">⚠️</span>
-                      <span>{tr("විමසිලිමත් විය යුතු පළිබෝධ හා රෝග (Pest Watch)", "Pest & Disease Alert", "பூச்சி & நோய் எச்சரிக்கை")}</span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-slate-700 leading-relaxed">
-                      {curStage.watch}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('leafdoctor'); }}
-                      className="text-xs font-black text-rose-700 hover:text-rose-900 underline flex items-center space-x-1 mt-1"
-                    >
-                      <span>{tr("🌿 කොළ රෝග 3D පරික්ෂාවට යන්න", "Open 3D Leaf Doctor", "3D இலை பரிசோதனை")}</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Weather Safeguard Alert */}
-                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 flex items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl flex-shrink-0">⛅</span>
-                    <div>
-                      <strong className="text-amber-950 font-black block">
-                        {tr("කාලගුණ ආරක්‍ෂණ අනතුරු ඇඟවීම:", "Weather Precaution:", "வானிலை முன்னெச்சரிக்கை:")}
-                      </strong>
-                      <span className="text-amber-900">
-                        {tr("තද වැසි ඇදහැලෙන අවස්ථාවල හෝ වැසි අපේක්ෂිත දිනවල කිසිසේත් පොහොර නොයොදන්න. 70%ක් සේදී යා හැක.", "Never broadcast fertilizer before heavy rainfall. Postpone to avoid 70% leaching loss.", "கனமழைக்கு முன் உரம் இட வேண்டாம்.")}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => { playTone('ding'); setActiveTab('weather'); }}
-                    className="px-3 py-1.5 rounded-xl bg-amber-200 hover:bg-amber-300 text-amber-950 font-black text-xs transition-all flex-shrink-0"
-                  >
-                    {tr("අද වැසි බලන්න", "Check Rain", "வானிலை")}
-                  </button>
-                </div>
-
-              </div>
-            );
-          })()}
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 1: DIY FIELD SCREENING */}
-      {/* ================================================================ */}
-      {activeTab === 'screening' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
-              <span>{t.screeningStepTag}</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900">
-              {t.screeningHeader}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.screeningHelp}
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            
-            {/* Step 1: Water test */}
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-900 block">
-                {t.q1Label}
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setTest1Water('fast_cold')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
-                    test1Water === 'fast_cold'
-                      ? 'border-emerald-600 bg-emerald-50/70 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    test1Water === 'fast_cold' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {test1Water === 'fast_cold' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div>
-                    <span className="font-black text-sm block">{t.q1OptA}</span>
-                    <span className="text-xs text-slate-500 block mt-1">{t.q1OptASub}</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTest1Water('slow_sediment')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
-                    test1Water === 'slow_sediment'
-                      ? 'border-rose-600 bg-rose-50/70 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    test1Water === 'slow_sediment' ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {test1Water === 'slow_sediment' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div>
-                    <span className="font-black text-sm block">{t.q1OptB}</span>
-                    <span className="text-xs text-slate-500 block mt-1">{t.q1OptBSub}</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Step 2: Vinegar test */}
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-900 block">
-                {t.q2Label}
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setTest2Vinegar('no_bubbles')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
-                    test2Vinegar === 'no_bubbles'
-                      ? 'border-emerald-600 bg-emerald-50/70 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    test2Vinegar === 'no_bubbles' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {test2Vinegar === 'no_bubbles' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div>
-                    <span className="font-black text-sm block">{t.q2OptA}</span>
-                    <span className="text-xs text-slate-500 block mt-1">{t.q2OptASub}</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTest2Vinegar('has_bubbles')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
-                    test2Vinegar === 'has_bubbles'
-                      ? 'border-rose-600 bg-rose-50/70 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    test2Vinegar === 'has_bubbles' ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {test2Vinegar === 'has_bubbles' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div>
-                    <span className="font-black text-sm block">{t.q2OptB}</span>
-                    <span className="text-xs text-slate-500 block mt-1">{t.q2OptBSub}</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Step 3: Flame test */}
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-900 block">
-                {t.q3Label}
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setTest3Heat('white_melt')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
-                    test3Heat === 'white_melt'
-                      ? 'border-emerald-600 bg-emerald-50/70 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    test3Heat === 'white_melt' ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {test3Heat === 'white_melt' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div>
-                    <span className="font-black text-xs sm:text-sm block">{t.q3OptA}</span>
-                    <span className="text-[11px] text-slate-500 block mt-1">{t.q3OptASub}</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTest3Heat('clay_char')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
-                    test3Heat === 'clay_char'
-                      ? 'border-amber-600 bg-amber-50/70 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    test3Heat === 'clay_char' ? 'border-amber-600 bg-amber-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {test3Heat === 'clay_char' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div>
-                    <span className="font-black text-xs sm:text-sm block">{t.q3OptB}</span>
-                    <span className="text-[11px] text-slate-500 block mt-1">{t.q3OptBSub}</span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTest3Heat('rock_ash')}
-                  className={`p-4 rounded-xl border-2 text-left transition-all flex items-start space-x-3 ${
-                    test3Heat === 'rock_ash'
-                      ? 'border-rose-600 bg-rose-50/70 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    test3Heat === 'rock_ash' ? 'border-rose-600 bg-rose-600 text-white' : 'border-slate-300'
-                  }`}>
-                    {test3Heat === 'rock_ash' && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div>
-                    <span className="font-black text-xs sm:text-sm block">{t.q3OptC}</span>
-                    <span className="text-[11px] text-slate-500 block mt-1">{t.q3OptCSub}</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Check Action Button */}
-            <button
-              type="button"
-              onClick={handleCheckFertilizer}
-              disabled={screeningLoading}
-              className="w-full py-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-base shadow-md transition-all flex items-center justify-center space-x-2"
-            >
-              {screeningLoading ? (
-                <span>{t.evaluating}</span>
-              ) : (
-                <>
-                  <ShieldCheck className="w-5 h-5" />
-                  <span>{t.btnEvaluate}</span>
-                </>
-              )}
-            </button>
-
-            {/* Big Friendly Result Banner */}
-            {screeningResult && (
-              <div className={`p-6 rounded-2xl border-2 text-left transition-all ${
-                screeningResult.is_genuine
-                  ? 'bg-emerald-50 border-emerald-500 text-emerald-950'
-                  : 'bg-rose-50 border-rose-500 text-rose-950'
-              }`}>
-                <div className="flex items-center space-x-3 mb-2">
-                  <span className="text-3xl">
-                    {screeningResult.is_genuine ? '🟢' : '🔴'}
-                  </span>
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-black">
-                      {screeningResult.title}
-                    </h3>
-                    <span className="text-xs font-bold text-slate-600">
-                      {t.confidenceLabel}: {screeningResult.confidence}%
-                    </span>
-                  </div>
-                </div>
-
-                <p className="text-sm font-medium mt-3 leading-relaxed">
-                  {screeningResult.description}
-                </p>
-
-                {screeningResult.adulterants && screeningResult.adulterants.length > 0 && (
-                  <div className="mt-3 p-3 bg-white rounded-xl border border-rose-200 text-xs text-rose-800 font-bold">
-                    {t.detectedAdulterantsLabel} {screeningResult.adulterants.join(', ')}
-                  </div>
-                )}
-                
-                <div className="mt-4 flex justify-end">
-                  <a 
-                    href={`https://wa.me/?text=${encodeURIComponent(screeningResult.title + ' - ' + screeningResult.description)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center space-x-2 px-4 py-2 bg-[#25D366] hover:bg-[#128C7E] text-white text-xs font-bold rounded-xl shadow-sm transition-all"
-                  >
-                    <span>WhatsApp</span>
-                  </a>
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 2: DOSAGE CALCULATOR */}
-      {/* ================================================================ */}
-      {activeTab === 'dosage' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-xl font-black text-slate-900">
-              {t.dosageHeader}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.dosageHelp}
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            
-            {/* Step 1: Crop Chooser */}
-            <div>
-              <label className="text-sm font-black text-slate-900 block mb-2">
-                {t.cropSelectLabel}
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                {[
-                  { id: 'paddy', label: t.cropPaddy, icon: '🌾' },
-                  { id: 'maize', label: t.cropMaize, icon: '🌽' },
-                  { id: 'tea', label: t.cropTea, icon: '🍃' },
-                  { id: 'vegetables', label: t.cropVeg, icon: '🥦' },
-                  { id: 'chilli', label: t.cropChilli, icon: '🌶️' }
-                ].map(c => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => handleCalculateDosage(c.id, landAcres)}
-                    className={`p-3.5 rounded-xl border-2 text-center transition-all ${
-                      selectedCrop === c.id
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-950 font-black shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                    }`}
-                  >
-                    <span className="text-2xl block mb-1">{c.icon}</span>
-                    <span className="text-xs sm:text-sm font-bold block">{c.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Step 2: Land size */}
-            <div>
-              <label className="text-sm font-black text-slate-900 block mb-2">
-                {t.landSizeLabel}
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                {[0.5, 1.0, 2.0, 3.0, 5.0].map(ac => (
-                  <button
-                    key={ac}
-                    type="button"
-                    onClick={() => handleCalculateDosage(selectedCrop, ac)}
-                    className={`px-4 py-2.5 rounded-xl border font-black text-sm transition-all ${
-                      landAcres === ac
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    {t.acreUnit} {ac}
-                  </button>
-                ))}
-                <div className="flex items-center space-x-1.5 ml-2">
-                  <input
-                    type="number"
-                    min="0.25"
-                    max="100"
-                    step="0.5"
-                    value={landAcres}
-                    onChange={(e) => handleCalculateDosage(selectedCrop, parseFloat(e.target.value) || 1)}
-                    className="w-24 p-2 rounded-xl border border-slate-300 text-center font-bold text-sm"
-                  />
-                  <span className="text-xs text-slate-600 font-bold">{t.acreUnit}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Output Display Card */}
-            {dosageResult && (
-              <div className="space-y-4 pt-2">
-                
-                {/* Bags required highlight */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
-                    <span className="text-xs font-bold text-emerald-800 uppercase block">{t.ureaLabel}</span>
-                    <span className="text-3xl font-black text-emerald-950 mt-1 block">
-                      {dosageResult.bags_50kg_required?.Urea_Bags || 2} <span className="text-sm font-medium">{t.bagUnit}</span>
-                    </span>
-                    <span className="text-[11px] text-emerald-700">{t.bag50kgNote}</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center">
-                    <span className="text-xs font-bold text-amber-800 uppercase block">{t.mopLabel}</span>
-                    <span className="text-3xl font-black text-amber-950 mt-1 block">
-                      {dosageResult.bags_50kg_required?.MOP_Bags || 1} <span className="text-sm font-medium">{t.bagUnit}</span>
-                    </span>
-                    <span className="text-[11px] text-amber-700">{t.bag50kgNote}</span>
-                  </div>
-
-                  <div className="p-4 rounded-xl bg-cyan-50 border border-cyan-200 text-center">
-                    <span className="text-xs font-bold text-cyan-800 uppercase block">{t.tspLabel}</span>
-                    <span className="text-3xl font-black text-cyan-950 mt-1 block">
-                      {dosageResult.bags_50kg_required?.TSP_Bags || 1} <span className="text-sm font-medium">{t.bagUnit}</span>
-                    </span>
-                    <span className="text-[11px] text-cyan-700">{t.bag50kgNote}</span>
-                  </div>
-                </div>
-
-                {/* Money savings banner */}
-                <div className="p-5 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-md flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-green-100 font-bold uppercase tracking-wider block">
-                      {t.savingsTitle}
-                    </span>
-                    <span className="text-2xl sm:text-3xl font-black mt-0.5 block">
-                      Rs. {dosageResult.cost_breakdown_lkr?.farmer_savings_lkr?.toLocaleString() || '14,200'} /=
-                    </span>
-                    <span className="text-xs text-green-100">{t.savingsSub}</span>
-                  </div>
-                  <div className="flex flex-col items-end gap-2">
-                    <div className="text-4xl">💰</div>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <button 
-                        type="button"
-                        onClick={() => setShowPrescriptionModal(true)} 
-                        className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center space-x-1.5"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>{tr("නිල බෙහෙත් වට්ටෝරුව 📜", "Official Prescription 📜", "உர பரிந்துரை 📜")}</span>
-                      </button>
-                      <button 
-                        type="button"
-                        onClick={() => setShowPrescriptionModal(true)} 
-                        className="px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs font-bold rounded-xl transition-all flex items-center space-x-1"
-                      >
-                        <Printer className="w-3.5 h-3.5" />
-                        <span>{tr("PDF / Print", "PDF / Print", "அச்சிடு")}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Stage Schedule */}
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    {t.scheduleHeader}
-                  </h4>
-                  <div className="space-y-2 text-xs">
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
-                      <div>
-                        <strong className="text-slate-900 block text-sm">{t.stageBasal}</strong>
-                        <span className="text-slate-500">{t.stageBasalSub}</span>
-                      </div>
-                      <span className="font-bold text-emerald-800">{t.stageBasalDose}</span>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
-                      <div>
-                        <strong className="text-slate-900 block text-sm">{t.stageTop1}</strong>
-                        <span className="text-slate-500">{t.stageTop1Sub}</span>
-                      </div>
-                      <span className="font-bold text-emerald-800">{t.stageTop1Dose}</span>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-lg border border-slate-200 flex justify-between items-center">
-                      <div>
-                        <strong className="text-slate-900 block text-sm">{t.stageTop2}</strong>
-                        <span className="text-slate-500">{t.stageTop2Sub}</span>
-                      </div>
-                      <span className="font-bold text-emerald-800">{t.stageTop2Dose}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Printable Prescription Action Button */}
-                <div className="pt-3 flex flex-col sm:flex-row items-center justify-between gap-3 bg-emerald-50/70 p-4 rounded-xl border border-emerald-200">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">🏛️</span>
-                    <div>
-                      <h4 className="text-sm font-black text-emerald-950">
-                        {t.prescriptionBtn || "නිල කෘෂි නිර්දේශ පත්‍රිකාව මුද්‍රණය"}
-                      </h4>
-                      <p className="text-xs text-emerald-800">
-                        {t.prescriptionValidAt || "ගොවිජන සේවා මධ්‍යස්ථාන (ASC) හා රසායන වෙළඳසැල් සඳහා වලංගුය."}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleOpenPrescription}
-                    className="w-full sm:w-auto px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm shadow-md transition-all flex items-center justify-center space-x-2"
-                  >
-                    <FileText className="w-4 h-4 text-emerald-400" />
-                    <span>{t.prescriptionBtn || "📄 පත්‍රිකාව මුද්‍රණය"}</span>
-                  </button>
-                </div>
-
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 3: TANK MIX CHECKER */}
-      {/* ================================================================ */}
-      {activeTab === 'tankmix' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-xl font-black text-slate-900">
-              {t.tankMixHeader}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.tankMixHelp}
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <label className="text-sm font-black text-slate-900 block">
-              {t.tankMixSelectLabel}
-            </label>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-              {[
-                { id: 'urea', label: t.chemUrea },
-                { id: 'mop', label: t.chemMop },
-                { id: 'tsp', label: t.chemTsp },
-                { id: 'calcium_nitrate', label: t.chemCa },
-                { id: 'copper', label: t.chemCopper },
-                { id: 'zinc', label: t.chemZinc }
-              ].map(item => {
-                const checked = tankFertilizers.includes(item.id);
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      if (checked) {
-                        setTankFertilizers(tankFertilizers.filter(x => x !== item.id));
-                      } else {
-                        setTankFertilizers([...tankFertilizers, item.id]);
-                      }
-                    }}
-                    className={`p-3.5 rounded-xl border-2 text-left font-bold text-xs sm:text-sm flex items-center justify-between transition-all ${
-                      checked
-                        ? 'border-emerald-600 bg-emerald-50 text-emerald-950 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    <div className={`w-5 h-5 rounded-md border flex items-center justify-center ${
-                      checked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300'
-                    }`}>
-                      {checked && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-
-            <button
-              type="button"
-              onClick={handleCheckTankMix}
-              disabled={tankFertilizers.length < 2}
-              className="w-full py-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow-md transition-all disabled:opacity-50"
-            >
-              {t.btnCheckMix}
-            </button>
-
-            {tankResult && (
-              <div className={`p-5 rounded-2xl border-2 ${
-                tankResult.safe 
-                  ? 'bg-emerald-50 border-emerald-500 text-emerald-950' 
-                  : 'bg-rose-50 border-rose-500 text-rose-950'
-              }`}>
-                <h3 className="text-base font-black">{tankResult.title}</h3>
-                <p className="text-sm font-medium mt-1 leading-relaxed">{tankResult.detail}</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 4: LEAF DOCTOR */}
-      {/* ================================================================ */}
-      {activeTab === 'leafdoctor' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-xl font-black text-slate-900">
-              {t.leafDocHeader}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.leafDocHelp}
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            {/* 3D Animated Paddy Plant Disease Inspector */}
-            <ThreePlantCanvas symptom={selectedSymptom} />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                { id: 'yellow_lower', label: t.symptomYellowLower, sub: t.symptomYellowLowerSub },
-                { id: 'scorch_edges', label: t.symptomScorch, sub: t.symptomScorchSub },
-                { id: 'purple_leaves', label: t.symptomPurple, sub: t.symptomPurpleSub },
-                { id: 'veins_green', label: t.symptomVeinsGreen, sub: t.symptomVeinsGreenSub }
-              ].map(s => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => handleDiagnoseLeaf(s.id)}
-                  className={`p-4 rounded-xl border-2 text-left transition-all ${
-                    selectedSymptom === s.id
-                      ? 'border-emerald-600 bg-emerald-50 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <span className="font-black text-sm block">{s.label}</span>
-                  <span className="text-xs text-slate-500 mt-1 block">{s.sub}</span>
-                </button>
-              ))}
-            </div>
-
-            {leafResult && (
-              <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-300 text-slate-900 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block">{t.diagnosedDiseaseLabel}</span>
-                  <button
-                    type="button"
-                    onClick={() => handleSpeakText(`${leafResult.title}. ${leafResult.solution}`)}
-                    className="px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center space-x-1 shadow-sm transition-all"
-                  >
-                    <Volume2 className="w-3.5 h-3.5" />
-                    <span>{t.btnSpeak || "හඬින් අසන්න"}</span>
-                  </button>
-                </div>
-                <h3 className="text-lg font-black text-emerald-950">{leafResult.title}</h3>
-                <p className="text-xs text-slate-600">{leafResult.cause}</p>
-                <div className="p-3 bg-white rounded-xl border border-emerald-200 mt-2">
-                  <strong className="text-xs font-bold text-emerald-900 block mb-1">{t.prescribedRemedyLabel}</strong>
-                  <p className="text-sm font-medium text-slate-800 leading-relaxed">{leafResult.solution}</p>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
-        </div>
-      )}
 
-      {/* ================================================================ */}
-      {/* FEATURE 5: WEATHER ADVISORY */}
-      {/* ================================================================ */}
-      {activeTab === 'weather' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-xl font-black text-slate-900">
-              {t.weatherHeader}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.weatherHelp}
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-black text-slate-900 block mb-2">{t.selectDistrictLabel}</label>
-              <div className="flex flex-wrap gap-2">
-                {["Anuradhapura", "Polonnaruwa", "Kurunegala", "Ampara", "Badulla", "Hambantota"].map(d => (
-                  <button
-                    key={d}
-                    type="button"
-                    onClick={() => handleFetchWeather(d)}
-                    className={`px-3.5 py-2 rounded-xl border font-bold text-xs transition-all ${
-                      selectedDistrict === d
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-50'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {weatherData && (
-              <div className="space-y-3 pt-2">
-                <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 font-medium text-sm leading-relaxed">
-                  💡 <strong>{t.weatherAdviceLabel}</strong> {weatherData.advice}
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
-                  {weatherData.days.map((item, idx) => (
-                    <div 
-                      key={idx}
-                      className={`p-3.5 rounded-xl border text-center ${
-                        item.canSpray 
-                          ? 'bg-emerald-50 border-emerald-300 text-emerald-950' 
-                          : 'bg-rose-50 border-rose-300 text-rose-950'
-                      }`}
-                    >
-                      <span className="font-bold text-xs block text-slate-600">{item.day}</span>
-                      <span className="text-sm font-black my-1 block">{item.status}</span>
-                      <span className={`text-[11px] font-black px-2 py-0.5 rounded-full inline-block ${
-                        item.canSpray ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
-                      }`}>
-                        {item.canSpray ? t.canSprayTag : t.cantSprayTag}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 6: ORGANIC BIO-RECIPES */}
-      {/* ================================================================ */}
-      {activeTab === 'organic' && (() => {
-        const organicRecipesData = {
-          jeevamrutha: {
-            id: 'jeevamrutha',
-            title: t.recJeevTitle,
-            subtitle: t.recJeevDesc,
-            icon: '🌱',
-            baseVolumePerAcre: 200,
-            savingsPerAcre: 14500,
-            dilutionPerTank: language === 'en' 
-              ? "For soil drenching: fill knapsack directly with strained broth. For foliar spraying: mix 1.5L strained Jeevamrutha with 14.5L clean water per 16L tank (10% foliar dilution)."
-              : (language === 'ta' 
-                  ? "மண்ணில் ஊற்ற: வடிகட்டிய திரவத்தை நேரடியாக 16L தெளிப்பானில் ஊற்றவும். இலைகளில் தெளிக்க: 1.5L கரைசலை 14.5L தண்ணீரில் கலக்கவும் (10% வீதம்)."
-                  : "පසට යෙදීමට නම්: පෙරාගත් ජීවාමෘත කෙලින්ම ලීටර් 16 ටැංකියට පුරවා මුලට වත්කරන්න. පත්‍ර මතට ස්ප්‍රේ කිරීමට නම්: ජීවාමෘත 1.5L ක් වතුර 14.5L සමග කලවම් කරන්න (10% තනුක කිරීම)."),
-            bestTiming: language === 'en'
-              ? "Early morning (6:30 AM - 8:30 AM) or evening (4:30 PM - 6:30 PM) during moist soil conditions. Avoid direct blazing mid-day sunlight."
-              : (language === 'ta'
-                  ? "அதிகாலை (காலை 6:30 - 8:30) அல்லது மாலை (4:30 - 6:30) வேளையில் மண் ஈரப்பதமாக இருக்கும் போது இடவும். நண்பகல் வெயிலை தவிர்க்கவும்."
-                  : "උදෑසන 6:30 - 8:30 හෝ සවස 4:30 - 6:30 හිරු රශ්මිය අඩු, පස තෙතමනය සහිත අවස්ථාවේදී. දහවල් තද අව්වේ යෙදීමෙන් වළකින්න."),
-            ingredients: [
-              { 
-                name: language === 'en' ? 'Fresh Cow Dung' : (language === 'ta' ? 'புதிய மாட்டு சாணம்' : 'නැවුම් එළගොම'),
-                amount: `${(10 * organicAcres).toFixed(1)} kg`,
-                note: language === 'en' ? 'From indigenous or local cattle' : (language === 'ta' ? 'நாட்டு மாட்டு சாணம் சிறந்தது' : 'දේශීය එළදෙනුන්ගේ වඩාත් සුදුසුයි')
-              },
-              { 
-                name: language === 'en' ? 'Fresh Cow Urine' : (language === 'ta' ? 'மாட்டு கோமியம்' : 'ගව මුත්‍රා'),
-                amount: `${(10 * organicAcres).toFixed(1)} L`,
-                note: language === 'en' ? 'Rich in organic nitrogen & hormones' : (language === 'ta' ? 'தழைச்சத்து மற்றும் வளர்ச்சி ஊக்கிகள்' : 'නයිට්‍රජන් හා ශාක හෝමෝන බහුලයි')
-              },
-              { 
-                name: language === 'en' ? 'Jaggery / Black Treacle' : (language === 'ta' ? 'நாட்டு சர்க்கரை / வெல்லம்' : 'හකුරු / උක් පැණි'),
-                amount: `${(2 * organicAcres).toFixed(1)} kg`,
-                note: language === 'en' ? 'Fermentation fuel for microbes' : (language === 'ta' ? 'நுண்ணுயிர் பெருக்கத்திற்கான ஆற்றல்' : 'ක්ෂුද්‍රජීවීන් ගුණනය වීමේ ශක්ති ප්‍රභවය')
-              },
-              { 
-                name: language === 'en' ? 'Pulse Flour (Gram / Chickpea)' : (language === 'ta' ? 'பயறு மாவு (கடலை மாவு)' : 'මුං/කඩල/උඳු පිටි'),
-                amount: `${(2 * organicAcres).toFixed(1)} kg`,
-                note: language === 'en' ? 'Microbial protein nutrient source' : (language === 'ta' ? 'நுண்ணுயிர்களுக்கான புரத உணவு' : 'ක්ෂුද්‍රජීවී ප්‍රෝටීන් ආහාරය')
-              },
-              { 
-                name: language === 'en' ? 'Living Ant-hill / Forest Soil' : (language === 'ta' ? 'புற்று மண் / நச்சு இல்லாத காட்டு மண்' : 'තුඹසකින් ගත් පස්'),
-                amount: `${(0.5 * organicAcres).toFixed(1)} kg`,
-                note: language === 'en' ? 'Inoculant containing millions of live soil bacteria' : (language === 'ta' ? 'மண் நுண்ணுயிர் மூலம்' : 'මිලියන ගණනක් හිතකර බැක්ටීරියා බීජාණු')
-              },
-              { 
-                name: language === 'en' ? 'Clean Water' : (language === 'ta' ? 'சுத்தமான தண்ணீர்' : 'පිරිසිදු ජලය'),
-                amount: `${Math.round(200 * organicAcres)} L`,
-                note: language === 'en' ? 'Chlorine-free well or canal water' : (language === 'ta' ? 'குளோரின் இல்லாத நீர்' : 'ක්ලෝරීන් රහිත ළිං හෝ ඇළ වතුර')
-              }
-            ],
-            steps: language === 'en' ? [
-              "Take a 200L clean barrel, add water, then dissolve fresh cow dung, urine, jaggery, pulse flour and ant-hill soil thoroughly.",
-              "Place the barrel in shade covered with a gunny bag. Stir clockwise with a wooden pole for 2 minutes, twice daily for 5-7 days.",
-              "Strain through a fine mosquito net before filling sprayers. Apply 200L per acre onto moist soil every 14 days."
-            ] : (language === 'ta' ? [
-              "ஒரு பிளாஸ்டிக் பீப்பாயில் தண்ணீரை ஊற்றி, மாட்டு சாணம், கோமியம், வெல்லம், பயறு மாவு மற்றும் புற்று மண்ணை நன்கு கலக்கவும்.",
-              "பீப்பாயை நிழலில் வைத்து சாக்கு பையால் மூடவும். தினமும் காலையும் மாலையும் ஒரு மரக்குச்சியால் வலஞ்சுழியாக கலக்கி விடவும். 5-7 நாட்களில் தயாராகும்.",
-              "தெளிப்பானில் ஊற்றுவதற்கு முன் மெல்லிய துணியால் வடிகட்டவும். ஏக்கருக்கு 200L வீதம் 14 நாட்களுக்கு ஒருமுறை பயிர்களுக்கு இடவும்."
-            ] : [
-              "ප්ලාස්ටික් බැරලයකට ජලය දමා, නැවුම් ගොම, ගව මුත්‍රා, හකුරු, පිටි සහ තුඹස් පස් දමා ලී දණ්ඩකින් හොඳින් කලවම් කරන්න.",
-              "හිරු එළිය නොවැටෙන සෙවණක තබා ගෝනියකින් මුඛය වසන්න. දින 5-7 ක් යනතුරු දිනපතා උදේ-හවස දක්ෂිණාවර්තව (දකුණතට) විනාඩි 2 බැගින් කලවම් කරන්න.",
-              "දින 7 කට පසු හොඳින් පැසී ඇති අතර, ස්ප්‍රේ යන්ත්‍රයට දැමීමට පෙර සියුම් දැලකින් පෙරා ගන්න. දින 14 කට වරක් ගොයමට යොදන්න."
-            ])
-          },
-
-          panchagavya: {
-            id: 'panchagavya',
-            title: t.recPanchTitle,
-            subtitle: t.recPanchDesc,
-            icon: '🥛',
-            baseVolumePerAcre: 200,
-            savingsPerAcre: 16500,
-            dilutionPerTank: language === 'en'
-              ? "Mix 500ml concentrated Panchagavya with 15.5L water per 16L knapsack sprayer tank (3% solution). Each acre requires ~13 sprayer tanks."
-              : (language === 'ta'
-                  ? "16L தெளிப்பான் தொட்டிக்கு 500ml பஞ்சகவ்யா கரைசலுடன் 15.5L தண்ணீர் சேர்க்கவும் (3% வீதம்). ஏக்கருக்கு 13 டேங்குகள் தேவை."
-                  : "ලීටර් 16 ස්ප්‍රේ ටැංකියකට සාන්ද්‍ර පංචගව්‍ය මිලිලීටර් 500 ක් දමා වතුර ලීටර් 15.5 ක් පුරවන්න (3% සාන්ද්‍රණය). අක්කරයකට ටැංකි 13ක් පමණ අවශ්‍ය වේ."),
-            bestTiming: language === 'en'
-              ? "Early morning or late evening. Most effective during vegetative branching, pre-flowering and grain-filling stages."
-              : (language === 'ta'
-                  ? "அதிகாலை அல்லது மாலையில் தெளிக்கவும். கிளைகள் வளரும் பருவம், பூ பூக்கும் முன் தெளிப்பது மிகச் சிறந்தது."
-                  : "උදෑසන හෝ සවස. පැළ වර්ධන අවධිය, මල් පිපීමට සතියකට පෙර සහ කරල්/ගෙඩි පැසෙන අවධියේදී යෙදීම අතිශයින් ඵලදායී වේ."),
-            ingredients: [
-              { 
-                name: language === 'en' ? 'Panchagavya Concentrate Stock' : (language === 'ta' ? 'தேவையான பஞ்சகவ்யா சாறு' : 'අවශ්‍ය සාන්ද්‍ර පංචගව්‍ය ද්‍රාවණය'),
-                amount: `${(6 * organicAcres).toFixed(1)} L`,
-                note: language === 'en' ? 'Stock required for 3% field dilution' : (language === 'ta' ? 'செறிவூட்டப்பட்ட திரவம்' : '3% තනුක කර යෙදීමට අවශ්‍ය සම්පූර්ණ තොගය')
-              },
-              { 
-                name: language === 'en' ? 'Fresh Cow Dung' : (language === 'ta' ? 'பசுஞ்சாணம்' : 'නැවුම් එළගොම'),
-                amount: `${(2.5 * organicAcres).toFixed(1)} kg`,
-                note: language === 'en' ? 'Beneficial microbial foundation' : (language === 'ta' ? 'நுண்ணுயிர் பெருக்கத்திற்கு' : 'හිතකර ක්ෂුද්‍රජීවීන්')
-              },
-              { 
-                name: language === 'en' ? 'Pure Cow Ghee' : (language === 'ta' ? 'பசு நெய்' : 'පිරිසිදු ගව ගිතෙල්'),
-                amount: `${Math.round(350 * organicAcres)} g`,
-                note: language === 'en' ? 'Fermentation matrix and vitamins' : (language === 'ta' ? 'நொதித்தலை தூண்டும்' : 'පැසවීමේදී විටමින් හා මේද අම්ල සපයයි')
-              },
-              { 
-                name: language === 'en' ? 'Fresh Cow Milk' : (language === 'ta' ? 'பசும்பால்' : 'නැවුම් එළකිරි'),
-                amount: `${(1.0 * organicAcres).toFixed(1)} L`,
-                note: language === 'en' ? 'Bio-calcium and amino acids' : (language === 'ta' ? 'அமினோ அமிலங்கள்' : 'ස්වභාවික කැල්සියම් හා ඇමයිනෝ අම්ල')
-              },
-              { 
-                name: language === 'en' ? 'Cow Curd (Yogurt)' : (language === 'ta' ? 'பசுந்தயிர்' : 'එළකිරි මුදවාපු කිරි'),
-                amount: `${Math.round(700 * organicAcres)} ml`,
-                note: language === 'en' ? 'Lactobacillus probiotic cultures' : (language === 'ta' ? 'லாக்டோபாகிலஸ் பாக்டீரியா' : 'ලැක්ටොබැසිලස් හිතකර බැක්ටීරියා')
-              },
-              { 
-                name: language === 'en' ? 'Tender Coconut Water & Bananas' : (language === 'ta' ? 'இளநீர் மற்றும் வாழைப்பழம்' : 'තැඹිලි වතුර සහ ඉදුණු කෙසෙල්'),
-                amount: `${(1.0 * organicAcres).toFixed(1)} L + ${Math.round(4 * organicAcres)} pcs`,
-                note: language === 'en' ? 'Potassium, cytokinin & auxin plant growth hormones' : (language === 'ta' ? 'பொட்டாசியம் மற்றும் வளர்ச்சி ஊக்கிகள்' : 'පොටෑසියම්, සයිටොකයිනින් හෝමෝන වර්ධකය')
-              }
-            ],
-            steps: language === 'en' ? [
-              "Mix fresh cow dung and cow ghee thoroughly in a wide-mouthed clay or plastic pot. Keep for 3 days, stirring twice daily.",
-              "On day 4, add cow urine, milk, curd, tender coconut water, jaggery and mashed ripe bananas. Mix well.",
-              "Keep covered in shade for 15-20 days, stirring twice daily. Strain through fine mesh and dilute 500ml per 16L sprayer."
-            ] : (language === 'ta' ? [
-              "மாட்டு சாணத்தையும் நெய்யையும் ஒரு பாத்திரத்தில் பிசைந்து 3 நாட்கள் வைக்கவும். தினமும் இருவேளை கிளறவும்.",
-              "4வது நாளில் கோமியம், பால், தயிர், இளநீர், வெல்லம் மற்றும் பிசைந்த வாழைப்பழங்களை சேர்த்து கலக்கவும்.",
-              "15-20 நாட்கள் நிழலில் வைக்கவும். தினமும் இருவேளை கிளறி, பின் வடிகட்டி 16L டேங்குக்கு 500ml வீதம் தெளிக்கவும்."
-            ] : [
-              "මුලින්ම නැවුම් ගොම සහ ගිතෙල් ප්ලාස්ටික් බඳුනක දමා අතින් හොඳින් කලවම් කර දින 3ක් තබන්න (දිනපතා උදේ-හවස කලවම් කරන්න).",
-              "4 වන දින එළකිරි, මුදවාපු කිරි, ගව මුත්‍රා, තැඹිලි වතුර, හකුරු සහ පොඩිකරගත් ඉදුණු කෙසෙල් එකතු කර හොඳින් දියකරන්න.",
-              "දින 15-20 ක් සෙවණේ තබා දිනපතා දෙවරක් කලවම් කරන්න. ඉන්පසු පෙරාගෙන ස්ප්‍රේ ටැංකියකට 500ml බැගින් දමා වතුර පුරවා ස්ප්‍රේ කරන්න."
-            ])
-          },
-
-          neem: {
-            id: 'neem',
-            title: t.recNeemTitle,
-            subtitle: t.recNeemDesc,
-            icon: '🌿',
-            baseVolumePerAcre: 50,
-            savingsPerAcre: 9200,
-            dilutionPerTank: language === 'en'
-              ? "Pour strained extract into 16L knapsack sprayer. Each 16L tank covers ~1/3 of an acre. Ensure nozzle sprays a fine mist covering underside of leaves."
-              : (language === 'ta'
-                  ? "வடிகட்டிய சாற்றை 16L தெளிப்பானில் ஊற்றி நன்றாக இலைகளின் மேல் மற்றும் கீழ்ப்பகுதியில் படும்படி தெளிக்கவும்."
-                  : "ලීටර් 16 ටැංකියකට පෙරාගත් සාරය දමා සියුම් මීදුමක් (fine mist) ලෙස කොළවල යටි පැත්තටත් හොඳින් වදින සේ ස්ප්‍රේ කරන්න."),
-            bestTiming: language === 'en'
-              ? "Late afternoon (after 4:30 PM). Active Azadirachtin degrades rapidly under harsh mid-day ultraviolet solar radiation."
-              : (language === 'ta'
-                  ? "மாலை 4:30 மணிக்கு மேல் தெளிக்கவும். கடுமையான வெயிலில் வேப்ப எண்ணெயின் வீரியம் குறையும்."
-                  : "සවස 4:30 න් පසු. දහවල් දැඩි හිරු එළියේ පාරජම්බුල කිරණ නිසා කොහොඹ වල ඇති Azadirachtin කෘමි නාශක ගුණය විනාශ වීම වළක්වා ගැනීමට."),
-            ingredients: [
-              { 
-                name: language === 'en' ? 'Crushed Neem Seeds / Leaves' : (language === 'ta' ? 'வேப்பங்கொட்டை / வேப்பிலை' : 'තලාගත් කොහොඹ ඇට හෝ කොළ'),
-                amount: `${(2.5 * organicAcres).toFixed(1)} kg`,
-                note: language === 'en' ? 'Botanical Azadirachtin repels 200+ pest species' : (language === 'ta' ? 'அசாடிராக்டின் நிறைந்த இயற்கை மருந்து' : 'Azadirachtin අඩංගු ස්වභාවික කෘමි විකර්ෂකය')
-              },
-              { 
-                name: language === 'en' ? 'Bar Soap Solution (Sticker)' : (language === 'ta' ? 'சோப் கரைசல்' : 'කැට සබන් දියරය'),
-                amount: `${Math.round(50 * organicAcres)} g`,
-                note: language === 'en' ? 'Wetting agent & sticker for waxy leaf surfaces' : (language === 'ta' ? 'இலைகளில் ஒட்டுவதற்கு' : 'කොළවල රැඳී තැබීමට සහ ඉටි තට්ටුව බිඳීමට (Sticker)')
-              },
-              { 
-                name: language === 'en' ? 'Clean Water' : (language === 'ta' ? 'சுத்தமான தண்ணீர்' : 'පිරිසිදු ජලය'),
-                amount: `${Math.round(50 * organicAcres)} L`,
-                note: language === 'en' ? 'Final diluted spraying volume' : (language === 'ta' ? 'கரைசலுக்கு' : 'සාරය පෙරා ගැනීම සඳහා')
-              }
-            ],
-            steps: language === 'en' ? [
-              "Pound dried neem seeds or fresh mature neem leaves into a coarse paste.",
-              "Tie into a porous cloth pouch and immerse in 10L water overnight (12-14 hrs). Squeeze pouch repeatedly until dark extract is obtained.",
-              "Add dissolved bar soap, dilute with water to make 50L per acre, filter through fine mesh, and spray covering both leaf sides immediately."
-            ] : (language === 'ta' ? [
-              "வேப்பங்கொட்டைகளை இடித்து அல்லது வேப்பிலையை அரைத்து விழுதாக்கவும்.",
-              "ஒரு துணியில் கட்டி 10 லிட்டர் தண்ணீரில் இரவு முழுவதும் ஊற வைக்கவும். காலையில் சாற்றை நன்கு பிழிந்து எடுக்கவும்.",
-              "சோப்பு கரைசலை சேர்த்து 50 லிட்டராக நீர்த்து, வடிகட்டி மாலையில் பயிர்களின் இலைகளின் இருபுறமும் படும்படி தெளிக்கவும்."
-            ] : [
-              "වියළි කොහොඹ ඇට කුඩු කරගන්න, හෝ නැවුම් කොහොඹ කොළ වංගෙඩියක දමා හොඳින් කොටා ගන්න.",
-              "සිහින් රෙදි කඩක පොට්ටනියක් බැඳ වතුර ලීටර් 10 ක බහා මුළු රැයක් (පැය 12ක්) පෙඟෙන්න තබන්න. උදෑසන පොට්ටනිය කිහිපවරක් මිරිකා සාරය වතුරට ගන්න.",
-              "දියකරගත් සබන් වතුර එකතු කර සම්පූර්ණ පරිමාව ලීටර් 50 දක්වා ජලයෙන් වැඩි කර, පෙරාගෙන සවසට කොළවල දෙපැත්තම තෙමෙන සේ ස්ප්‍රේ කරන්න."
-            ])
-          },
-
-          chili_garlic: {
-            id: 'chili_garlic',
-            title: t.recChiliTitle,
-            subtitle: t.recChiliDesc,
-            icon: '🌶️',
-            baseVolumePerAcre: 50,
-            savingsPerAcre: 10500,
-            dilutionPerTank: language === 'en'
-              ? "Add ~1.5L of strained stock solution into each 16L knapsack tank and fill remaining 14.5L with clean water (1:10 dilution)."
-              : (language === 'ta'
-                  ? "16L தெளிப்பான் தொட்டிக்கு 1.5L சாற்றை ஊற்றி மீதமுள்ள 14.5L தண்ணீரை நிரப்பவும்."
-                  : "ලීටර් 16 ටැංකියකට පෙරාගත් සාරය ලීටර් 1.5 ක් දමා ඉතිරි ලීටර් 14.5 ට වතුර පුරවන්න (1:10 අනුපාතය)."),
-            bestTiming: language === 'en'
-              ? "Early morning or late afternoon. Spray immediately upon first sign of thrips, mites, or leaf curling."
-              : (language === 'ta'
-                  ? "அதிகாலை அல்லது மாலையில் தெளிக்கவும். இலை சுருட்டை மற்றும் பூச்சிகள் தென்பட்டவுடன் தெளிக்கவும்."
-                  : "උදෑසන හෝ සවස. කොළ කොඩවීම, මයිටාවන්, කීඩෑවන් හෝ පැළ මැක්කන් දුටු වහාම යොදන්න."),
-            ingredients: [
-              { 
-                name: language === 'en' ? 'Hot Green Chillies (Nai Miris)' : (language === 'ta' ? 'காரமான பச்சை மிளகாய்' : 'සැර අමු මිරිස් / නයි මිරිස්'),
-                amount: `${Math.round(500 * organicAcres)} g`,
-                note: language === 'en' ? 'Capsaicin repels chewing and sucking insects' : (language === 'ta' ? 'பூச்சிகளை விரட்டும் காரத்தன்மை' : 'කැප්සයිසින් සාරය කෘමීන්ගේ ස්නායු පද්ධතියට බලපායි')
-              },
-              { 
-                name: language === 'en' ? 'Garlic Cloves' : (language === 'ta' ? 'பூண்டு' : 'සුදුලූනු බික්'),
-                amount: `${Math.round(500 * organicAcres)} g`,
-                note: language === 'en' ? 'Allicin compound acts as strong natural deterrent' : (language === 'ta' ? 'பூஞ்சை மற்றும் பூச்சி எதிர்ப்பு' : 'ඇලිසින් සල්ෆර් සංයෝගය කෘමි හා දිලීර නාශකයකි')
-              },
-              { 
-                name: language === 'en' ? 'Fresh Ginger' : (language === 'ta' ? 'இஞ்சி' : 'අමු ඉඟුරු'),
-                amount: `${Math.round(500 * organicAcres)} g`,
-                note: language === 'en' ? 'Strong pungent aroma repellent' : (language === 'ta' ? 'பூச்சி விரட்டி' : 'ජින්ජරෝල් තද විකර්ෂකයකි')
-              },
-              { 
-                name: language === 'en' ? 'Mild Soap Solution (Sticker)' : (language === 'ta' ? 'சோப் கரைசல்' : 'කැට සබන් දියරය'),
-                amount: `${Math.round(50 * organicAcres)} g`,
-                note: language === 'en' ? 'Ensures adhesion to foliage' : (language === 'ta' ? 'இலைகளில் ஒட்டுவதற்கு' : 'කොළ මත රැඳී සිටීම තහවුරු කරයි')
-              },
-              { 
-                name: language === 'en' ? 'Clean Water' : (language === 'ta' ? 'சுத்தமான தண்ணீர்' : 'පිරිසිදු ජලය'),
-                amount: `${Math.round(50 * organicAcres)} L`,
-                note: language === 'en' ? 'Final spray volume' : (language === 'ta' ? 'மொத்த தெளிக்கும் நீர்' : 'තනුක කර ස්ප්‍රේ කිරීමට අවශ්‍ය මුළු ජලය')
-              }
-            ],
-            steps: language === 'en' ? [
-              "Grind green chillies, garlic, and ginger separately with a little water into fine pastes.",
-              "Mix all three pastes together in 5L of water and let steep for 24 hours.",
-              "Strain carefully through a fine muslin cloth, add dissolved soap, and dilute into 50L total spray solution. Spray onto affected crops."
-            ] : (language === 'ta' ? [
-              "பச்சை மிளகாய், பூண்டு, இஞ்சி ஆகியவற்றை சிறிதளவு தண்ணீர் சேர்த்து தனித்தனியாக அரைக்கவும்.",
-              "மூன்றையும் 5 லிட்டர் நீரில் ஒன்றாக கலந்து 24 மணி நேரம் ஊற வைக்கவும்.",
-              "மெல்லிய துணியில் வடிகட்டி, சோப்பு கரைசலை சேர்த்து 50 லிட்டராக நீர்த்து தெளிக்கவும்."
-            ] : [
-              "අමු මිරිස්, සුදුලූනු සහ ඉඟුරු වතුර ස්වල්පයක් දමා වෙන වෙනම හොඳින් අඹරාගන්න හෝ බ්ලෙන්ඩර් කරන්න.",
-              "මෙම පල්ප තුනම එකට එකතු කර වතුර ලීටර් 5 ක දියකර පැය 24 ක් වසා තබන්න.",
-              "සියුම් රෙදි කඩකින් පෙරා, සබන් දියරය කලවම් කර, මුළු පරිමාව ලීටර් 50 දක්වා ජලයෙන් තනුක කර වගාවට ස්ප්‍රේ කරන්න."
-            ])
-          }
-        };
-
-        const currentRecipe = organicRecipesData[recipeKey] || organicRecipesData.jeevamrutha;
-        const totalSprayLiters = Math.round(currentRecipe.baseVolumePerAcre * organicAcres);
-        const totalTanks = Math.ceil(totalSprayLiters / 16);
-        const totalSavings = Math.round(currentRecipe.savingsPerAcre * organicAcres);
-
-        return (
-          <div className="clean-card p-6 sm:p-8 space-y-6">
-            <div className="border-b border-slate-100 pb-4">
-              <h2 className="text-xl font-black text-slate-900">
-                {t.organicHeader}
-              </h2>
-              <p className="text-sm text-slate-600 mt-1">
-                {t.organicHelp}
-              </p>
-            </div>
-
-            {/* STEP 1: Land Area Extent Selector */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <label className="text-sm font-black text-emerald-950 flex items-center space-x-2">
-                  <span>📍</span>
-                  <span>{t.organicLandSizeLabel}</span>
-                </label>
-                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
-                  {organicAcres} {language === 'en' ? 'Acres' : (language === 'ta' ? 'ஏக்கர்' : 'අක්කර')}
-                </span>
-              </div>
-
-              {/* Quick Select Chips */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {[
-                  { val: 0.25, label: language === 'en' ? '1/4 Acre' : (language === 'ta' ? '1/4 ஏக்கர்' : 'අක්කර 1/4 (පාත්ති)') },
-                  { val: 0.5, label: language === 'en' ? '1/2 Acre' : (language === 'ta' ? '1/2 ஏக்கர்' : 'අක්කර 1/2') },
-                  { val: 1.0, label: language === 'en' ? '1 Acre' : (language === 'ta' ? '1 ஏக்கர்' : 'අක්කර 1') },
-                  { val: 2.0, label: language === 'en' ? '2 Acres' : (language === 'ta' ? '2 ஏக்கர்' : 'අක්කර 2') },
-                  { val: 5.0, label: language === 'en' ? '5 Acres' : (language === 'ta' ? '5 ஏக்கர்' : 'අක්කර 5') }
-                ].map(chip => (
-                  <button
-                    key={chip.val}
-                    type="button"
-                    onClick={() => setOrganicAcres(chip.val)}
-                    className={`py-2 px-3 rounded-xl font-bold text-xs border transition-all ${
-                      organicAcres === chip.val
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                        : 'bg-white text-slate-700 border-slate-300 hover:border-emerald-400'
-                    }`}
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Custom Number Input */}
-              <div className="flex items-center space-x-3 pt-1">
-                <span className="text-xs font-bold text-slate-600">
-                  {language === 'en' ? 'Or enter custom acres:' : (language === 'ta' ? 'அல்லது ஏக்கரை உள்ளிடவும்:' : 'හෝ අක්කර ගණන ඇතුළත් කරන්න:')}
-                </span>
-                <div className="relative w-32">
-                  <input
-                    type="number"
-                    min="0.1"
-                    max="50"
-                    step="0.25"
-                    value={organicAcres}
-                    onChange={(e) => setOrganicAcres(Math.max(0.1, parseFloat(e.target.value) || 0.1))}
-                    className="w-full py-1.5 px-3 rounded-xl border border-slate-300 bg-white font-black text-slate-900 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  />
-                  <span className="absolute right-3 top-2 text-[11px] font-bold text-slate-400 pointer-events-none">
-                    {language === 'en' ? 'ac' : 'අක්.'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* STEP 2: Recipe Selector */}
-            <div className="space-y-2">
-              <label className="text-sm font-black text-slate-900 block">
-                {t.organicSelectRecipeLabel}
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
-                {[
-                  { id: 'jeevamrutha', label: t.recJeevTitle, desc: t.recJeevDesc, icon: '🌱' },
-                  { id: 'panchagavya', label: t.recPanchTitle, desc: t.recPanchDesc, icon: '🥛' },
-                  { id: 'neem', label: t.recNeemTitle, desc: t.recNeemDesc, icon: '🌿' },
-                  { id: 'chili_garlic', label: t.recChiliTitle, desc: t.recChiliDesc, icon: '🌶️' }
-                ].map(r => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setRecipeKey(r.id)}
-                    className={`p-3.5 rounded-xl border-2 text-left transition-all ${
-                      recipeKey === r.id
-                        ? 'border-emerald-600 bg-emerald-50 text-slate-900 shadow-sm'
-                        : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xl">{r.icon}</span>
-                      <span className="font-black text-sm block">{r.label}</span>
-                    </div>
-                    <span className="text-[11px] text-slate-500 mt-1 block leading-tight">{r.desc}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* STEP 3: KPI Metrics Banner for Selected Land Extent */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {/* Metric 1: Total Liquid */}
-              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-slate-900">
-                <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wide block">
-                  {t.totalLiquidNeeded}
-                </span>
-                <div className="text-2xl font-black text-blue-950 mt-1">
-                  {totalSprayLiters} <span className="text-sm font-bold text-slate-600">Liters (ලීටර්)</span>
-                </div>
-                <span className="text-[11px] text-blue-600 font-medium block mt-1">
-                  {language === 'en' ? `Scaled for ${organicAcres} acres` : `අක්කර ${organicAcres} ක බිම් ප්‍රමාණය සඳහා`}
-                </span>
-              </div>
-
-              {/* Metric 2: Knapsack Sprayer Tanks */}
-              <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-slate-900">
-                <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wide block">
-                  {t.sprayerTanksNeeded}
-                </span>
-                <div className="text-2xl font-black text-amber-950 mt-1">
-                  {totalTanks} <span className="text-sm font-bold text-slate-600">{language === 'en' ? 'Tanks' : 'ටැංකි'}</span>
-                </div>
-                <span className="text-[11px] text-amber-700 font-medium block mt-1">
-                  {language === 'en' ? 'Standard 16-liter knapsack sprayers' : 'ලීටර් 16 සම්මත ස්ප්‍රේ ටැංකි'}
-                </span>
-              </div>
-
-              {/* Metric 3: Estimated Rupee Savings */}
-              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-300 text-slate-900">
-                <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wide block">
-                  {language === 'en' ? 'Estimated Rupee Savings' : 'ඉතිරි වන මුදල (රුපියල්)'}
-                </span>
-                <div className="text-2xl font-black text-emerald-950 mt-1">
-                  Rs. {totalSavings.toLocaleString()}
-                </div>
-                <span className="text-[11px] text-emerald-700 font-medium block mt-1">
-                  {language === 'en' ? 'Saved vs synthetic chemicals' : 'රසායනික පොහොර/බෙහෙත් ඉතිරිය'}
-                </span>
-              </div>
-            </div>
-
-            {/* STEP 4: Dynamic Scaled Ingredients Cards */}
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-slate-200 pb-3">
-                <h3 className="text-base font-black text-slate-900 flex items-center space-x-2">
-                  <span>{currentRecipe.icon}</span>
-                  <span>{currentRecipe.title}</span>
-                  <span className="text-xs font-bold text-slate-500 font-normal">
-                    — {t.scaledForLand} ({organicAcres} {language === 'en' ? 'Acres' : 'අක්කර'})
-                  </span>
-                </h3>
-                <span className="text-[11px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full inline-block">
-                  🌿 100% {language === 'en' ? 'Chemical Free' : 'ස්වභාවිකයි'}
-                </span>
-              </div>
-
-              {/* Ingredients Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {currentRecipe.ingredients.map((ing, idx) => (
-                  <div key={idx} className="p-3 bg-white rounded-xl border border-slate-200 flex flex-col justify-between shadow-xs">
-                    <div>
-                      <span className="text-xs font-bold text-slate-700 block leading-tight">{ing.name}</span>
-                      <span className="text-[10px] text-slate-400 block mt-0.5">{ing.note}</span>
-                    </div>
-                    <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase">
-                        {language === 'en' ? 'Quantity' : 'ප්‍රමාණය'}:
-                      </span>
-                      <strong className="text-sm sm:text-base font-black text-emerald-800">
-                        {ing.amount}
-                      </strong>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Tank Mixing & Application Timing Rules */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-3.5 bg-blue-50/80 rounded-xl border border-blue-200 text-xs text-blue-950 space-y-1">
-                  <strong className="font-black text-blue-900 flex items-center space-x-1.5">
-                    <span>🎯</span>
-                    <span>{t.tankDilutionRule}</span>
-                  </strong>
-                  <p className="leading-relaxed font-medium text-slate-700">{currentRecipe.dilutionPerTank}</p>
-                </div>
-
-                <div className="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200 text-xs text-amber-950 space-y-1">
-                  <strong className="font-black text-amber-900 flex items-center space-x-1.5">
-                    <span>⏰</span>
-                    <span>{t.bestTimingRule}</span>
-                  </strong>
-                  <p className="leading-relaxed font-medium text-slate-700">{currentRecipe.bestTiming}</p>
-                </div>
-              </div>
-
-              {/* Preparation Steps */}
-              <div className="pt-2 border-t border-slate-200 space-y-2">
-                <span className="text-xs font-black text-slate-900 uppercase tracking-wide block">
-                  {language === 'en' ? 'Preparation & Fermentation Process:' : (language === 'ta' ? 'செய்முறை மற்றும் நொதித்தல் விதம்:' : 'සාදාගන්නා සහ පැසවීමේ පියවර:')}
-                </span>
-                <div className="space-y-1.5">
-                  {currentRecipe.steps.map((step, sIdx) => (
-                    <div key={sIdx} className="flex items-start space-x-2 text-xs text-slate-700 font-medium">
-                      <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-900 font-black text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5">
-                        {sIdx + 1}
-                      </span>
-                      <p className="leading-relaxed">{step}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* DOA Certification Badge */}
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 text-xs flex items-center space-x-3">
-                <span className="text-2xl">🌱</span>
-                <div>
-                  <strong className="font-black block">
-                    {language === 'en' ? 'Sri Lanka DOA GAP Certified Organic Protocol' : 'ශ්‍රී ලංකා කෘෂිකර්ම දෙපාර්තමේන්තුවේ GAP කාබනික නිර්දේශය'}
-                  </strong>
-                  <span className="text-[11px] text-emerald-800 font-medium">
-                    {language === 'en' 
-                      ? 'Complies with SLS 1672 organic agriculture standards. Eliminates soil toxicity and restores native earthworms.' 
-                      : 'මෙම කාබනික වට්ටෝරු භාවිතයෙන් රසායනික විස ඉවත් වී පසේ ක්ෂුද්‍රජීවීන් හා ගැඩවිලුන් නැවත බෝවේ. පාංශු සාරවත්භාවය දිගුකාලීනව රැකෙයි.'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* ================================================================ */}
-      {/* FEATURE 7: 3D GRANULE INSPECTION */}
-      {/* ================================================================ */}
-      {activeTab === 'granule3d' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-xl font-black text-slate-900">
-              {t.granule3DHeader}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.granule3DHelp}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-            <div className="lg:col-span-7 bg-slate-900 rounded-2xl overflow-hidden h-72 sm:h-80 relative shadow-inner">
-              <ThreeGranuleCanvas 
-                granuleType={granuleType} 
-                sphericity={granuleType === 'urea' ? 0.96 : (granuleType === 'marble' ? 0.65 : 0.85)} 
-                purityScore={granuleType === 'urea' ? 98.5 : 40.0} 
-              />
-              <div className="absolute bottom-2 left-3 right-3 text-center text-[11px] text-slate-400 bg-slate-950/70 py-1 rounded-lg backdrop-blur-sm">
-                {t.granuleDragHint}
-              </div>
-            </div>
-
-            <div className="lg:col-span-5 space-y-3">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                {t.granuleSelectLabel}
-              </span>
-              
-              {[
-                { id: 'urea', title: t.granuleUreaTitle, desc: t.granuleUreaDesc },
-                { id: 'marble', title: t.granuleMarbleTitle, desc: t.granuleMarbleDesc },
-                { id: 'mop', title: t.granuleMopTitle, desc: t.granuleMopDesc }
-              ].map(btn => (
-                <button
-                  key={btn.id}
-                  onClick={() => setGranuleType(btn.id)}
-                  className={`w-full p-3.5 rounded-xl border-2 text-left transition-all ${
-                    granuleType === btn.id
-                      ? 'border-emerald-600 bg-emerald-50 text-slate-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
-                  }`}
-                >
-                  <strong className="text-sm font-black block">{btn.title}</strong>
-                  <span className="text-xs text-slate-500 block mt-0.5">{btn.desc}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 3: FERTILIZER BAG & HOLOGRAM AUTHENTICITY SCANNER */}
-      {/* ================================================================ */}
-      {activeTab === 'bagscan' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold mb-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-700" />
-              <span>{language === 'en' ? 'Packaging & Vision Security' : 'උරයේ මුද්‍රණ හා ආරක්ෂක ලකුණු පරීක්ෂාව'}</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900">
-              {language === 'en' ? 'Fertilizer Bag & Hologram Authenticity Verification' : 'පොහොර උරයේ ආරක්ෂිත ලකුණු හා හොලෝග්‍රෑම් පරීක්ෂාව'}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {language === 'en'
-                ? 'Verify official brand packaging, diffraction holograms, microprint typography, and stitch patterns to detect counterfeit bag reuse.'
-                : 'රජයේ ලක්පොහොර හා බලපත්‍රලාභී පොහොර උරවල ඇති හොලෝග්‍රෑම්, ක්ෂුද්‍ර මුද්‍රණ (Microprint) සහ ද්විත්ව මැහුම් රටාව පරීක්ෂා කර ව්‍යාජ උර හඳුනාගනිමු.'}
-            </p>
-          </div>
-
-          {/* Smartphone Camera Evidence Photo Capture */}
-          <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-fadeIn">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
-                <Camera className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h4 className="text-sm font-black text-slate-900">
-                  {language === 'en' ? '📷 Capture Fertilizer Bag Label & Packaging Photo Evidence' : '📷 පොහොර උරයේ ලේබලය හෝ මුද්‍රාව ඡායාරූප ගත කරන්න'}
-                </h4>
-                <p className="text-xs text-slate-600">
-                  {language === 'en' ? 'Take a clear photograph of the bag label, lot number, or seal as verifiable field evidence for official records.' : 'පොහොර උරයේ ලේබලය, කාණ්ඩ අංකය හෝ මුද්‍රාව ඡායාරූප ගත කර නීතිමය සාක්ෂි හා විමර්ශන වාර්තා සඳහා සුරක්ෂිත කරන්න.'}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={cameraActive ? stopCamera : startCamera}
-              className={`px-4 py-2.5 rounded-xl font-black text-xs shadow-md transition-all flex items-center space-x-2 flex-shrink-0 ${
-                cameraActive 
-                  ? 'bg-rose-600 hover:bg-rose-700 text-white' 
-                  : 'bg-blue-600 hover:bg-blue-700 text-white hover:scale-105 active:scale-95'
-              }`}
-            >
-              <Camera className="w-4 h-4" />
-              <span>{cameraActive ? (language === 'en' ? 'Close Camera' : 'කැමරාව වසන්න') : (language === 'en' ? 'Open Evidence Camera' : 'ඡායාරූප සාක්ෂි ගන්න')}</span>
-            </button>
-          </div>
-
-          {/* Captured Evidence Photo Preview */}
-          {capturedPhotoUrl && (
-            <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn">
-              <div className="flex items-center space-x-3.5">
-                <img 
-                  src={capturedPhotoUrl} 
-                  alt="Captured Evidence" 
-                  className="w-16 h-16 object-cover rounded-xl border border-emerald-400 shadow-sm"
-                />
-                <div>
-                  <div className="inline-flex items-center space-x-1 text-emerald-800 text-xs font-black">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>{language === 'en' ? 'Field Photographic Evidence Recorded' : 'ක්ෂේත්‍ර සාක්ෂි ඡායාරූපය සාර්ථකව සුරක්ෂිත විය'}</span>
-                  </div>
-                  <p className="text-xs text-slate-600 mt-0.5">
-                    {language === 'en' 
-                      ? 'This photo is linked to your session and ready to attach to whistleblower or inspection dossiers.' 
-                      : 'මෙම ඡායාරූපය ඔබගේ සැසියට සම්බන්ධ කර ඇති අතර පැමිණිලි වාර්තාවට අමුණා යැවිය හැක.'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-2 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('whistleblower')}
-                  className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all flex items-center space-x-1"
-                >
-                  <ShieldAlert className="w-3.5 h-3.5" />
-                  <span>{language === 'en' ? 'File Complaint' : 'පැමිණිල්ලට එක් කරන්න'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCapturedPhotoUrl(null)}
-                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs transition-all"
-                >
-                  {language === 'en' ? 'Retake' : 'ඉවත් කරන්න'}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Active Camera Viewport */}
-          {cameraActive && (
-            <div className="p-4 bg-slate-900 rounded-3xl border-2 border-blue-500 shadow-2xl space-y-4 animate-scaleIn relative overflow-hidden">
-              <div className="relative w-full max-w-lg mx-auto aspect-video rounded-2xl overflow-hidden bg-black flex items-center justify-center border border-slate-700">
-                <video 
-                  ref={videoRef} 
-                  autoPlay 
-                  playsInline 
-                  muted 
-                  className="w-full h-full object-cover"
-                />
-                
-                {/* Targeting HUD Overlay */}
-                <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
-                  {/* Glowing Laser Scan Bar */}
-                  <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent shadow-[0_0_12px_#38bdf8] animate-bounce" />
-                  
-                  {/* Reticle box */}
-                  <div className="w-48 h-48 border-2 border-dashed border-cyan-300/80 rounded-2xl relative flex items-center justify-center">
-                    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-400 -mt-0.5 -ml-0.5" />
-                    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-400 -mt-0.5 -mr-0.5" />
-                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-400 -mb-0.5 -ml-0.5" />
-                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-400 -mb-0.5 -mr-0.5" />
-                    <span className="text-[10px] font-black text-cyan-200 bg-black/60 px-2 py-0.5 rounded-full backdrop-blur-xs">
-                      EVIDENCE RETICLE
-                    </span>
-                  </div>
-                </div>
-
-                <canvas ref={canvasRef} className="hidden" />
-              </div>
-
-              {cameraError && (
-                <div className="p-3 bg-amber-900/60 border border-amber-500 rounded-xl text-amber-200 text-xs text-center font-bold">
-                  {cameraError}
-                </div>
-              )}
-
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <button
-                  type="button"
-                  onClick={captureCameraFrame}
-                  disabled={cameraScanning}
-                  className="py-3 px-6 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm shadow-lg transition-all flex items-center space-x-2 active:scale-95 disabled:opacity-50"
-                >
-                  <Scan className="w-5 h-5 text-slate-950" />
-                  <span>{cameraScanning ? 'ඡායාරූපය ලබාගනිමින් පවතී...' : '📸 ඡායාරූපය ගෙන සාක්ෂි ලෙස සුරකින්න'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={stopCamera}
-                  className="py-3 px-5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-600 transition-all"
-                >
-                  අවලංගු කරන්න
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-black text-slate-900 block mb-1">
-                  {language === 'en' ? 'Select Fertilizer Brand:' : 'පොහොර සන්නාමය තෝරන්න:'}
-                </label>
-                <select
-                  value={bagBrand}
-                  onChange={(e) => setBagBrand(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white text-slate-800"
-                >
-                  <option value="ceylon_fertilizer_lakpohora">රජයේ ලක්පොහොර (Ceylon Fertilizer Co.)</option>
-                  <option value="colombo_commercial_fertilizers">කොළඹ කොමර්ෂල් පොහොර සමාගම (CCF)</option>
-                  <option value="baurs_fertilizer">බවර්ස් පොහොර (A. Baur & Co.)</option>
-                  <option value="cic_agri_businesses">සී.අයි.සී. කෘෂි ව්‍යාපාර (CIC Agri)</option>
-                </select>
-              </div>
-
-              {/* DOA 5-Point Physical Inspection Protocol Header */}
-              <div className="bg-slate-100 p-3 rounded-xl border border-slate-200">
-                <h4 className="text-xs font-black text-slate-900 flex items-center space-x-1.5">
-                  <ShieldCheck className="w-4 h-4 text-blue-700" />
-                  <span>{language === 'en' ? 'Official DOA 5-Point Physical Inspection Guide' : '🏛️ කෘෂිකර්ම දෙපාර්තමේන්තු 5-ලක්ෂ්‍ය භෞතික ප්‍රමිති පරීක්ෂාව'}</span>
-                </h4>
-                <p className="text-[11px] text-slate-600 mt-0.5">
-                  {language === 'en' 
-                    ? 'Manually evaluate each physical security feature on the physical bag according to Department of Agriculture regulations.' 
-                    : 'කෘෂිකර්ම දෙපාර්තමේන්තු නීති රෙගුලාසි අනුව පොහොර උරයේ එක් එක් භෞතික ලක්ෂණ අතින් පරීක්ෂා කර ලකුණු කරන්න.'}
-                </p>
-              </div>
-
-              {/* Hologram inspection */}
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-800">
-                    {language === 'en' ? '1. Hologram 3D Luster & Diffraction:' : '1. ආරක්ෂිත හොලෝග්‍රෑම් පටියේ දිලිසීම:'}
-                  </span>
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    {Math.round(hologramScore * 100)}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="0.2"
-                  max="1.0"
-                  step="0.05"
-                  value={hologramScore}
-                  onChange={(e) => setHologramScore(parseFloat(e.target.value))}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-                <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
-                  <span>❌ {language === 'en' ? 'Dull Sticker (Fake)' : 'අඳුරු/ස්ටිකර් (බාලයි)'}</span>
-                  <span>✅ {language === 'en' ? 'Rainbow 3D Shimmer' : 'වර්ණාවලි ත්‍රිමාණ දීප්තිය'}</span>
-                </div>
-              </div>
-
-              {/* Microprint inspection */}
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-800">
-                    {language === 'en' ? '2. Microprint Text Sharpness:' : '2. ක්ෂුද්‍ර අකුරු මුද්‍රණයේ පැහැදිලිකම:'}
-                  </span>
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
-                    {Math.round(microprintScore * 100)}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="0.2"
-                  max="1.0"
-                  step="0.05"
-                  value={microprintScore}
-                  onChange={(e) => setMicroprintScore(parseFloat(e.target.value))}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-                <div className="flex justify-between text-[11px] text-slate-500 font-semibold">
-                  <span>❌ {language === 'en' ? 'Blurred Ink' : 'තීන්ත විසිරුණු බොඳ අකුරු'}</span>
-                  <span>✅ {language === 'en' ? 'Razor Sharp Print' : 'ඉතා පැහැදිලි සියුම් අකුරු'}</span>
-                </div>
-              </div>
-
-              {/* Stitching and seal */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 bg-white rounded-xl border border-slate-200">
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {language === 'en' ? 'Stitch Pattern:' : 'මැහුම් වර්ගය:'}
-                  </label>
-                  <select
-                    value={stitchType}
-                    onChange={(e) => setStitchType(e.target.value)}
-                    className="w-full p-1.5 rounded-lg border text-xs font-semibold bg-white"
-                  >
-                    <option value="double_chainstitch">ද්විත්ව දාම මැහුම (Double Chainstitch - නියම)</option>
-                    <option value="single_twine">තනි නූල් මැහුම (Single Hand Twine - සැක සහිත)</option>
-                  </select>
-                </div>
-
-                <div className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700 block">
-                      {language === 'en' ? 'Seal Tampered?' : 'මුද්‍රාව කඩා තිබේද?'}
-                    </label>
-                    <span className="text-[10px] text-slate-500">
-                      {sealTampered ? 'කැඩූ සලකුණු ඇත' : 'මුද්‍රාව සුරක්ෂිතයි'}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setSealTampered(!sealTampered)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      sealTampered ? 'bg-rose-600 text-white' : 'bg-slate-200 text-slate-700'
-                    }`}
-                  >
-                    {sealTampered ? 'ඔව් (කැඩී ඇත)' : 'නැත'}
-                  </button>
-                </div>
-              </div>
-
+          {/* Master Tool Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {visibleTiles.map(tile => (
               <button
+                key={tile.id}
                 type="button"
-                onClick={handleVerifyBag}
-                disabled={bagLoading}
-                className="w-full py-3.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
+                onClick={() => handleOpenTool(tile.id)}
+                className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-emerald-500 hover:shadow-md text-left transition-all hover:scale-[1.01] flex flex-col justify-between group"
               >
-                <Scan className="w-4 h-4" />
-                <span>{bagLoading ? 'පරීක්ෂා කරමින් පවතී...' : 'උරයේ සත්‍යතාවය තහවුරු කරන්න'}</span>
-              </button>
-            </div>
-
-            {/* Results Panel */}
-            <div className="space-y-4">
-              {/* 3D Sack Hologram Preview */}
-              <div className="h-64 sm:h-72 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
-                <ThreeBagCanvas 
-                  isAuthentic={bagResult ? bagResult.authenticity_score_pct >= 75 : (!sealTampered && hologramScore >= 0.7 && microprintScore >= 0.7 && stitchType === 'double_chainstitch')}
-                  brand={bagBrand}
-                />
-              </div>
-
-              {bagResult ? (
-                <div className={`p-6 rounded-2xl border-2 space-y-4 ${
-                  bagResult.authenticity_score_pct >= 75
-                    ? 'bg-emerald-50 border-emerald-400 text-emerald-950'
-                    : 'bg-rose-50 border-rose-400 text-rose-950'
-                }`}>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-4xl">
-                      {bagResult.authenticity_score_pct >= 75 ? '🛡️' : '🚨'}
-                    </span>
-                    <div>
-                      <span className="text-xs font-bold text-slate-600 uppercase tracking-wide block">
-                        {language === 'en' ? 'Security Authentication Verdict' : 'ආරක්ෂිත පරීක්ෂණ නිගමනය'}
-                      </span>
-                      <h3 className="text-lg font-black leading-tight">
-                        {bagResult.verdict_si || bagResult.verdict}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
-                    <div>
-                      <span className="text-xs font-bold text-slate-500 block">
-                        {language === 'en' ? 'Authenticity Score:' : 'ආරක්ෂිත සත්‍යතා ලකුණු:'}
-                      </span>
-                      <strong className="text-2xl font-black text-slate-900">
-                        {bagResult.authenticity_score_pct}%
-                      </strong>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-black ${
-                      bagResult.authenticity_score_pct >= 75 ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
-                    }`}>
-                      {bagResult.authenticity_score_pct >= 75 ? 'නියම රජයේ උරයකි' : 'ව්‍යාජ අවදානමක්!'}
-                    </span>
-                  </div>
-
-                  <div className="text-xs font-medium leading-relaxed p-3 bg-white/70 rounded-xl border border-slate-200">
-                    💡 <strong>{language === 'en' ? 'Action Advice:' : 'නිල උපදෙස:'}</strong> {bagResult.action_advice_si || bagResult.verdict}
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
-                  <Scan className="w-8 h-8 text-slate-400" />
-                  <p className="text-xs font-bold">
-                    {language === 'en' ? 'Click "Verify Bag Packaging" to analyze security marks.' : 'උරයේ සත්‍යතාවය පරීක්ෂා කිරීමට ඉහත බොත්තම ඔබන්න.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 7: SOIL PH & DOLOMITE CALCULATOR */}
-      {/* ================================================================ */}
-      {activeTab === 'dolomite' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold mb-2">
-              <FlaskConical className="w-3.5 h-3.5 text-amber-700" />
-              <span>{language === 'en' ? 'Soil Health & Buffer Titration' : 'පසේ සෞඛ්‍යය හා ඇඹුල් ගතිය පාලනය'}</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900">
-              {t.tileDolomite}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {language === 'en'
-                ? 'When soil pH drops below 5.5, over 60% of applied chemical fertilizers get locked up and wasted. Calculate the exact dolomite dosage to restore soil health.'
-                : 'පසේ pH අගය 5.5 ට වඩා අඩු වූ විට (ඇඹුල් වූ විට) ඔබ දමන යූරියා සහ TSP පොහොර වලින් 60% කට වඩා පැළයට උරාගැනීමට නොහැකිව අපතේ යයි. ඩොලමයිට් දමා පස සුවපත් කරමු.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              {/* pH Slider */}
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black text-slate-900">
-                    {language === 'en' ? 'Current Soil pH Level:' : 'ඔබේ පසේ වර්තමාන pH අගය:'}
-                  </label>
-                  <span className={`text-base font-black px-3 py-0.5 rounded-full ${
-                    soilPh < 5.0 ? 'bg-rose-200 text-rose-900' : (soilPh < 6.0 ? 'bg-amber-200 text-amber-900' : 'bg-emerald-200 text-emerald-900')
-                  }`}>
-                    pH {soilPh.toFixed(1)}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="4.0"
-                  max="6.8"
-                  step="0.1"
-                  value={soilPh}
-                  onChange={(e) => setSoilPh(parseFloat(e.target.value))}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-                <div className="flex justify-between text-[11px] font-bold">
-                  <span className="text-rose-600">4.0 (තද ඇඹුල් / විෂයි)</span>
-                  <span className="text-amber-600">5.5 (මධ්‍යම)</span>
-                  <span className="text-emerald-700">6.2 (නියම අගය)</span>
-                </div>
-              </div>
-
-              {/* Land Acres */}
-              <div>
-                <label className="text-xs font-black text-slate-800 block mb-1">
-                  {language === 'en' ? 'Cultivation Land Area (Acres):' : 'ඉඩමේ ප්‍රමාණය (අක්කර වලින්):'}
-                </label>
-                <div className="flex items-center space-x-2">
-                  {[0.5, 1.0, 2.0, 5.0].map(ac => (
-                    <button
-                      key={ac}
-                      type="button"
-                      onClick={() => setDolomiteAcres(ac)}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
-                        dolomiteAcres === ac ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'
-                      }`}
-                    >
-                      {ac} {language === 'en' ? 'Ac' : 'අක්.'}
-                    </button>
-                  ))}
-                  <input
-                    type="number"
-                    min="0.1"
-                    max="50"
-                    step="0.25"
-                    value={dolomiteAcres}
-                    onChange={(e) => setDolomiteAcres(parseFloat(e.target.value) || 0.5)}
-                    className="w-24 p-1.5 rounded-xl border border-slate-300 text-xs font-black text-center"
-                  />
-                </div>
-              </div>
-
-              {/* Soil Texture */}
-              <div>
-                <label className="text-xs font-black text-slate-800 block mb-1">
-                  {language === 'en' ? 'Soil Texture Type:' : 'පස් වර්ගය:'}
-                </label>
-                <select
-                  value={soilTexture}
-                  onChange={(e) => setSoilTexture(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white text-slate-800"
-                >
-                  <option value="loam_podzolic">රතු-කහ පොඩ්සොලික් (Loam / Dry & Intermediate Zone)</option>
-                  <option value="clay_grumusol">කළු මැටි සහිත පස (Clay / Lowland Paddy)</option>
-                  <option value="sandy_regosol">වැලි සහිත පස (Sandy Coastal / Kalpitiya)</option>
-                </select>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleCalculateDolomite(soilPh, dolomiteAcres, soilTexture)}
-                disabled={dolomiteLoading}
-                className="w-full py-3.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
-              >
-                <Calculator className="w-4 h-4" />
-                <span>{dolomiteLoading ? 'ගණනය කරමින් පවතී...' : 'ඩොලමයිට් මාත්‍රාව ගණනය කරන්න'}</span>
-              </button>
-            </div>
-
-            {/* Dolomite Result Card */}
-            <div className="space-y-4">
-              {/* 3D Soil Horizon & Neutralization Preview */}
-              <div className="h-64 sm:h-72 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
-                <ThreeSoilCanvas 
-                  phValue={soilPh} 
-                  dolomiteAppliedKg={dolomiteResult?.dolomite_recommendation?.dolomite_kg_total || (soilPh < 5.0 ? 600 : (soilPh < 5.5 ? 400 : 150))} 
-                />
-              </div>
-
-              {dolomiteResult ? (
-                <div className="p-6 rounded-2xl bg-amber-50/80 border-2 border-amber-300 space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-3xl">🧪</span>
-                    <div>
-                      <span className="text-xs font-bold text-amber-900 uppercase tracking-wide block">
-                        {language === 'en' ? 'DOA Soil Buffering Recommendation' : 'කෘෂිකර්ම දෙපාර්තමේන්තු ඩොලමයිට් නිර්දේශය'}
-                      </span>
-                      <h3 className="text-base font-black text-slate-900">
-                        {dolomiteAcres} {language === 'en' ? 'Acres' : 'අක්කරයක්'} සඳහා අවශ්‍ය මාත්‍රාව
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 bg-white rounded-xl border border-amber-200">
-                      <span className="text-[11px] font-bold text-slate-500 block">අවශ්‍ය ඩොලමයිට්:</span>
-                      <strong className="text-xl font-black text-emerald-800">
-                        {dolomiteResult.dolomite_recommendation?.dolomite_kg_total || 600} kg
-                      </strong>
-                    </div>
-
-                    <div className="p-3.5 bg-white rounded-xl border border-amber-200">
-                      <span className="text-[11px] font-bold text-slate-500 block">50kg කොට්ට ගණන:</span>
-                      <strong className="text-xl font-black text-amber-900">
-                        {dolomiteResult.dolomite_recommendation?.bags_50kg_count || 12} කොට්ට
-                      </strong>
-                    </div>
-                  </div>
-
-                  {soilPh < 5.0 && (
-                    <div className="p-3 bg-rose-100 rounded-xl border border-rose-300 text-rose-950 text-xs font-medium space-y-1">
-                      <strong className="font-black block">⚠️ දැඩි ඇඹුල් අවදානමක් (Severe Nutrient Lockup):</strong>
-                      <p>pH {soilPh.toFixed(1)} හිදී පසේ ඇලුමිනියම් විෂවීම නිසා ඔබ යොදන TSP සහ යූරියා වලින් 60% කට වඩා ගල් වේ (අපතේ යයි). ඩොලමයිට් අනිවාර්යයෙන් දැමිය යුතුය.</p>
-                    </div>
-                  )}
-
-                  <div className="p-3.5 bg-white rounded-xl border border-amber-200 text-xs text-slate-700 space-y-1">
-                    <strong className="font-bold text-emerald-900 block">📋 යෙදිය යුතු නිවැරදි ක්‍රමය:</strong>
-                    <p className="leading-relaxed font-medium">
-                      {dolomiteResult.application_protocol_si || "අවසන් බිම් සැකසීමට (අවසන් හෑමට) සති 2 කට පෙර ඩොලමයිට් පසට දමා කලවම් කරන්න. රසායනික පොහොර දැමීමට සති 2 කට පෙර යෙදිය යුතුය."}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
-                  <FlaskConical className="w-8 h-8 text-slate-400" />
-                  <p className="text-xs font-bold">
-                    {language === 'en' ? 'Click "Calculate Dolomite Dosage" to compute requirements.' : 'ඩොලමයිට් මිටි ගණන ගණනය කිරීමට ඉහත බොත්තම ඔබන්න.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 8: PADDY STRAW IN-SITU BIO-DECOMPOSITION */}
-      {/* ================================================================ */}
-      {activeTab === 'straw' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
-              <Wheat className="w-3.5 h-3.5 text-emerald-700" />
-              <span>{language === 'en' ? 'Circular Nutrient Recycling' : 'පිදුරු ප්‍රතිචක්‍රීකරණය හා මුදල් ඉතිරිය'}</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900">
-              {t.tileStraw}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {language === 'en'
-                ? 'Stop burning paddy straw! Biological in-situ decomposition recycles over 80% of native potassium (K2O), saving an entire bag of MOP fertilizer per hectare.'
-                : 'කුඹුරේ පිදුරු ගිනි තැබීමෙන් වළකින්න! පිදුරු කුඹුරේම දිරවීමට සැලැස්වීමෙන් පොටෑසියම් (K2O) 80% ක් නැවත පසට ලැබී රතු පොහොර (MOP) මිටියක්ම ඉතිරි කරගත හැක.'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-black text-slate-800 block mb-1">
-                  {language === 'en' ? 'Paddy Field Extent (Acres):' : 'කුඹුරේ ප්‍රමාණය (අක්කර):'}
-                </label>
-                <div className="flex items-center space-x-2">
-                  {[0.5, 1.0, 2.0, 5.0].map(ac => (
-                    <button
-                      key={ac}
-                      type="button"
-                      onClick={() => setStrawAcres(ac)}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
-                        strawAcres === ac ? 'bg-emerald-700 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-300'
-                      }`}
-                    >
-                      {ac} {language === 'en' ? 'Ac' : 'අක්.'}
-                    </button>
-                  ))}
-                  <input
-                    type="number"
-                    min="0.1"
-                    max="50"
-                    step="0.25"
-                    value={strawAcres}
-                    onChange={(e) => setStrawAcres(parseFloat(e.target.value) || 1.0)}
-                    className="w-24 p-1.5 rounded-xl border border-slate-300 text-xs font-black text-center"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-black text-slate-800 block mb-1">
-                  {language === 'en' ? 'Previous Harvest Yield (Tons/Acre):' : 'පසුගිය කන්නයේ අස්වැන්න (අක්කරයකට මෙ.ටොන්):'}
-                </label>
-                <select
-                  value={grainYield}
-                  onChange={(e) => setGrainYield(parseFloat(e.target.value))}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs font-bold bg-white text-slate-800"
-                >
-                  <option value={3.0}>3.0 Tons / Acre (සාමාන්‍ය අස්වැන්න)</option>
-                  <option value={4.5}>4.5 Tons / Acre (ඉහළ අස්වැන්නක්)</option>
-                  <option value={6.0}>6.0 Tons / Acre (විශිෂ්ට අස්වැන්නක්)</option>
-                </select>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleCalculateStraw(strawAcres, grainYield)}
-                disabled={strawLoading}
-                className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
-              >
-                <Wheat className="w-4 h-4" />
-                <span>{strawLoading ? 'ගණනය කරමින් පවතී...' : 'පොටෑසියම් ප්‍රතිචක්‍රීකරණය හා ඉතිරිය ගණනය කරන්න'}</span>
-              </button>
-            </div>
-
-            {/* Straw Result Dashboard */}
-            <div>
-              {strawResult ? (
-                <div className="p-6 rounded-2xl bg-emerald-50 border-2 border-emerald-300 space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-3xl">🌾</span>
-                    <div>
-                      <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide block">
-                        {language === 'en' ? 'Nutrient Recycling Dashboard' : 'පිදුරු ප්‍රතිචක්‍රීකරණ ප්‍රතිලාභ'}
-                      </span>
-                      <h3 className="text-base font-black text-slate-900">
-                        අක්කර {strawAcres} ක් සඳහා ප්‍රතිචක්‍රීකරණ අගය
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 bg-white rounded-xl border border-emerald-200">
-                      <span className="text-[11px] font-bold text-slate-500 block">ඉතිරි වන MOP (රතු පොහොර):</span>
-                      <strong className="text-2xl font-black text-emerald-800">
-                        {strawResult.economic_benefits?.equivalent_mop_bags_saved || 1} මිටියයි
-                      </strong>
-                    </div>
-
-                    <div className="p-3.5 bg-white rounded-xl border border-emerald-200">
-                      <span className="text-[11px] font-bold text-slate-500 block">ඉතිරි වන මුදල:</span>
-                      <strong className="text-2xl font-black text-emerald-800">
-                        Rs. {(strawResult.economic_benefits?.cost_savings_lkr || 19500).toLocaleString()}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 bg-white rounded-xl border border-emerald-200 text-xs space-y-1.5">
-                    <strong className="font-bold text-slate-800 block">🌱 පසට එකතුවන ස්වභාවික පෝෂක:</strong>
-                    <div className="grid grid-cols-3 gap-2 text-center pt-1 font-bold">
-                      <div className="p-2 bg-emerald-50 rounded-lg">
-                        <span className="text-[10px] text-slate-500 block">පොටෑසියම් (K2O)</span>
-                        <span className="text-emerald-900 text-sm font-black">{strawResult.nutrients_recycled_to_soil_kg?.potassium_k2o_kg || 45} kg</span>
-                      </div>
-                      <div className="p-2 bg-emerald-50 rounded-lg">
-                        <span className="text-[10px] text-slate-500 block">කාබනික කාබන්</span>
-                        <span className="text-emerald-900 text-sm font-black">{strawResult.nutrients_recycled_to_soil_kg?.organic_carbon_kg || 1200} kg</span>
-                      </div>
-                      <div className="p-2 bg-emerald-50 rounded-lg">
-                        <span className="text-[10px] text-slate-500 block">සිලිකා (ශක්තියට)</span>
-                        <span className="text-emerald-900 text-sm font-black">{strawResult.nutrients_recycled_to_soil_kg?.silica_sio2_kg || 220} kg</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-3 bg-white/80 rounded-xl text-xs text-slate-700 leading-relaxed">
-                    💡 <strong>දිරවීමේ පියවර:</strong> අස්වැන්න නෙළූ පසු පිදුරු ඒකාකාරීව පතුරුවා, ගොම දියර හෝ ට්‍රයිකොඩර්මා ඉස, අඟල් 2ක් ජලය බැඳ සති 2ක් තබා මුල් හෑමේදී පසට පෙරළන්න.
-                  </div>
-                </div>
-              ) : (
-                <div className="h-full min-h-[220px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
-                  <Wheat className="w-10 h-10 text-slate-400" />
-                  <p className="text-xs font-bold">
-                    {language === 'en' ? 'Click "Calculate Savings" to evaluate straw recycling.' : 'පිදුරු මගින් ඉතිරි වන රතු පොහොර ගණනයට ඉහත බොත්තම ඔබන්න.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 9: DRONE MULTISPECTRAL NDVI CROP HEALTH SCANNER */}
-      {/* ================================================================ */}
-      {activeTab === 'drone' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-2">
-              <Cpu className="w-3.5 h-3.5 text-cyan-700" />
-              <span>{language === 'en' ? 'Precision Agronomy & Drone Remote Sensing (VRA Simulator)' : 'නිරවද්‍ය කෘෂිකර්මය හා ඩ්‍රෝන සංවේදන ආකෘතිය (VRA Simulator)'}</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900">
-              {t.tileDrone}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {language === 'en'
-                ? 'Aerial NDVI multispectral survey identifies localized nitrogen deficiency zones, enabling Variable-Rate Application (VRA) so you only fertilize under-nourished patches.'
-                : 'අහසේ සිට ඩ්‍රෝන මගින් ලබාගන්නා NDVI බෝග වියන් දර්ශකය මගින් කුඹුරේ නයිට්‍රජන් ඌනතාවය ඇති තැන් නිවැරදිව හඳුනාගෙන අවශ්‍ය තැනට පමණක් පොහොර යොදමු (Variable-Rate Application).'}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div className="space-y-4">
-              <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-cyan-400 uppercase tracking-wide">
-                    🚁 ඩ්‍රෝන සංවේදන ආකෘති පරාමිතීන් (VRA Simulator)
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-[11px] font-bold">
-                    Multi-Spectral 5-Band
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-center text-xs pt-1">
-                  <div className="p-2 bg-slate-800/80 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block">කැමරාව:</span>
-                    <strong className="text-slate-200">RedEdge / NIR</strong>
-                  </div>
-                  <div className="p-2 bg-slate-800/80 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block">පියාසැරි උස:</span>
-                    <strong className="text-slate-200">35 Meters</strong>
-                  </div>
-                  <div className="p-2 bg-slate-800/80 rounded-xl">
-                    <span className="text-[10px] text-slate-400 block">විභේදනය:</span>
-                    <strong className="text-slate-200">2.5 cm / px</strong>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleRunDroneScan}
-                  disabled={droneScanning}
-                  className="w-full py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
-                >
-                  <Play className="w-4 h-4 fill-slate-950" />
-                  <span>{droneScanning ? 'බෝග වියන් දත්ත පරිලෝකනය වේ...' : '🚁 බෝග වියන් NDVI ආකෘති පරීක්ෂාව අරඹන්න (Simulate NDVI)'}</span>
-                </button>
-              </div>
-
-              {/* 4x4 Spatial Crop Health Matrix */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-                <span className="text-xs font-bold text-slate-700 block">
-                  🗺️ කුඹුරේ 4x4 ක්ෂේත්‍ර කලාප සිතියම (Spatial NDVI Vigor Grid):
-                </span>
-                <div className="grid grid-cols-4 gap-1.5 p-2 bg-white rounded-xl border border-slate-200">
-                  {[
-                    0.82, 0.78, 0.65, 0.42,
-                    0.80, 0.72, 0.48, 0.38,
-                    0.75, 0.68, 0.70, 0.79,
-                    0.84, 0.81, 0.74, 0.76
-                  ].map((val, idx) => (
-                    <div
-                      key={idx}
-                      className={`h-12 rounded-lg flex flex-col items-center justify-center font-black text-[11px] transition-all shadow-xs ${
-                        val >= 0.75
-                          ? 'bg-emerald-600 text-white'
-                          : (val >= 0.60 ? 'bg-amber-400 text-slate-950' : 'bg-rose-600 text-white animate-pulse')
-                      }`}
-                    >
-                      <span>{val.toFixed(2)}</span>
-                      <span className="text-[9px] font-medium opacity-80">
-                        {val >= 0.75 ? 'නිරෝගී' : (val >= 0.60 ? 'මධ්‍යම' : 'ඌනයි!')}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between text-[10px] font-bold text-slate-500 pt-1">
-                  <span className="flex items-center space-x-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 inline-block"></span>
-                    <span>NDVI &gt; 0.75 (නිරෝගී)</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
-                    <span>0.60-0.74 (මධ්‍යම)</span>
-                  </span>
-                  <span className="flex items-center space-x-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 inline-block"></span>
-                    <span>&lt; 0.60 (නයිට්‍රජන් ඌනයි)</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Drone Results Dashboard */}
-            <div className="space-y-4">
-              {/* 3D Autonomous Drone & Paddy Field Scanner Preview */}
-              <div className="h-64 sm:h-72 w-full rounded-2xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner">
-                <ThreeDroneFieldCanvas 
-                  isScanning={droneScanning}
-                  healthyPct={droneResult?.spatial_zone_distribution?.healthy_green_pct || 62.5}
-                  stressPct={droneResult?.spatial_zone_distribution?.severe_deficiency_pct || 12.5}
-                />
-              </div>
-
-              {droneResult ? (
-                <div className="p-6 rounded-2xl bg-cyan-50/80 border-2 border-cyan-300 space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-3xl">🛸</span>
-                    <div>
-                      <span className="text-xs font-bold text-cyan-900 uppercase tracking-wide block">
-                        {language === 'en' ? 'Drone Multispectral Diagnostic' : 'ඩ්‍රෝන බෝග වියන් විශ්ලේෂණය'}
-                      </span>
-                      <h3 className="text-base font-black text-slate-900">
-                        සාමාන්‍ය NDVI අගය: {droneResult.canopy_indices_summary?.mean_ndvi || 0.68}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    <div className="p-3 bg-white rounded-xl border border-cyan-200">
-                      <span className="text-[10px] font-bold text-slate-500 block">නිරෝගී කලාප:</span>
-                      <strong className="text-lg font-black text-emerald-700">
-                        {droneResult.spatial_zone_distribution?.healthy_green_pct || 62.5}%
-                      </strong>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-cyan-200">
-                      <span className="text-[10px] font-bold text-slate-500 block">මධ්‍යම කලාප:</span>
-                      <strong className="text-lg font-black text-amber-700">
-                        {droneResult.spatial_zone_distribution?.moderate_stress_pct || 25.0}%
-                      </strong>
-                    </div>
-
-                    <div className="p-3 bg-white rounded-xl border border-cyan-200">
-                      <span className="text-[10px] font-bold text-slate-500 block">ඌන කලාප:</span>
-                      <strong className="text-lg font-black text-rose-700">
-                        {droneResult.spatial_zone_distribution?.severe_deficiency_pct || 12.5}%
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div className="p-4 bg-white rounded-xl border border-cyan-200 space-y-2">
-                    <strong className="text-xs font-black text-cyan-950 block">
-                      🎯 නිරවද්‍ය යෙදවුම් නිර්දේශය (Variable-Rate Application):
-                    </strong>
-                    <p className="text-xs text-slate-700 leading-relaxed font-medium">
-                      {droneResult.variable_rate_prescription?.zone_recommendation || "රතු හා කහ පැහැති කොටුවලට පමණක් අමතර යූරියා කි.ග්‍රෑ. 30ක් යොදන්න. කොළ පැහැති නිරෝගී කලාප වලට පොහොර යෙදීමෙන් වළකින්න."}
-                    </p>
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-xs">
-                      <span className="font-bold text-slate-500">අපතේ යාමෙන් වැළකෙන යූරියා:</span>
-                      <strong className="font-black text-emerald-800">
-                        {droneResult.variable_rate_prescription?.urea_saved_kg || 28.5} kg (ඉතිරිය: රු. 11,400)
-                      </strong>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
-                  <Cpu className="w-8 h-8 text-slate-400" />
-                  <p className="text-xs font-bold">
-                    {language === 'en' ? 'Click "Launch Drone Scan" to inspect aerial crop canopy.' : 'කුඹුරේ ඩ්‍රෝන සිතියම ලබාගැනීමට ඉහත බොත්තම ඔබන්න.'}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 12: FARMER AI CHAT */}
-      {/* ================================================================ */}
-      {activeTab === 'chat' && (
-        <div className="clean-card p-6 sm:p-8 space-y-4">
-          <div className="border-b border-slate-100 pb-3">
-            <h2 className="text-xl font-black text-slate-900">
-              {t.chatHeader}
-            </h2>
-            <p className="text-xs text-slate-600 mt-0.5">
-              {t.chatHelp}
-            </p>
-          </div>
-
-          {/* Quick Questions */}
-          <div className="flex flex-wrap gap-1.5">
-            {[
-              language === 'en' ? "How to test Urea purity at home?" : "යූරියා බාලද කියලා ගෙදරදි හොයාගන්නේ කොහොමද?",
-              language === 'en' ? "When should I apply basal fertilizer for paddy?" : "වී වගාවට මූලික පොහොර යොදන්නේ කවදාද?",
-              language === 'en' ? "Can I mix Calcium Nitrate and TSP?" : "කැල්සියම් නයිට්රේට් සහ TSP කලවම් කරන්න පුලුවන්ද?",
-              language === 'en' ? "Paddy bottom leaves turning yellow, what is the remedy?" : "ගොයමේ කොළ කහ වෙලා, මොකද්ද බෙහෙත?"
-            ].map((q, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleSendChat(q)}
-                className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all text-left"
-              >
-                💬 {q}
-              </button>
-            ))}
-          </div>
-
-          {/* Message Thread */}
-          <div className="h-64 overflow-y-auto space-y-3 p-4 bg-slate-50 rounded-2xl border border-slate-200">
-            {chatMessages.map((msg, i) => (
-              <div 
-                key={i} 
-                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div className={`max-w-[85%] p-3.5 rounded-2xl text-xs sm:text-sm font-medium leading-relaxed flex items-start justify-between gap-2 ${
-                  msg.sender === 'user'
-                    ? 'bg-emerald-700 text-white rounded-tr-none shadow-sm'
-                    : 'bg-white text-slate-800 rounded-tl-none border border-slate-200 shadow-sm'
-                }`}>
-                  <span>{msg.text}</span>
-                  {msg.sender === 'bot' && (
-                    <button
-                      type="button"
-                      onClick={() => handleSpeakText(msg.text)}
-                      className="text-slate-400 hover:text-emerald-700 transition-colors p-1 flex-shrink-0"
-                      title={t.btnSpeak || "හඬින් අසන්න"}
-                    >
-                      <Volume2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-            {chatLoading && (
-              <div className="text-xs text-slate-500 italic">{t.chatThinking}</div>
-            )}
-          </div>
-
-          {/* Listening Indicator */}
-          {isListening && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 font-bold flex items-center space-x-2 animate-pulse">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
-              <span>{t.voiceListening || "සවන් දෙමින් පවතී... ඔබගේ ප්‍රශ්නය පවසන්න"}</span>
-            </div>
-          )}
-
-          {/* Input Box */}
-          <div className="flex space-x-2">
-            <button
-              type="button"
-              onClick={handleStartVoice}
-              className={`p-3 rounded-xl border text-sm font-black shadow transition-all flex items-center justify-center ${
-                isListening 
-                  ? 'bg-red-600 hover:bg-red-700 text-white border-red-600 animate-pulse' 
-                  : 'bg-white hover:bg-slate-100 text-emerald-800 border-slate-300'
-              }`}
-              title={t.btnVoice || "හඬින් අසන්න"}
-            >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5 text-emerald-700" />}
-            </button>
-            <input
-              type="text"
-              value={chatInput}
-              onChange={(e) => setChatInput(e.target.value)}
-              placeholder={t.chatPlaceholder}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendChat()}
-              className="flex-1 p-3 rounded-xl border border-slate-300 text-sm focus:border-emerald-600 focus:outline-none"
-            />
-            <button
-              type="button"
-              onClick={() => handleSendChat()}
-              className="px-5 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow transition-all"
-            >
-              {t.btnSend}
-            </button>
-          </div>
-          
-          <div className="flex flex-wrap gap-2 mt-2">
-            {[
-              "යූරියා කොතරම් ඕනෙද?",
-              "MOP ගාන",
-              "කාලගුණය",
-              "ව්යාජ හඳුනාගැනීම"
-            ].map((chip, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setChatInput(chip)}
-                className="px-3 py-1 rounded-full bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-600 text-xs font-bold border border-slate-200 hover:border-emerald-200 transition-all"
-              >
-                {chip}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 13: AGRARIAN MICRO-CREDIT SCORECARD */}
-      {/* ================================================================ */}
-      {activeTab === 'credit' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">🏦</span>
-              <h2 className="text-xl font-black text-slate-900">
-                {t.creditHeader || "ගොවි ණය හා පොහොර මූල්‍ය ශ්‍රේණිගත කිරීම (Credit Scorecard)"}
-              </h2>
-            </div>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.creditHelp || "ශ්‍රී ලංකා මහ බැංකුවේ (CBSL) 6.5% අඩු පොලී සහන ණය සුදුසුකම සහ උපරිම පොහොර ණය සීමාව ගණනය කරගන්න."}
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            
-            {/* Input grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              
-              {/* Land Extent */}
-              <div>
-                <label className="text-sm font-black text-slate-900 block mb-1.5">
-                  {t.creditLandLabel || "ඉඩමේ ප්‍රමාණය (අක්කර):"}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {[0.5, 1.0, 2.0, 3.0, 5.0].map(ac => (
-                    <button
-                      key={ac}
-                      type="button"
-                      onClick={() => setCreditLandAcres(ac)}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
-                        creditLandAcres === ac
-                          ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {ac} {t.acreUnit || "අක්කර"}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Crop Type */}
-              <div>
-                <label className="text-sm font-black text-slate-900 block mb-1.5">
-                  {t.creditCropLabel || "වගා කරන බෝගය:"}
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { id: 'paddy', label: t.cropPaddy || 'වී' },
-                    { id: 'maize', label: t.cropMaize || 'බඩඉරිඟු' },
-                    { id: 'tea', label: t.cropTea || 'තේ' },
-                    { id: 'vegetable', label: t.cropVeg || 'එළවළු' }
-                  ].map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setCreditCrop(c.id)}
-                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold transition-all ${
-                        creditCrop === c.id
-                          ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                      }`}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Land Tenure Security */}
-              <div>
-                <label className="text-sm font-black text-slate-900 block mb-1.5">
-                  {t.creditTenureLabel || "ඉඩමේ අයිතිය (භුක්තිය):"}
-                </label>
-                <select
-                  value={creditTenure}
-                  onChange={(e) => setCreditTenure(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium focus:border-emerald-600 focus:outline-none bg-white"
-                >
-                  <option value="freehold_deed">{t.creditTenureDeed || "සින්නක්කර ඔප්පුව (Freehold Deed)"}</option>
-                  <option value="swarnabhoomi_permit">{t.creditTenureSwarna || "ස්වර්ණභූමි / ජයභූමි බලපත්‍රය (Swarnabhoomi Permit)"}</option>
-                  <option value="mahaweli_permit">{t.creditTenureMahaweli || "මහවැලි වසර 99 බදු බලපත්‍රය (Mahaweli Permit)"}</option>
-                  <option value="statutory_ande_lease">{t.creditTenureAnde || "අඳ ගොවි ලියාපදිංචිය (Statutory Ande Tenant)"}</option>
-                  <option value="informal_tenant">{t.creditTenureInformal || "අවිධිමත් බදු / කුලියට ගැනීම (Informal Tenant)"}</option>
-                </select>
-              </div>
-
-              {/* Irrigation Resilience */}
-              <div>
-                <label className="text-sm font-black text-slate-900 block mb-1.5">
-                  {t.creditIrrigLabel || "ජල මූලාශ්‍රය:"}
-                </label>
-                <select
-                  value={creditIrrig}
-                  onChange={(e) => setCreditIrrig(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium focus:border-emerald-600 focus:outline-none bg-white"
-                >
-                  <option value="major_irrigation_canal">{t.creditIrrigCanal || "ප්‍රධාන මහවැලි වාරි ඇල (Major Canal)"}</option>
-                  <option value="deep_agro_well">{t.creditIrrigAgroWell || "කෘෂි ළිං (Agro-Well)"}</option>
-                  <option value="minor_irrigation_tank">{t.creditIrrigTank || "ගමේ වැව / එල්ලංගා වැව (Minor Tank)"}</option>
-                  <option value="strictly_rainfed">{t.creditIrrigRain || "නිකම්ම වැසි ජලයෙන් (Rainfed)"}</option>
-                </select>
-              </div>
-
-              {/* Farming Experience & Past Yield */}
-              <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t.creditExpLabel || "පළපුරුද්ද (වසර):"}
-                  </label>
-                  <input
-                    type="number"
-                    value={creditExp}
-                    onChange={(e) => setCreditExp(e.target.value)}
-                    min="1"
-                    max="60"
-                    className="w-full p-2 rounded-lg border border-slate-300 text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t.creditYieldLabel || "අස්වැන්න (Mt/Ha):"}
-                  </label>
-                  <input
-                    type="number"
-                    value={creditYield}
-                    step="0.5"
-                    onChange={(e) => setCreditYield(e.target.value)}
-                    className="w-full p-2 rounded-lg border border-slate-300 text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Debt & Insurance */}
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">
-                    {t.creditDebtLabel || "ණය මුදල (රු.):"}
-                  </label>
-                  <input
-                    type="number"
-                    value={creditDebt}
-                    step="5000"
-                    onChange={(e) => setCreditDebt(e.target.value)}
-                    className="w-full p-2 rounded-lg border border-slate-300 text-xs"
-                  />
-                </div>
-                <div className="flex items-center pt-5">
-                  <label className="flex items-center space-x-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={creditInsurance}
-                      onChange={(e) => setCreditInsurance(e.target.checked)}
-                      className="w-4 h-4 text-emerald-600 rounded"
-                    />
-                    <span className="text-xs font-bold text-slate-800">
-                      🛡️ AAIB වගා රක්ෂණය
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-            </div>
-
-            {/* Calculate Button */}
-            <button
-              type="button"
-              onClick={handleCalculateCredit}
-              disabled={creditLoading}
-              className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow-md transition-all flex items-center justify-center space-x-2"
-            >
-              <span>{creditLoading ? "ණය ලකුණු ගණනය කරමින්..." : (t.creditCalcBtn || "ණය සුදුසුකම හා පොලී අනුපාතය ගණනය කරන්න")}</span>
-            </button>
-
-            {/* Credit Scorecard Results */}
-            {creditResult && (
-              <div className="space-y-4 pt-2">
-                
-                {/* Score & Risk Tier Meter */}
-                <div className="p-6 rounded-2xl bg-gradient-to-r from-emerald-800 to-teal-900 text-white shadow-lg">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div>
-                      <span className="text-xs uppercase tracking-wider text-emerald-200 font-bold block">
-                        {t.creditScoreLabel || "ගොවි ණය ලකුණු ප්‍රමාණය (Agrarian Credit Score):"}
-                      </span>
-                      <div className="flex items-baseline space-x-2 mt-1">
-                        <span className="text-4xl sm:text-5xl font-black text-yellow-300">
-                          {creditResult.scorecard_results?.agrarian_credit_score || 839}
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-3xl">{tile.icon}</span>
+                    <div className="flex items-center space-x-1.5">
+                      {tile.popular && (
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                          POPULAR
                         </span>
-                        <span className="text-sm text-emerald-200 font-medium">/ 850 (Prime Tier)</span>
-                      </div>
-                      <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-emerald-700 text-emerald-100">
-                        {creditResult.scorecard_results?.risk_tier_si || "ප්‍රමුඛ අඩු අවදානම් (Prime Low-Risk)"}
-                      </span>
-                    </div>
-
-                    <div className="text-right">
-                      <span className="text-xs text-emerald-200 font-bold uppercase block">
-                        {t.creditMaxLimitLabel || "අනුමත උපරිම පොහොර ණය සීමාව:"}
-                      </span>
-                      <span className="text-2xl sm:text-3xl font-black text-white mt-1 block">
-                        Rs. {(creditResult.underwriting_terms?.max_approved_credit_line_lkr || 195500).toLocaleString()} /=
-                      </span>
-                      <span className="text-xs text-emerald-300">
-                        පෙරනිමි අවදානම (Default Risk): {creditResult.scorecard_results?.estimated_default_probability_pct || 2.1}%
+                      )}
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {tile.hub === 'operations' ? '🌾 මෙහෙයුම්' : (tile.hub === 'market' ? '💰 වෙළඳපොළ' : '🔬 කෘෂි විද්‍යාව')}
                       </span>
                     </div>
                   </div>
-
-                  {/* Progress bar meter */}
-                  <div className="mt-4 w-full bg-emerald-950/60 rounded-full h-3 overflow-hidden p-0.5 border border-emerald-700/50">
-                    <div 
-                      className="bg-gradient-to-r from-yellow-400 to-emerald-400 h-full rounded-full transition-all duration-700"
-                      style={{ width: `${Math.min(100, Math.max(10, ((creditResult.scorecard_results?.agrarian_credit_score || 839) - 300) / 5.5))}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* CBSL Subsidized Loan Badge */}
-                <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-amber-950 flex items-center space-x-3">
-                  <span className="text-3xl">🏛️</span>
-                  <div>
-                    <h4 className="text-sm font-black">
-                      {t.creditAprBadge || "ශ්‍රී ලංකා මහ බැංකු 6.5% සහන පොලී ණය ක්‍රමයට සුදුසුකම් ලබයි!"}
-                    </h4>
-                    <p className="text-xs text-amber-800 mt-0.5">
-                      පොලී අනුපාතය: වාර්ෂිකව {creditResult.underwriting_terms?.concessionary_apr_pct || 6.5}% පමණි.
-                    </p>
-                  </div>
-                </div>
-
-                {/* 5-Pillar Score Details */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-center text-xs">
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
-                    <span className="text-slate-500 block">ඉඩම් භුක්තිය</span>
-                    <strong className="text-sm font-black text-slate-900 block mt-1">
-                      {creditResult.pillar_subscores?.land_tenure_score || 90}/100
-                    </strong>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
-                    <span className="text-slate-500 block">වාරිමාර්ග</span>
-                    <strong className="text-sm font-black text-slate-900 block mt-1">
-                      {creditResult.pillar_subscores?.irrigation_resilience_score || 100}/100
-                    </strong>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
-                    <span className="text-slate-500 block">අස්වැන්න</span>
-                    <strong className="text-sm font-black text-slate-900 block mt-1">
-                      {creditResult.pillar_subscores?.yield_and_experience_score || 94}/100
-                    </strong>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
-                    <span className="text-slate-500 block">ණය/ආදායම</span>
-                    <strong className="text-sm font-black text-slate-900 block mt-1">
-                      {creditResult.pillar_subscores?.debt_to_income_dti_score || 90}/100
-                    </strong>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200 col-span-2 sm:col-span-1">
-                    <span className="text-slate-500 block">වගා රක්ෂණය</span>
-                    <strong className="text-sm font-black text-slate-900 block mt-1">
-                      {creditResult.pillar_subscores?.crop_insurance_score || 100}/100
-                    </strong>
-                  </div>
-                </div>
-
-                {/* Participating Banks */}
-                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600">
-                  <strong className="text-slate-900 block mb-1">
-                    ණය මුදල් ලබාගත හැකි සහන ග්‍රාමීය බැංකු ජාලය:
+                  <strong className="text-sm sm:text-base font-black text-slate-900 block group-hover:text-emerald-700 transition-colors">
+                    {tile.label}
                   </strong>
-                  <span>ප්‍රාදේශීය සංවර්ධන බැංකුව (RDB) • සණස සංවර්ධන බැංකුව (SDB) • ලංකා බැංකුව (BOC) • මහජන බැංකුව (People's Bank) • ගොවිජන සේවා මධ්‍යස්ථාන (ASC Credit Counters)</span>
-                </div>
-
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 14: WHISTLEBLOWER & PRICE GOUGING PORTAL */}
-      {/* ================================================================ */}
-      {activeTab === 'whistleblower' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">🚨</span>
-              <h2 className="text-xl font-black text-slate-900">
-                {t.whistleHeader || "හොර පොහොර, වැඩිමිල හා සඟවා තැබීම් රහසිගතව වාර්තා කරමු"}
-              </h2>
-            </div>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.whistleHelp || "2003 අංක 09 දරන පාරිභෝගික කටයුතු අධිකාරි පනත සහ 1988 අංක 68 දරන පොහොර විධිමත් කිරීමේ පනත යටතේ නීතිමය පියවර ගැනේ."}
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {tr("වෙළඳසැල / ගොවිජන සේවා මධ්‍යස්ථානයේ නම:", "Dealer / Agrarian Services Centre Name:", "வியாபாரி / விவசாய சேவை மைய பெயர்:")}
-                </label>
-                <input
-                  type="text"
-                  value={whistleDealer}
-                  onChange={(e) => setWhistleDealer(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:border-emerald-600 focus:outline-none"
-                  placeholder={tr("උදා: මැදිරිගිරිය ගොවිජන සේවා මධ්‍යස්ථානය හෝ පොලොන්නරුව ඇග්‍රෝ", "e.g. Medirigiriya ASC or Polonnaruwa Agro", "உதா: மெதிரிகிரிய விவசாய மையம்")}
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {tr("නගරය / ප්‍රදේශය:", "Town / Region:", "நகரம் / பிரதேசம்:")}
-                </label>
-                <input
-                  type="text"
-                  value={whistleLocation}
-                  onChange={(e) => setWhistleLocation(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-sm font-medium focus:border-emerald-600 focus:outline-none"
-                  placeholder={tr("උදා: මැදිරිගිරිය, පොලොන්නරුව", "e.g. Medirigiriya, Polonnaruwa", "உதா: மெதிரிகிரிய, பொலன்னறுவை")}
-                />
-              </div>
-            </div>
-
-            {/* Violation Type */}
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1.5">
-                {tr("ගැටලුවෙහි / වරදෙහි ස්වභාවය:", "Nature of Issue / Violation:", "சிக்கலின் / குற்றத்தின் தன்மை:")}
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                {[
-                  { id: 'PRICE_GOUGING', label: tr('වැඩිමිල අය කිරීම', 'Price Gouging', 'அதிக விலை'), icon: '💰' },
-                  { id: 'ADULTERATION', label: tr('බාල / ව්‍යාජ පොහොර', 'Adulterated Fertilizer', 'போலி உரம்'), icon: '⚠️' },
-                  { id: 'HOARDING', label: tr('පොහොර සඟවා තැබීම', 'Hoarding & Withholding', 'பதுக்கல்'), icon: '🔒' },
-                  { id: 'REGIONAL_SHORTAGE', label: tr('ප්‍රාදේශීය පොහොර හිඟය', 'Regional Stockout', 'உர தட்டுப்பாடு'), icon: '📉' },
-                  { id: 'DISTRIBUTION_DELAY', label: tr('බෙදාහැරීමේ ප්‍රමාදය', 'Distribution Delay', 'விநியோக தாமதம்'), icon: '⏳' }
-                ].map(v => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setWhistleType(v.id)}
-                    className={`p-3 rounded-xl border text-left text-xs font-bold transition-all flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 ${
-                      whistleType === v.id
-                        ? 'border-red-600 bg-red-50 text-red-950 font-black shadow-sm ring-1 ring-red-400'
-                        : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span className="text-lg">{v.icon}</span>
-                    <span className="leading-tight">{v.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Prices */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {t.whistleFertTypeLabel || "පොහොර වර්ගය:"}
-                </label>
-                <select
-                  value={whistleFertType}
-                  onChange={(e) => setWhistleFertType(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-sm bg-white"
-                >
-                  <option value="Urea">යූරියා (Urea)</option>
-                  <option value="MOP">MOP රතු පොහොර</option>
-                  <option value="TSP">TSP කළු පොහොර</option>
-                  <option value="NPK">මිශ්‍ර පොහොර (NPK)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {t.whistleMrpLabel || "රජයේ ගැසට් මිල (රු.):"}
-                </label>
-                <input
-                  type="number"
-                  value={whistleMrp}
-                  onChange={(e) => setWhistleMrp(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-sm font-bold bg-slate-50"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-red-700 block mb-1">
-                  {t.whistleChargedLabel || "වෙළෙන්දා අය කළ මුදල (රු.):"}
-                </label>
-                <input
-                  type="number"
-                  value={whistleCharged}
-                  onChange={(e) => setWhistleCharged(e.target.value)}
-                  className="w-full p-2.5 rounded-xl border-2 border-red-400 text-sm font-black text-red-950 bg-red-50/50"
-                />
-              </div>
-            </div>
-
-            {/* Narrative */}
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
-                {t.whistleNarrativeLabel || "සිදුවූ අසාධාරණය කෙටියෙන් විස්තර කරන්න:"}
-              </label>
-              <textarea
-                rows={2}
-                value={whistleNarrative}
-                onChange={(e) => setWhistleNarrative(e.target.value)}
-                className="w-full p-2.5 rounded-xl border border-slate-300 text-sm focus:border-red-600 focus:outline-none"
-              ></textarea>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="button"
-              onClick={handleSubmitWhistleblower}
-              disabled={whistleLoading}
-              className="w-full py-3.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-sm shadow-md transition-all flex items-center justify-center space-x-2"
-            >
-              <span>{whistleLoading ? (t.whistleSubmitting || "වාර්තාව ලියාපදිංචි කරමින්...") : (t.whistleSubmitBtn || "🚨 පැමිණිල්ල රහසිගතව යොමු කරන්න")}</span>
-            </button>
-
-            {/* Results */}
-            {whistleResult && (
-              <div className="p-5 rounded-2xl bg-red-50 border-2 border-red-300 space-y-3">
-                <div className="flex items-center space-x-2 text-red-900">
-                  <CheckCircle2 className="w-5 h-5 text-red-600 flex-shrink-0" />
-                  <h4 className="text-sm font-black">
-                    {t.whistleSuccessTitle || "පැමිණිල්ල සාර්ථකව පාරිභෝගික අධිකාරියට යොමු කෙරිණි!"}
-                  </h4>
-                </div>
-
-                <div className="p-3 bg-white rounded-xl border border-red-200 flex items-center justify-between">
-                  <div>
-                    <span className="text-xs text-slate-500 block">
-                      {t.whistleTokenLabel || "රහස්‍ය විමර්ශන අංකය (Tracking Token):"}
-                    </span>
-                    <strong className="text-sm font-mono font-black text-slate-900 block mt-0.5">
-                      {whistleResult.ticket_token}
-                    </strong>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(whistleResult.ticket_token);
-                      setWhistleCopied(true);
-                      setTimeout(() => setWhistleCopied(false), 2000);
-                    }}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center space-x-1"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>{whistleCopied ? "පිටපත් විය!" : "Copy"}</span>
-                  </button>
-                </div>
-
-                <div className="text-xs space-y-1 text-red-950 font-medium">
-                  <div>
-                    <strong>{t.whistleUrgencyLabel || "හදිසි මට්ටම:"} </strong>
-                    <span className="px-2 py-0.5 rounded bg-red-200 font-bold">{whistleResult.urgency_level}</span>
-                  </div>
-                  <div>
-                    <strong>{t.whistleEnforceLabel || "නීතිමය පියවර:"} </strong>
-                    <span>{whistleResult.recommended_enforcement}</span>
-                  </div>
-                </div>
-
-                <p className="text-[11px] text-slate-500 italic">
-                  * ඔබගේ අනන්‍යතාවය 100% රහසිගතව සුරක්ෂිතව පවතී. පාරිභෝගික කටයුතු අධිකාරි පනතේ 18 වන වගන්තිය යටතේ නීතිමය ක්‍රියාමාර්ග ක්‍රියාත්මක වේ.
-                </p>
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 15: ANCIENT ELLANGAWA CASCADE PROTECTION */}
-      {/* ================================================================ */}
-      {activeTab === 'ellangawa' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-2xl">🏛️</span>
-              <h2 className="text-xl font-black text-slate-900">
-                {t.ellangawaHeader || "පුරාණ එල්ලංගා වැව් පද්ධතිය හා පෝෂක කාන්දු ආරක්ෂාව"}
-              </h2>
-            </div>
-            <p className="text-sm text-slate-600 mt-1">
-              {t.ellangawaHelp || "වැවේ ඇල්ගී පිපිරීම (Eutrophication) වැළැක්වීමට සහ කටුකැලෑව/පෙරහන ස්වභාවික පද්ධතිය රැකගැනීමේ උපදෙස්."}
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  {t.ellangawaTankSelect || "ඔබගේ ග්‍රාමීය වැව තෝරන්න:"}
-                </label>
-                <select
-                  value={ellangawaTank}
-                  onChange={(e) => handleAssessEllangawa(e.target.value, ellangawaBuffer)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 text-sm bg-white"
-                >
-                  <option value="Thirappane Maha Wewa">තිරප්පනේ මහ වැව (Thirappane)</option>
-                  <option value="Hurulu Wewa">හුරුළු වැව (Hurulu Wewa)</option>
-                  <option value="Nachchaduwa Wewa">නාච්චදූව වැව (Nachchaduwa)</option>
-                  <option value="Kantale Wewa">කන්තලේ වැව (Kantale)</option>
-                  <option value="Tissa Wewa">තිස්ස වැව (Tissa Wewa)</option>
-                </select>
-              </div>
-
-              <div className="flex items-center pt-5">
-                <label className="flex items-center space-x-2.5 cursor-pointer bg-slate-50 p-2.5 rounded-xl border border-slate-200 w-full">
-                  <input
-                    type="checkbox"
-                    checked={ellangawaBuffer}
-                    onChange={(e) => handleAssessEllangawa(ellangawaTank, e.target.checked)}
-                    className="w-4 h-4 text-emerald-600 rounded"
-                  />
-                  <span className="text-xs font-bold text-slate-800">
-                    🌱 {t.ellangawaBufferToggle || "කටුකැලෑව / පෙරහන බට පඳුරු තීරය තිබේද?"}
-                  </span>
-                </label>
-              </div>
-            </div>
-
-            {/* Assessment Card */}
-            {ellangawaResult && (
-              <div className="space-y-4 pt-2">
-                <div className={`p-5 rounded-2xl border ${
-                  ellangawaResult.has_kattakaduwa_buffer 
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-950' 
-                    : 'bg-amber-50 border-amber-300 text-amber-950'
-                }`}>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-3xl">{ellangawaResult.has_kattakaduwa_buffer ? "✅" : "⚠️"}</span>
-                    <div>
-                      <span className="text-xs uppercase tracking-wider font-bold block opacity-75">
-                        {t.ellangawaTrophicLabel || "වැවේ පෝෂක තත්ත්වය:"}
-                      </span>
-                      <h4 className="text-base sm:text-lg font-black mt-0.5">
-                        {ellangawaResult.trophic_status_si || ellangawaResult.trophic_status}
-                      </h4>
-                    </div>
-                  </div>
-
-                  <p className="text-xs mt-3 leading-relaxed">
-                    {ellangawaResult.action_advice_si}
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                    {tile.desc}
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-center text-xs">
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
-                    <span className="text-slate-500 block">වාර්ෂික නයිට්‍රජන් කාන්දුව</span>
-                    <strong className="text-sm font-black text-slate-900 block mt-1">
-                      {ellangawaResult.annual_nitrogen_load_kg} kg/yr
-                    </strong>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200">
-                    <span className="text-slate-500 block">පොස්පරස් කාන්දුව</span>
-                    <strong className="text-sm font-black text-slate-900 block mt-1">
-                      {ellangawaResult.annual_phosphorus_load_kg} kg/yr
-                    </strong>
-                  </div>
-                  <div className="p-3 bg-white rounded-xl border border-slate-200 col-span-2 sm:col-span-1">
-                    <span className="text-slate-500 block">පෙරහන් කාර්යක්ෂමතාව</span>
-                    <strong className="text-sm font-black text-emerald-700 block mt-1">
-                      {ellangawaResult.buffer_filter_efficiency_pct}%
-                    </strong>
-                  </div>
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-black text-slate-600 group-hover:text-emerald-700">
+                  <span>{tr("විවෘත කරන්න", "Launch Service", "தொடங்கு")}</span>
+                  <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform" />
                 </div>
-
-              </div>
-            )}
-
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* ================================================================ */}
-      {/* FEATURE 16: SOIL SALINITY & SODICITY GYPSUM RECLAMATION */}
-      {/* ================================================================ */}
-      {activeTab === 'salinity' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-900 text-xs font-bold mb-2">
-              <Waves className="w-3.5 h-3.5 text-blue-700" />
-              <span>{tr("පසේ ලවණතාවය හා කිවුල් ගතිය පාලනය", "Soil Salinity & Sodicity Reclamation", "மண் உவர்த்தன்மை & சீரமைப்பு")}</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900">
-              {tr("ලවණ හා කිවුල් පස් සුවපත් කිරීමේ ගණකය (Salinity & Gypsum Calculator)", "Soil Salinity & Gypsum Reclamation Calculator", "உவர் மண் மற்றும் ஜிப்சம் கால்குலேட்டர்")}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {tr(
-                "හම්බන්තොට, මන්නාරම, මඩකලපුව, පුත්තලම සහ වියළි කලාපයේ ලවණ නිසා මුල් පිලිස්සීම වළක්වා, නියම ජිප්සම් මාත්‍රාව හා ලවණ සෝදා හැරීමේ ජල මට්ටම (Leaching) ගණනය කරමු.",
-                "Diagnose coastal/dry-zone soil salinity, calculate hydraulic leaching water depth to flush salts, and compute agricultural Gypsum requirement to displace toxic sodium.",
-                "கடலோர மற்றும் உலர் வலயங்களில் மண் உவர்த்தன்மையை நீக்கி, ஜிப்சம் மற்றும் நீர் மூலம் உப்பை வெளியேற்றும் அளவை கணக்கிடவும்."
-              )}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div className="space-y-4">
-              
-              {/* ECe Slider */}
-              <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-black text-slate-900">
-                    {tr("පසේ විද්‍යුත් සන්නායකතාවය (ECe):", "Soil Electrical Conductivity (ECe):", "மண் மின் கடத்துத்திறன் (ECe):")}
-                  </label>
-                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                    salinityEc >= 4.0 ? 'bg-rose-200 text-rose-950 font-black' : 'bg-emerald-200 text-emerald-950'
-                  }`}>
-                    {salinityEc.toFixed(1)} dS/m ({salinityEc >= 4.0 ? tr('ලවණ සහිතයි', 'Saline', 'உவர் மண்') : tr('නිරෝගී', 'Safe', 'சாதாரண')})
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="1.0"
-                  max="12.0"
-                  step="0.5"
-                  value={salinityEc}
-                  onChange={(e) => setSalinityEc(parseFloat(e.target.value))}
-                  className="w-full accent-blue-600 cursor-pointer"
-                />
-                <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                  <span>1.0 (නිරෝගී)</span>
-                  <span>4.0 (ලවණ සීමාව)</span>
-                  <span>8.0+ (තද කිවුල්)</span>
-                </div>
-              </div>
-
-              {/* pH & ESP grid */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 bg-white rounded-xl border border-slate-200">
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                    {tr("පසේ pH අගය:", "Soil pH Level:", "மண் pH அளவு:")}
-                  </label>
-                  <input
-                    type="number"
-                    min="5.0"
-                    max="9.5"
-                    step="0.1"
-                    value={salinityPh}
-                    onChange={(e) => setSalinityPh(parseFloat(e.target.value) || 7.0)}
-                    className="w-full p-2 rounded-lg border border-slate-300 font-black text-sm bg-slate-50"
-                  />
-                  <span className="text-[10px] text-slate-500 block mt-1">
-                    {salinityPh >= 8.5 ? tr('⚠️ ක්ෂාරීය සෝඩියම්', 'Alkaline Sodic', 'கார மண்') : tr('සාමාන්‍ය පරාසය', 'Normal', 'சாதாரண')}
-                  </span>
-                </div>
-
-                <div className="p-3 bg-white rounded-xl border border-slate-200">
-                  <label className="text-[11px] font-bold text-slate-700 block mb-1">
-                    {tr("සෝඩියම් ප්‍රතිශතය (ESP %):", "Sodium % (ESP):", "சோடியம் வீதம் (ESP %):")}
-                  </label>
-                  <input
-                    type="number"
-                    min="2"
-                    max="30"
-                    value={salinityEsp}
-                    onChange={(e) => setSalinityEsp(parseFloat(e.target.value) || 8.0)}
-                    className="w-full p-2 rounded-lg border border-slate-300 font-black text-sm bg-slate-50"
-                  />
-                  <span className="text-[10px] text-slate-500 block mt-1">
-                    {salinityEsp >= 15 ? tr('🚨 ජිප්සම් අත්‍යවශ්‍යයි', 'Gypsum Mandatory', 'ஜிப்சம் தேவை') : tr('ආරක්ෂිතයි (<15%)', 'Safe', 'பாதுகாப்பானது')}
-                  </span>
-                </div>
-              </div>
-
-              {/* Land Extent */}
-              <div>
-                <label className="text-xs font-black text-slate-900 block mb-1">
-                  {tr("වගා බිමේ ප්‍රමාණය (අක්කර):", "Cultivated Extent (Acres):", "நில அளவு (ஏக்கர்):")}
-                </label>
-                <div className="flex items-center space-x-2">
-                  {[0.5, 1.0, 2.0, 5.0].map(ac => (
-                    <button
-                      key={ac}
-                      type="button"
-                      onClick={() => setSalinityAcres(ac)}
-                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition-all ${
-                        salinityAcres === ac ? 'bg-blue-700 text-white border-blue-700' : 'bg-white text-slate-700 border-slate-300'
-                      }`}
-                    >
-                      {ac} {tr("අක්.", "Ac", "ஏக்.")}
-                    </button>
-                  ))}
-                  <input
-                    type="number"
-                    min="0.25"
-                    max="50"
-                    step="0.5"
-                    value={salinityAcres}
-                    onChange={(e) => setSalinityAcres(parseFloat(e.target.value) || 1.0)}
-                    className="w-20 p-1.5 rounded-xl border border-slate-300 text-xs font-black text-center"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => handleDiagnoseSalinity()}
-                disabled={salinityLoading}
-                className="w-full py-3.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
-              >
-                <Waves className="w-4 h-4" />
-                <span>{salinityLoading ? tr("පරීක්ෂා කරමින් පවතී...", "Evaluating...", "பரிசோதிக்கிறது...") : tr("ලවණ තත්ත්වය පරීක්ෂා කර ජිප්සම් බලන්න", "Diagnose & Compute Gypsum", "உவர் நிலை & ஜிப்சம் கணக்கிடு")}</span>
-              </button>
-            </div>
-
-            {/* Results Column */}
-            <div>
-              {salinityResult ? (
-                <div className="p-6 rounded-2xl bg-blue-50/80 border-2 border-blue-300 space-y-4">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-3xl">🌊</span>
-                    <div>
-                      <span className="text-xs font-bold text-blue-900 uppercase tracking-wide block">
-                        {tr("පස වර්ගීකරණ නිගමනය", "Soil Classification Verdict", "மண் வகைப்பாடு முடிவு")}
-                      </span>
-                      <h3 className="text-base font-black text-slate-900">
-                        {salinityResult.classification?.soil_class_si || salinityResult.classification?.soil_class}
-                      </h3>
-                    </div>
-                  </div>
-
-                  {/* Leaching and Gypsum Requirements */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="p-3.5 bg-white rounded-xl border border-blue-200">
-                      <span className="text-[11px] font-bold text-slate-500 block">ලවණ සේදීමට අවශ්‍ය ජලය:</span>
-                      <strong className="text-xl font-black text-blue-900">
-                        {salinityResult.leaching_hydrology?.leaching_water_depth_mm || 45} mm
-                      </strong>
-                      <span className="text-[10px] text-slate-500 block mt-0.5">
-                        (~අඟල් {(((salinityResult.leaching_hydrology?.leaching_water_depth_mm || 45)) / 25.4).toFixed(1)} ක ජල මට්ටමක්)
-                      </span>
-                    </div>
-
-                    <div className="p-3.5 bg-white rounded-xl border border-blue-200">
-                      <span className="text-[11px] font-bold text-slate-500 block">අවශ්‍ය කෘෂි ජිප්සම්:</span>
-                      <strong className="text-xl font-black text-amber-900">
-                        {salinityResult.chemical_amendments?.gypsum_kg_per_acre || 0} kg/ac
-                      </strong>
-                      <span className="text-[10px] text-slate-500 block mt-0.5">
-                        {salinityResult.chemical_amendments?.gypsum_needed ? `සම්පූර්ණ: ${(salinityResult.chemical_amendments?.gypsum_tons_total || 0.5)} ටොන්` : 'ජිප්සම් අනවශ්‍යයි'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Saline-Tolerant Rice Varieties */}
-                  <div className="p-3.5 bg-white rounded-xl border border-blue-200 text-xs space-y-1">
-                    <strong className="font-bold text-emerald-900 block">🌾 නිර්දේශිත ලවණ-ප්‍රතිරෝධී වී ප්‍රභේද:</strong>
-                    <p className="font-semibold text-slate-800">
-                      {salinityResult.crop_recommendations?.paddy_varieties_si || "පොක්කාලි (Pokkali), At 354, Bg 310, Bg 358"}
-                    </p>
-                    <p className="text-[11px] text-slate-600 mt-1">
-                      {salinityResult.crop_recommendations?.notes_si || "බයෝචාර් (Biochar) හෝ දහයියා අඟුරු යෙදීමෙන් මුල් පිලිස්සීම වළක්වාගත හැක."}
-                    </p>
-                  </div>
-
-                  <div className="p-3 bg-white/70 rounded-xl text-xs text-slate-700">
-                    💡 <strong>සේදීමේ උපදෙස:</strong> {salinityResult.leaching_hydrology?.leaching_advice_si || "ජලය බැඳ දින 3ක් තබා ලවණ බැසයාමට හරින්න."}
-                  </div>
-                </div>
-              ) : (
-                <div className="h-full min-h-[220px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
-                  <Waves className="w-10 h-10 text-slate-400" />
-                  <p className="text-xs font-bold">
-                    {tr("පසේ ලවණතාවය පරීක්ෂා කිරීමට ඉහත බොත්තම ඔබන්න.", "Click button to diagnose salinity and gypsum.", "உவர் நிலை அறிய பொத்தானை அழுத்தவும்.")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 17: GOVERNMENT FERTILIZER SUBSIDY E-WALLET */}
-      {/* ================================================================ */}
-      {activeTab === 'subsidy' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-xs font-bold mb-2">
-              <Landmark className="w-3.5 h-3.5 text-emerald-700" />
-              <span>{tr("ගොවි සහනාධාර හා ඩිජිටල් වවුචර් සේවාව", "Agrarian Subsidy E-Wallet", "விவசாய மானிய மின்-பை")}</span>
-            </div>
-            <h2 className="text-xl font-black text-slate-900">
-              {tr("රජයේ පොහොර සහනාධාර ඊ-පසුම්බිය (Fertilizer Subsidy & Carbon E-Wallet)", "Government Fertilizer Subsidy & Carbon E-Wallet", "அரசு உர மானிய மின்-பை")}
-            </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              {tr(
-                "රජයෙන් ගොවීන්ට ලබාදෙන රු. 15,000 පොහොර සහනාධාර වවුචරයේ ශේෂය, හිමි පොහොර මිටි ගණන සහ කාබනික භාවිතය වෙනුවෙන් හිමිවන හරිත කාබන් දීමනාව මෙතැනින් පරීක්ෂා කරගන්න.",
-                "Verify your government fertilizer voucher (Rs. 15,000/ha subsidy entitlement), quota redemption at your local Agrarian Services Center (ASC), and Carbon Reduction Reward credits.",
-                "அரசின் ரூ. 15,000 உர மானிய இருப்பு, உரித்தான உர மூட்டைகள் மற்றும் பசுமை கார்பன் போனஸ் விபரங்களை அறியவும்."
-              )}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-            <div className="space-y-4">
-              
-              {/* Farmer NIC Input */}
-              <div>
-                <label className="text-xs font-black text-slate-900 block mb-1">
-                  {tr("ගොවි මහතාගේ ජාතික හැඳුනුම්පත් අංකය (NIC):", "Farmer National Identity Card (NIC):", "விவசாயி தேசிய அடையாள அட்டை (NIC):")}
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={subsidyNic}
-                    onChange={(e) => setSubsidyNic(e.target.value)}
-                    placeholder="198425600123"
-                    className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setSubsidyNic("198425600123")}
-                    className="absolute right-2 top-2 px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 text-[10px] font-bold"
-                  >
-                    නියැදි අංකය
-                  </button>
-                </div>
-              </div>
-
-              {/* ASC Center Dropdown */}
-              <div>
-                <label className="text-xs font-black text-slate-900 block mb-1">
-                  {tr("ගොවිජන සේවා මධ්‍යස්ථානය (ASC Center):", "Agrarian Services Center (ASC):", "விவசாய சேவை மையம் (ASC):")}
-                </label>
-                <select
-                  value={subsidyAsc}
-                  onChange={(e) => setSubsidyAsc(e.target.value)}
-                  className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white text-slate-800"
-                >
-                  <option value="Tambuttegama ASC">තඹුත්තේගම ගොවිජන සේවා මධ්‍යස්ථානය (Tambuttegama ASC)</option>
-                  <option value="Polonnaruwa Central ASC">පොළොන්නරුව මධ්‍යම ගොවිජන සේවා මධ්‍යස්ථානය (Polonnaruwa)</option>
-                  <option value="Anuradhapura ASC">අනුරාධපුර ගොවිජන සේවා මධ්‍යස්ථානය (Anuradhapura)</option>
-                  <option value="Ampara Valley ASC">අම්පාර නිම්න ගොවිජන සේවා මධ්‍යස්ථානය (Ampara)</option>
-                  <option value="Hambantota ASC">හම්බන්තොට ගොවිජන සේවා මධ්‍යස්ථානය (Hambantota)</option>
-                </select>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleCheckSubsidy}
-                disabled={subsidyLoading}
-                className="w-full py-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
-              >
-                <Landmark className="w-4 h-4" />
-                <span>{subsidyLoading ? tr("පරීක්ෂා කරමින් පවතී...", "Checking...", "சரிபார்க்கிறது...") : tr("ඊ-පසුම්බියේ ශේෂය පරීක්ෂා කරන්න", "Check Subsidy E-Wallet", "மானிய இருப்பை சரிபார்க்க")}</span>
-              </button>
-            </div>
-
-            {/* Subsidy Digital Card */}
-            <div>
-              {subsidyResult ? (
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white space-y-4 shadow-xl border border-emerald-600">
-                  <div className="flex items-center justify-between border-b border-emerald-700/80 pb-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-2xl">🏛️</span>
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-emerald-300 block">ශ්‍රී ලංකා රජයේ නිල ගොවි සහනාධාරය</span>
-                        <h4 className="font-black text-sm">ASC DIGITAL SUBSIDY WALLET</h4>
-                      </div>
-                    </div>
-                    <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 text-[10px] font-black">
-                      ✓ සක්‍රියයි
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className="p-3 bg-white/10 rounded-xl backdrop-blur-xs">
-                      <span className="text-[10px] text-emerald-200 block">සම්පූර්ණ සහනාධාරය:</span>
-                      <strong className="text-xl font-black text-white">
-                        Rs. {(subsidyResult.government_subsidy_quota_lkr || 15000).toLocaleString()}
-                      </strong>
-                    </div>
-
-                    <div className="p-3 bg-white/10 rounded-xl backdrop-blur-xs">
-                      <span className="text-[10px] text-emerald-200 block">ඉතිරි ශේෂය (Balance):</span>
-                      <strong className="text-xl font-black text-amber-300">
-                        Rs. {(subsidyResult.remaining_quota_lkr || 5000).toLocaleString()}
-                      </strong>
-                    </div>
-                  </div>
-
-                  {/* Bags quota strip */}
-                  <div className="p-3 bg-black/20 rounded-xl border border-white/10 text-xs space-y-1.5">
-                    <div className="flex justify-between text-slate-300">
-                      <span>🌾 යූරියා (Urea 50kg):</span>
-                      <strong className="text-white">හිමි 3 | ලබාගත් 2 | ඉතිරි 1</strong>
-                    </div>
-                    <div className="flex justify-between text-slate-300">
-                      <span>🧪 රතු පොහොර (MOP):</span>
-                      <strong className="text-white">හිමි 1 | ලබාගත් 1 | ඉතිරි 0</strong>
-                    </div>
-                    <div className="flex justify-between text-slate-300">
-                      <span>🌱 කාබන් හරිත දීමනාව:</span>
-                      <strong className="text-emerald-300">+ Rs. {(subsidyResult.carbon_credit_bonus_lkr || 1250).toLocaleString()}</strong>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between text-[11px] pt-1 border-t border-emerald-700/60 text-emerald-200">
-                    <span>වවුචර් කේතය: <strong className="font-mono text-white">{subsidyResult.voucher_code || "ASC-VOUCHER-7A9B1C"}</strong></span>
-                    <span>ASC: {subsidyAsc.split(" ")[0]}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="h-full min-h-[220px] rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
-                  <Landmark className="w-10 h-10 text-slate-400" />
-                  <p className="text-xs font-bold">
-                    {tr("පොහොර සහනාධාර ශේෂය බැලීමට ඉහත බොත්තම ඔබන්න.", "Click button to view government subsidy quota.", "மானிய இருப்பு அறிய பொத்தானை அழுத்தவும்.")}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE 22: FERTILIZER MARKET PRICE FORECAST & OPTIMAL BUYING WINDOW */}
-      {/* ================================================================ */}
-      {activeTab === 'priceforecast' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6 animate-fadeIn">
-          
-          {/* Header Banner */}
-          <div className="border-b border-slate-100 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
-                <BarChart3 className="w-3.5 h-3.5 text-emerald-700" />
-                <span>{tr("ශ්‍රී ලංකා වෙළඳපොළ බුද්ධි තොරතුරු (Market Intelligence Engine)", "DOA & CBSL Market Intelligence Engine", "சந்தை நுண்ணறிவு எஞ்சின்")}</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center space-x-2">
-                <span>📈 {tr("පොහොර වෙළඳපොළ මිල පුරෝකථනය හා වාසිදායකම මිලදී ගැනීමේ කාලය", "Fertilizer Price Trend Forecast & Best Buy Window", "உர சந்தை விலை கணிப்பு")}</span>
-              </h2>
-              <p className="text-sm text-slate-600 mt-1">
-                {tr("ගෝලීය ස්වභාවික වායු, USD/LKR විනිමය සහ නැව් ගාස්තු අනුව ඉදිරි මාසවල පොහොර මිල වෙනස්වන ආකාරය කලින්ම දැනගෙන උපරිම මුදලක් ඉතිරි කරගන්න.", "Predict open market retail price shifts and spot the most profitable procurement window for your crop season.", "எதிர்கால உர விலை மாற்றங்களை முன்கூட்டியே அறிந்து பணத்தை சேமிக்கவும்.")}
-              </p>
-            </div>
-
-            {/* Audio Readout */}
-            {forecastResult && (
-              <button
-                type="button"
-                onClick={() => {
-                  playTone('chime');
-                  handleSpeakText(
-                    language === 'en'
-                      ? `${forecastResult.fertilizer_name_si} price forecast: ${forecastResult.trend_en}. ${forecastResult.recommendation_en}`
-                      : `${forecastResult.fertilizer_name_si} මිල පුරෝකථනය: ${forecastResult.trend_si}. ${forecastResult.recommendation_si}`
-                  );
-                }}
-                className="self-start md:self-auto flex items-center space-x-2 px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition-all shadow-xs"
-                title="හඬින් අසන්න"
-              >
-                <Volume2 className="w-4 h-4 text-emerald-700" />
-                <span>{tr("උපදෙසට සවන් දෙන්න", "Listen to Forecast", "ஆலோசனை கேட்க")}</span>
-              </button>
-            )}
-          </div>
-
-          {/* Interactive Parameters Card */}
-          <div className="p-5 sm:p-6 rounded-3xl bg-slate-50 border border-slate-200 space-y-5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black uppercase text-slate-500 tracking-wider">
-                {tr("පුරෝකථන පරාමිතීන් තෝරන්න (Select Parameters)", "Forecast Levers", "அளவீடுகளை தேர்வு செய்யவும்")}
-              </span>
-              <button
-                type="button"
-                onClick={() => setShowMacroLevers(!showMacroLevers)}
-                className="text-xs font-bold text-emerald-700 hover:text-emerald-900 underline flex items-center space-x-1"
-              >
-                <span>{showMacroLevers ? tr("සරල ආකාරය (Simple View)", "Simple View", "எளிய முறை") : tr("උසස් ආර්ථික ලීවර (Macro Levers)", "Advanced Macro Levers", "மேம்பட்ட அளவீடுகள்")}</span>
-              </button>
-            </div>
-
-            {/* 1. Fertilizer Type Pill Selector */}
-            <div className="space-y-2">
-              <label className="text-xs font-black text-slate-700 block">
-                {tr("පොහොර වර්ගය තෝරන්න:", "Select Fertilizer Commodity:", "உர வகையை தேர்வு செய்யவும்:")}
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {[
-                  { key: 'urea', name: tr("යූරියා (Urea 46% N)", "Urea (46% N)", "யூரியா (46% N)"), icon: '🌾' },
-                  { key: 'tsp', name: tr("TSP කළු පොහොර", "TSP (Triple Super)", "TSP உரம்"), icon: '⚫' },
-                  { key: 'mop', name: tr("MOP රතු පොහොර", "MOP (Potash)", "MOP உரம்"), icon: '🔴' },
-                  { key: 'npk', name: tr("මිශ්‍ර පොහොර (NPK)", "NPK Compound", "NPK கலவை உரம்"), icon: '🧪' }
-                ].map(item => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => {
-                      playTone('ding');
-                      setForecastFert(item.key);
-                      handleFetchPriceForecast(item.key, forecastHorizon, forecastUsdLkr, forecastEnergyChange, forecastFreight, forecastSeason);
-                    }}
-                    className={`p-3 rounded-2xl border text-left font-bold text-xs sm:text-sm transition-all flex items-center space-x-2.5 ${
-                      forecastFert === item.key
-                        ? 'bg-emerald-700 text-white border-emerald-700 shadow-md ring-2 ring-emerald-300 transform scale-[1.02]'
-                        : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/40'
-                    }`}
-                  >
-                    <span className="text-lg">{item.icon}</span>
-                    <span className="leading-tight">{item.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 2. Horizon & Season Controls */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              
-              {/* Forecast Horizon */}
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-700 block">
-                  {tr("පුරෝකථන කාලසීමාව (Horizon):", "Forecast Horizon:", "கணிப்பு காலம்:")}
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { h: 1, label: tr("මාස 1", "1 Month", "1 மாதம்") },
-                    { h: 3, label: tr("මාස 3 (කන්නය)", "3 Months", "3 மாதம்") },
-                    { h: 6, label: tr("මාස 6", "6 Months", "6 மாதம்") }
-                  ].map(hz => (
-                    <button
-                      key={hz.h}
-                      type="button"
-                      onClick={() => {
-                        playTone('ding');
-                        setForecastHorizon(hz.h);
-                        handleFetchPriceForecast(forecastFert, hz.h, forecastUsdLkr, forecastEnergyChange, forecastFreight, forecastSeason);
-                      }}
-                      className={`p-2.5 rounded-xl border text-center font-bold text-xs transition-all ${
-                        forecastHorizon === hz.h
-                          ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {hz.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Season */}
-              <div className="space-y-2">
-                <label className="text-xs font-black text-slate-700 block">
-                  {tr("කෘෂිකාර්මික කන්නය (Season):", "Crop Season:", "விவசாய பருவம்:")}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { s: 'Maha', label: tr("මහ කන්නය (Maha)", "Maha Season", "மகா பருவம்") },
-                    { s: 'Yala', label: tr("යල කන්නය (Yala)", "Yala Season", "யல பருவம்") }
-                  ].map(sn => (
-                    <button
-                      key={sn.s}
-                      type="button"
-                      onClick={() => {
-                        playTone('ding');
-                        setForecastSeason(sn.s);
-                        handleFetchPriceForecast(forecastFert, forecastHorizon, forecastUsdLkr, forecastEnergyChange, forecastFreight, sn.s);
-                      }}
-                      className={`p-2.5 rounded-xl border text-center font-bold text-xs transition-all ${
-                        forecastSeason === sn.s
-                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      {sn.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-
-            {/* Advanced Macro Levers (Optional Accordion) */}
-            {showMacroLevers && (
-              <div className="p-4 rounded-2xl bg-white border border-slate-200 space-y-4 animate-fadeIn">
-                <span className="text-xs font-black text-slate-700 block border-b border-slate-100 pb-2">
-                  {tr("ගෝලීය හා දේශීය ආර්ථික දර්ශක සකසන්න:", "Adjust Macro-Economic Drivers:", "பொருளாதார குறிகாட்டிகளை சரிசெய்யவும்:")}
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  
-                  {/* USD/LKR */}
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-600 flex justify-between">
-                      <span>USD/LKR විනිමය:</span>
-                      <strong className="text-emerald-700">{forecastUsdLkr} LKR</strong>
-                    </label>
-                    <input
-                      type="range"
-                      min="280"
-                      max="360"
-                      step="1"
-                      value={forecastUsdLkr}
-                      onChange={(e) => setForecastUsdLkr(Number(e.target.value))}
-                      className="w-full accent-emerald-600 cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Energy Shock */}
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-600 flex justify-between">
-                      <span>ගෝලීය බලශක්ති/ගෑස්:</span>
-                      <strong className={forecastEnergyChange >= 0 ? "text-rose-600" : "text-emerald-600"}>
-                        {forecastEnergyChange >= 0 ? `+${forecastEnergyChange}%` : `${forecastEnergyChange}%`}
-                      </strong>
-                    </label>
-                    <input
-                      type="range"
-                      min="-20"
-                      max="40"
-                      step="1"
-                      value={forecastEnergyChange}
-                      onChange={(e) => setForecastEnergyChange(Number(e.target.value))}
-                      className="w-full accent-emerald-600 cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Maritime Freight */}
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-slate-600 flex justify-between">
-                      <span>නැව් ගාස්තු (Freight):</span>
-                      <strong className="text-amber-700">+{forecastFreight}%</strong>
-                    </label>
-                    <input
-                      type="range"
-                      min="0"
-                      max="40"
-                      step="1"
-                      value={forecastFreight}
-                      onChange={(e) => setForecastFreight(Number(e.target.value))}
-                      className="w-full accent-emerald-600 cursor-pointer"
-                    />
-                  </div>
-
-                </div>
-
-                <div className="flex justify-end pt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      playTone('ding');
-                      handleFetchPriceForecast(forecastFert, forecastHorizon, forecastUsdLkr, forecastEnergyChange, forecastFreight, forecastSeason);
-                    }}
-                    className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs transition-all shadow-xs"
-                  >
-                    {tr("ලීවර අනුව නැවත ගණනය කරන්න", "Apply Macro Changes", "அளவீடுகளை புதுப்பிக்க")}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Run Button */}
-            <button
-              type="button"
-              disabled={forecastLoading}
-              onClick={() => {
-                playTone('chime');
-                handleFetchPriceForecast(forecastFert, forecastHorizon, forecastUsdLkr, forecastEnergyChange, forecastFreight, forecastSeason);
-              }}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white font-black text-sm sm:text-base shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2"
-            >
-              {forecastLoading ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  <span>{tr("වෙළඳපොළ දත්ත විශ්ලේෂණය වෙමින් පවතී...", "Forecasting Price Trends...", "விலை கணிக்கப்படுகிறது...")}</span>
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="w-5 h-5" />
-                  <span>{tr("මිල පුරෝකථනය සහ වාසිදායකම දිනය ගණනය කරන්න", "Generate Fertilizer Price Forecast", "உர விலை கணிப்பை உருவாக்கவும்")}</span>
-                </>
-              )}
-            </button>
-
-          </div>
-
-          {/* Results Section */}
-          {forecastResult && (
-            <div className="space-y-6 animate-fadeIn">
-              
-              {/* 1. Four Core Figures Overview Cards */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                
-                {/* Gazette Subsidized Price */}
-                <div className="p-4 rounded-2xl bg-white border border-emerald-200 shadow-xs">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] uppercase font-black text-emerald-700 tracking-wider">
-                      {tr("රජයේ පාලන මිල (Gazette)", "Gazette Subsidized MRP", "அரசு மானிய விலை")}
-                    </span>
-                    <span className="text-base">🏛️</span>
-                  </div>
-                  <strong className="text-2xl font-black text-emerald-900 block leading-tight">
-                    Rs. {Number(forecastResult.current_subsidized_mrp_lkr || 2500).toLocaleString()}
-                  </strong>
-                  <span className="text-[11px] text-emerald-700 font-bold block mt-1">
-                    {tr("50kg මිටියකට සහනාධාර මිල", "Per 50kg bag (Official)", "50 கிலோ மூட்டைக்கு")}
-                  </span>
-                </div>
-
-                {/* Current Open Market */}
-                <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] uppercase font-black text-slate-500 tracking-wider">
-                      {tr("වත්මන් විවෘත මිල", "Current Open Market", "தற்போதைய சந்தை விலை")}
-                    </span>
-                    <span className="text-base">🏬</span>
-                  </div>
-                  <strong className="text-2xl font-black text-slate-800 block leading-tight">
-                    Rs. {Number(forecastResult.current_open_market_lkr || 3350).toLocaleString()}
-                  </strong>
-                  <span className="text-[11px] text-slate-500 font-medium block mt-1">
-                    {tr("පෞද්ගලික වෙළඳසැල් සාමාන්‍යය", "Avg private commercial price", "தனியார் கடைகள் சராசரி")}
-                  </span>
-                </div>
-
-                {/* Projected Price */}
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 shadow-xs">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] uppercase font-black text-amber-900 tracking-wider">
-                      {tr(`ඉදිරි මාස ${forecastHorizon} පුරෝකථනය`, `Projected (${forecastHorizon}M)`, `${forecastHorizon} மாத கணிப்பு`)}
-                    </span>
-                    {forecastResult.trend === 'RISING_BULLISH' ? (
-                      <TrendingUp className="w-4 h-4 text-rose-600" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-emerald-600" />
-                    )}
-                  </div>
-                  <strong className="text-2xl font-black text-amber-950 block leading-tight">
-                    Rs. {Number(forecastResult.projected_open_market_lkr || 3581).toLocaleString()}
-                  </strong>
-                  <div className="flex items-center space-x-1.5 mt-1">
-                    <span className={`text-[11px] font-black px-1.5 py-0.5 rounded-md ${
-                      forecastResult.projected_change_pct >= 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      {forecastResult.projected_change_pct >= 0 ? `+${forecastResult.projected_change_pct}%` : `${forecastResult.projected_change_pct}%`}
-                    </span>
-                    <span className="text-[11px] text-amber-900 font-bold">
-                      ({forecastResult.projected_change_amount_lkr >= 0 ? `+Rs. ${forecastResult.projected_change_amount_lkr}` : `-Rs. ${Math.abs(forecastResult.projected_change_amount_lkr)}`})
-                    </span>
-                  </div>
-                </div>
-
-                {/* Subsidy Benefit / Rupee Gap */}
-                <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-300 shadow-xs">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] uppercase font-black text-emerald-800 tracking-wider">
-                      {tr("බෑගයකින් ලැබෙන ඉතිරිය", "Subsidy Value / Bag", "மூட்டைக்கு சேமிப்பு")}
-                    </span>
-                    <span className="text-base">💰</span>
-                  </div>
-                  <strong className="text-2xl font-black text-emerald-800 block leading-tight">
-                    Rs. {Number(forecastResult.savings_with_subsidy_lkr || 1081).toLocaleString()}
-                  </strong>
-                  <span className="text-[11px] text-emerald-700 font-bold block mt-1">
-                    {tr("රජයේ මිලට ගත් විට ඉතිරි වන මුදල", "Saved when buying at Govt price", "அரசு விலையில் சேமிப்பு")}
-                  </span>
-                </div>
-
-              </div>
-
-              {/* 2. Strategic Best Buying Window Recommendation Banner */}
-              <div className={`p-6 rounded-3xl border-2 space-y-3 ${
-                forecastResult.trend === 'RISING_BULLISH'
-                  ? 'bg-amber-50/80 border-amber-300'
-                  : (forecastResult.trend === 'FALLING_BEARISH' ? 'bg-emerald-50/80 border-emerald-300' : 'bg-blue-50/80 border-blue-300')
-              }`}>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-3xl">
-                      {forecastResult.trend === 'RISING_BULLISH' ? '📈' : (forecastResult.trend === 'FALLING_BEARISH' ? '📉' : '⚖️')}
-                    </span>
-                    <div>
-                      <span className="text-[10px] uppercase font-black tracking-wider text-slate-500 block">
-                        {tr("වෙළඳපොළ ප්‍රවණතා විග්‍රහය (Market Verdict)", "Market Trend Verdict", "சந்தை போக்கு முடிவு")}
-                      </span>
-                      <h3 className="text-lg sm:text-xl font-black text-slate-900 mt-0.5">
-                        {language === 'en' ? forecastResult.trend_en : (language === 'ta' ? forecastResult.trend_ta : forecastResult.trend_si)}
-                      </h3>
-                    </div>
-                  </div>
-
-                  <div className="px-3.5 py-1.5 rounded-xl bg-white border border-amber-200 shadow-xs self-start sm:self-auto">
-                    <span className="text-[10px] text-slate-500 block font-bold">{tr("හොඳම මිලදී ගැනීමේ කාලය:", "Best Buying Window:", "சிறந்த வாங்கும் காலம்:")}</span>
-                    <strong className="text-xs sm:text-sm font-black text-emerald-800">{forecastResult.best_buying_window}</strong>
-                  </div>
-                </div>
-
-                <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-medium pt-2 border-t border-amber-200/60">
-                  {language === 'en' ? forecastResult.recommendation_en : forecastResult.recommendation_si}
-                </p>
-              </div>
-
-              {/* 3. Monthly Trajectory Chart (Bar Visualization) */}
-              {forecastResult.monthly_trajectory && forecastResult.monthly_trajectory.length > 0 && (
-                <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-xs space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                    <div>
-                      <h4 className="text-sm font-black text-slate-900 flex items-center space-x-2">
-                        <BarChart3 className="w-4 h-4 text-emerald-700" />
-                        <span>{tr("මාසික මිල ගමන්මඟ (Past 4 Months + Future 6 Months)", "Monthly Price Trajectory", "மாதாந்திர விலை பாதை")}</span>
-                      </h4>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {tr("පසුගිය වෙළඳපොළ දත්ත සහ ආර්ථික මාදිලියේ ඉදිරි මාස 6 පුරෝකථන ප්‍රක්ෂේපනය.", "Historical benchmark vs econometric projected trajectory.", "கடந்த கால மற்றும் எதிர்கால விலை ஒப்பீடு.")}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center space-x-3 text-[11px] font-bold">
-                      <span className="flex items-center space-x-1">
-                        <span className="w-3 h-3 rounded-sm bg-slate-400 inline-block"></span>
-                        <span className="text-slate-600">{tr("පසුගිය මාස", "Historical", "கடந்த காலம்")}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <span className="w-3 h-3 rounded-sm bg-amber-500 inline-block"></span>
-                        <span className="text-amber-800">{tr("ඉදිරි පුරෝකථනය", "Projected", "எதிர்காலம்")}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <span className="w-3 h-1 bg-emerald-600 inline-block"></span>
-                        <span className="text-emerald-800">{tr("රජයේ ගැසට් මිල", "Gazette MRP", "அரசு விலை")}</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Responsive Visual Trajectory Bars */}
-                  <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 pt-4">
-                    {forecastResult.monthly_trajectory.map((pt, idx) => {
-                      const maxPrice = 4200;
-                      const heightPct = Math.min(100, Math.max(30, ((pt.open_market_price - 2000) / (maxPrice - 2000)) * 100));
-                      return (
-                        <div key={idx} className="flex flex-col items-center justify-end space-y-2 group">
-                          {/* Price Tag tooltip / label */}
-                          <span className="text-[10px] font-black text-slate-700 group-hover:scale-110 transition-transform">
-                            Rs. {Math.round(pt.open_market_price)}
-                          </span>
-
-                          {/* Bar Container */}
-                          <div className="w-full max-w-[36px] h-32 bg-slate-100 rounded-t-xl flex flex-col justify-end p-1 relative overflow-hidden border border-slate-200">
-                            {/* Gazette dashed indicator */}
-                            <div 
-                              className="absolute left-0 right-0 border-b-2 border-dashed border-emerald-600 z-10 opacity-70"
-                              style={{ bottom: `${((pt.subsidized_mrp - 2000) / (maxPrice - 2000)) * 100}%` }}
-                              title={`Gazette MRP: Rs. ${pt.subsidized_mrp}`}
-                            />
-                            
-                            <div
-                              style={{ height: `${heightPct}%` }}
-                              className={`w-full rounded-t-lg transition-all duration-500 ${
-                                pt.is_projected
-                                  ? 'bg-gradient-to-t from-amber-500 to-orange-400 group-hover:from-amber-600 group-hover:to-orange-500'
-                                  : 'bg-gradient-to-t from-slate-400 to-slate-500 group-hover:from-slate-500 group-hover:to-slate-600'
-                              }`}
-                            />
-                          </div>
-
-                          {/* Month and Status */}
-                          <span className="text-[10px] font-bold text-slate-600 text-center leading-tight">
-                            {pt.month.split(" ")[0]}
-                            <span className="block text-[8px] text-slate-400">'{pt.month.split(" ")[1]?.slice(2)}</span>
-                          </span>
-
-                          <span className={`text-[8px] font-black px-1 rounded ${
-                            pt.is_projected ? 'bg-amber-100 text-amber-900' : 'bg-slate-200 text-slate-700'
-                          }`}>
-                            {pt.is_projected ? tr("අනාගත", "Proj", "கணிப்பு") : tr("ගතවූ", "Past", "கடந்த")}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* 4. Price Drivers Breakdown & Practical Guidance */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* Econometric Drivers */}
-                <div className="p-5 rounded-3xl bg-slate-50 border border-slate-200 space-y-3">
-                  <h4 className="text-xs font-black uppercase text-slate-700 tracking-wider flex items-center space-x-2">
-                    <span>⚙️</span>
-                    <span>{tr("මිල කෙරෙහි බලපාන ප්‍රධාන සාධක (Price Drivers)", "Underlying Market Price Drivers", "விலையை பாதிக்கும் முக்கிய காரணிகள்")}</span>
-                  </h4>
-                  
-                  <div className="space-y-2.5 pt-1 text-xs">
-                    <div>
-                      <div className="flex justify-between text-slate-700 font-bold mb-1">
-                        <span>{tr("1. ස්වභාවික වායු හා අමුද්‍රව්‍ය පිරිවැය:", "1. Natural Gas Feedstock Cost:", "1. மூலப்பொருள் மற்றும் எரிவாயு:")}</span>
-                        <strong className="text-emerald-800">{forecastResult.price_drivers_breakdown?.natural_gas_energy_pct || 40}%</strong>
-                      </div>
-                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-600 rounded-full" style={{ width: `${forecastResult.price_drivers_breakdown?.natural_gas_energy_pct || 40}%` }} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-slate-700 font-bold mb-1">
-                        <span>{tr("2. USD/LKR ඩොලර් විනිමය අනුපාතය:", "2. USD/LKR Exchange Rate Exposure:", "2. டாலர் மாற்று விகிதம்:")}</span>
-                        <strong className="text-blue-800">{forecastResult.price_drivers_breakdown?.usd_lkr_exchange_rate_pct || 30}%</strong>
-                      </div>
-                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-blue-600 rounded-full" style={{ width: `${forecastResult.price_drivers_breakdown?.usd_lkr_exchange_rate_pct || 30}%` }} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-slate-700 font-bold mb-1">
-                        <span>{tr("3. රතු මුහුදේ සාගර නැව් ගාස්තු:", "3. Ocean Freight & Route Surcharges:", "3. கப்பல் போக்குவரத்து கட்டணம்:")}</span>
-                        <strong className="text-amber-800">{forecastResult.price_drivers_breakdown?.freight_maritime_pct || 20}%</strong>
-                      </div>
-                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-600 rounded-full" style={{ width: `${forecastResult.price_drivers_breakdown?.freight_maritime_pct || 20}%` }} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex justify-between text-slate-700 font-bold mb-1">
-                        <span>{tr("4. දේශීය කන්න ඉල්ලුම (Seasonal Sowing Spike):", "4. Seasonal Peak Sowing Spike:", "4. பருவகால விதைப்பு தேவை:")}</span>
-                        <strong className="text-purple-800">{forecastResult.price_drivers_breakdown?.local_demand_cycle_pct || 10}%</strong>
-                      </div>
-                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-purple-600 rounded-full" style={{ width: `${forecastResult.price_drivers_breakdown?.local_demand_cycle_pct || 10}%` }} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Farmer Direct Action Tips */}
-                <div className="p-5 rounded-3xl bg-emerald-50/60 border border-emerald-200 space-y-3">
-                  <h4 className="text-xs font-black uppercase text-emerald-900 tracking-wider flex items-center space-x-2">
-                    <span>💡</span>
-                    <span>{tr("ගොවියන් සඳහා මුදල් ඉතිරි කරගැනීමේ ක්‍රම", "Farmer Cost Savings Strategy", "விவசாயிகளுக்கு பண சேமிப்பு வழிகள்")}</span>
-                  </h4>
-
-                  <ul className="text-xs text-emerald-950 space-y-2 leading-relaxed">
-                    <li className="flex items-start space-x-2">
-                      <span className="text-emerald-700 font-black">•</span>
-                      <span>{tr("රජයේ ගොවිජන සේවා මධ්‍යස්ථාන (ASC) මගින් රු. 2,500 ගැසට් මිලට පොහොර ලබා ගැනීමට වවුචරය කලින්ම වෙන්කරවා ගන්න.", "Secure your government subsidy quota through your Agrarian Service Centre early to lock in the Rs. 2,500 MRP.", "அரசு மானிய விலையில் உரங்களை பெற ASC மூலம் முன்கூட்டியே பதிவு செய்யுங்கள்.")}</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span className="text-emerald-700 font-black">•</span>
-                      <span>{tr("පෞද්ගලික වෙළඳුන් නියමිත මිලට වඩා රු. 100 ක් හෝ වැඩියෙන් අය කරන්නේ නම් අපගේ 'හොර පොහොර වාර්තා' සේවාවෙන් ක්ෂණිකව පැමිණිලි කරන්න.", "Report any merchant charging beyond gazette rates anonymously via our Whistleblower service.", "அதிக விலை வசூலிக்கும் வியாபாரிகள் மீது முறைப்பாடு பதிவு செய்யுங்கள்.")}</span>
-                    </li>
-                    <li className="flex items-start space-x-2">
-                      <span className="text-emerald-700 font-black">•</span>
-                      <span>{tr("පිදුරු දිරවීම සහ ජීවාමෘත මගින් රසායනික පොහොර අවශ්‍යතාවය 25% කින් අඩු කරගෙන ඔබේ මුදල් ඉතිරි කරගන්න.", "Adopt in-situ paddy straw decomposition and Jeevamrutha to cut commercial chemical fertilizer costs by up to 25%.", "வைக்கோல் மற்றும் இயற்கை உரங்கள் மூலம் இரசாயன உர செலவை 25% வரை குறையுங்கள்.")}</span>
-                    </li>
-                  </ul>
-
-                  <div className="pt-2 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('subsidy'); }}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition-all shadow-xs"
-                    >
-                      {tr("💳 සහනාධාර ශේෂය බලන්න", "View Govt Subsidy", "மானிய இருப்பு")}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => { playTone('ding'); setActiveTab('whistleblower'); }}
-                      className="px-3 py-1.5 rounded-xl bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-900 font-bold text-xs transition-all"
-                    >
-                      {tr("🚨 මිල වංචා වාර්තා කරන්න", "Report Price Gouging", "முறைப்பாடு")}
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-
-            </div>
-          )}
-
-        </div>
-      )}
-
-      {/* ================================================================ */}
-      {/* FEATURE: ONLINE FERTILIZER PROCUREMENT & PRE-ORDER PORTAL        */}
-      {/* ================================================================ */}
-      {(activeTab === 'procurement' || activeTab === 'distributors') && (
-        <OnlineProcurementPortal 
-          language={language} 
-          farmerProfile={farmerProfile} 
+      {/* ========================================================================= */}
+      {/* 3. WORKSPACE 1: DAILY OPERATIONS HUB                                     */}
+      {/* ========================================================================= */}
+      {activeWorkspace === 'operations' && (
+        <DailyOperationsHub
+          language={language}
+          tr={tr}
+          activeTool={activeTool}
+          onSelectTool={(toolId) => setActiveTool(toolId)}
+          onBackToHome={() => setActiveWorkspace('home')}
+          onOpenPrescription={handleLaunchPrescriptionModal}
+          farmerProfile={farmerProfile}
+          playTone={playTone}
         />
       )}
 
-      {/* ================================================================ */}
-      {/* FEATURE 24: FERTILIZER CARBON LCA & GREEN CREDITS CALCULATOR   */}
-      {/* ================================================================ */}
-      {activeTab === 'carbonlca' && (
-        <div className="clean-card p-6 sm:p-8 space-y-6 animate-fadeIn">
-          {/* Header */}
-          <div className="border-b border-slate-100 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold mb-2">
-                <Leaf className="w-3.5 h-3.5 text-emerald-700" />
-                <span>{tr("පොහොර කාබන් පියසටහන හා පරිසර දීමනා (LCA Carbon Engine)", "Fertilizer Life Cycle Assessment (LCA) Carbon Engine", "உர கார்பன் தடம் & பசுமை வரவு")}</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-black text-slate-900 flex items-center space-x-2">
-                <span>🌱</span>
-                <span>{tr("කාබන් පියසටහන හා Green Credits ගණකය", "Carbon Footprint & Voluntary Carbon Offset Valuation", "கார்பன் தடம் & பசுமை ஊக்கத்தொகை")}</span>
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-3xl">
-                {tr(
-                  "රසායනික පොහොර (Urea/TSP/MOP) නිෂ්පාදනය හා භාවිතයේදී පිටවන හරිතාගාර වායු (GHG) ගණනය කර, කොම්පෝස්ට් සහ බයෝචාර් (Biochar) මගින් කාබන් උරාගැනීමේ ත්‍යාග මුදල් ලබාගන්න.",
-                  "Computes Scope 1, 2, and 3 cradle-to-farm-gate GHG emissions and offset rewards from organic compost & biochar carbon sequestration.",
-                  "இரசாயன உரங்களின் கார்பன் உமிழ்வைக் கணக்கிட்டு, இயற்கை உரம் மூலம் பசுமை வரவு ஊக்கத்தொகையைப் பெறுங்கள்."
-                )}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleCalculateCarbonLCA}
-              disabled={carbonLoading}
-              className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs sm:text-sm shadow-md transition-all flex items-center space-x-2 self-start md:self-auto hover:scale-105 active:scale-95 disabled:opacity-60"
-            >
-              <RefreshCw className={`w-4 h-4 ${carbonLoading ? 'animate-spin' : ''}`} />
-              <span>{carbonLoading ? tr("ගණනය කෙරේ...", "Calculating...", "கணக்கிடுகிறது...") : tr("නැවත ගණනය කරන්න", "Calculate LCA Footprint", "கணக்கிடு")}</span>
-            </button>
-          </div>
-
-          {/* Form & Sliders */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <h3 className="text-sm font-black text-slate-900 border-b border-slate-100 pb-2 flex items-center space-x-2">
-                <span>🧪</span>
-                <span>{tr("යොදන ලද පොහොර ප්‍රමාණ ඇතුළත් කරන්න (Per Hectare):", "Applied Fertilizer Quantities (Per Ha):", "பயன்படுத்திய உர அளவு:")}</span>
-              </h3>
-
-              {/* Urea slider */}
-              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-800">1. යූරියා (Urea - 46% N):</span>
-                  <span className="font-black text-emerald-800 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200">{carbonUreaKg} kg</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="300"
-                  step="10"
-                  value={carbonUreaKg}
-                  onChange={(e) => setCarbonUreaKg(parseFloat(e.target.value))}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-                <span className="text-[10px] text-slate-400 block">IPCC Factor: 2.58 kg CO₂e/kg (Haber-Bosch) + 0.73 kg N₂O/hydrolysis</span>
-              </div>
-
-              {/* TSP slider */}
-              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-800">2. කළු පොහොර (TSP - 46% P₂O₅):</span>
-                  <span className="font-black text-emerald-800 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200">{carbonTspKg} kg</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="150"
-                  step="5"
-                  value={carbonTspKg}
-                  onChange={(e) => setCarbonTspKg(parseFloat(e.target.value))}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-                <span className="text-[10px] text-slate-400 block">Mining & Acidulation: 1.15 kg CO₂e/kg</span>
-              </div>
-
-              {/* MOP slider */}
-              <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-1.5">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-800">3. රතු පොහොර (MOP - 60% K₂O):</span>
-                  <span className="font-black text-emerald-800 bg-white px-2.5 py-0.5 rounded-lg border border-slate-200">{carbonMopKg} kg</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="150"
-                  step="5"
-                  value={carbonMopKg}
-                  onChange={(e) => setCarbonMopKg(parseFloat(e.target.value))}
-                  className="w-full accent-emerald-600 cursor-pointer"
-                />
-                <span className="text-[10px] text-slate-400 block">Potash Extraction: 0.62 kg CO₂e/kg</span>
-              </div>
-
-              {/* Compost & Biochar Offsetters */}
-              <div className="p-4 bg-emerald-50/70 rounded-2xl border border-emerald-200 space-y-3">
-                <span className="text-xs font-black text-emerald-950 uppercase tracking-wide block">
-                  🌿 කාබන් උරාගන්නා කාබනික සංශෝධක (Carbon Offsets):
-                </span>
-                
-                <div>
-                  <div className="flex justify-between text-xs font-bold text-emerald-900 mb-1">
-                    <span>කාබනික කොම්පෝස්ට් (Compost):</span>
-                    <span>{carbonCompostKg} kg</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="1000"
-                    step="50"
-                    value={carbonCompostKg}
-                    onChange={(e) => setCarbonCompostKg(parseFloat(e.target.value))}
-                    className="w-full accent-emerald-700 cursor-pointer"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex justify-between text-xs font-bold text-emerald-900 mb-1">
-                    <span>බයෝචාර් අඟුරු (Biochar):</span>
-                    <span>{carbonBiocharKg} kg</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    step="10"
-                    value={carbonBiocharKg}
-                    onChange={(e) => setCarbonBiocharKg(parseFloat(e.target.value))}
-                    className="w-full accent-emerald-700 cursor-pointer"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Output & Report Card */}
-            <div className="space-y-4">
-              {carbonResult ? (
-                <div className="space-y-4 animate-scaleIn">
-                  
-                  {/* Grade & Net Footprint Hero */}
-                  <div className="p-6 rounded-3xl bg-gradient-to-br from-emerald-800 to-teal-900 text-white shadow-xl space-y-4 relative overflow-hidden">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-[10px] uppercase font-bold text-emerald-200 tracking-wider">
-                          ශුද්ධ කාබන් පියසටහන (Net Carbon Footprint)
-                        </span>
-                        <div className="text-3xl sm:text-4xl font-black text-white mt-1">
-                          {carbonResult.net_carbon_footprint_kg_co2e} <span className="text-base font-bold text-emerald-200">kg CO₂e/ha</span>
-                        </div>
-                      </div>
-
-                      {/* Grade Badge */}
-                      <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 flex flex-col items-center justify-center">
-                        <span className="text-[9px] uppercase font-bold text-emerald-200">ශ්‍රේණිය</span>
-                        <span className="text-2xl font-black text-emerald-100">{carbonResult.carbon_intensity_grade || 'A'}</span>
-                      </div>
-                    </div>
-
-                    {/* Offset & Earnings Strip */}
-                    <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/20">
-                      <div>
-                        <span className="text-[10px] text-emerald-200 block font-semibold">කාබන් උරාගැනීම (Sequestration):</span>
-                        <strong className="text-sm font-black text-emerald-300">-{carbonResult.carbon_sequestration_offset_kg_co2e} kg CO₂e</strong>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-emerald-200 block font-semibold">පරිසර දීමනා වටිනාකම (Carbon Credits):</span>
-                        <strong className="text-sm font-black text-amber-300">+ Rs. {carbonResult.carbon_credit_earnings_lkr.toLocaleString()}</strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Emissions Breakdown Cards */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                      <span className="text-[10px] text-slate-500 block">යූරියා කාබන්</span>
-                      <strong className="text-slate-900 font-black block mt-0.5">
-                        {carbonResult.emission_breakdown?.urea_manufacturing_transport || Math.round(carbonUreaKg * 2.65)} kg
-                      </strong>
-                    </div>
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                      <span className="text-[10px] text-slate-500 block">කුඹුරේ N₂O වායු</span>
-                      <strong className="text-slate-900 font-black block mt-0.5">
-                        {carbonResult.emission_breakdown?.field_n2o_hydrolysis || Math.round(carbonUreaKg * 0.95)} kg
-                      </strong>
-                    </div>
-                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                      <span className="text-[10px] text-slate-500 block">TSP / MOP</span>
-                      <strong className="text-slate-900 font-black block mt-0.5">
-                        {(carbonResult.emission_breakdown?.tsp_mining_transport || 0) + (carbonResult.emission_breakdown?.mop_mining_transport || 0)} kg
-                      </strong>
-                    </div>
-                    <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
-                      <span className="text-[10px] text-emerald-700 block font-bold">කොම්පෝස්ට් ඉතිරිය</span>
-                      <strong className="text-emerald-900 font-black block mt-0.5">
-                        -{carbonResult.carbon_sequestration_offset_kg_co2e} kg
-                      </strong>
-                    </div>
-                  </div>
-
-                  {/* Agronomic Green Recommendation */}
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs space-y-2 text-emerald-950">
-                    <div className="flex items-center space-x-2 font-black text-emerald-900">
-                      <span>💡</span>
-                      <span>{tr("හරිත ගොවි නිර්දේශය (Green Farming Advice):", "Green Farming Advice:", "பசுமை விவசாய ஆலோசனை:")}</span>
-                    </div>
-                    <p className="leading-relaxed">
-                      {tr(
-                        "කොම්පෝස්ට් සහ බයෝචාර් (Biochar) පසට එක් කිරීමෙන් යූරියා භාවිතය 20% කින් අඩු කරගත හැකි අතර, රජයේ කාබන් අඩුකිරීමේ ත්‍යාග මුදල් (Carbon Bonus) සඳහා සුදුසුකම් ලබයි.",
-                        "Integrating compost and biochar sequesters carbon stably in the soil, lowers required synthetic nitrogen by 20%, and earns voluntary carbon bonus payouts.",
-                        "இயற்கை உரங்கள் மூலம் இரசாயன உரப் பயன்பாட்டைக் குறைத்து கார்பன் போனஸ் பெறலாம்."
-                      )}
-                    </p>
-                  </div>
-
-                </div>
-              ) : (
-                <div className="h-64 rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-xl">
-                    🌱
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-black text-slate-800">
-                      {tr("කාබන් පියසටහන ගණනය කිරීමට සූදානම්", "Ready for Carbon Footprint LCA", "கார்பன் தடம் கணக்கிட தயார்")}
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1 max-w-xs">
-                      {tr("ඔබේ ඉඩමේ පොහොර ප්‍රමාණ වෙනස් කර 'ගණනය කරන්න' බොත්තම ඔබන්න.", "Adjust fertilizer rates and click Calculate.", "அளவுகளை அமைத்து கணக்கிடுங்கள்.")}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCalculateCarbonLCA}
-                    className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-sm transition-all"
-                  >
-                    ගණනය කරන්න
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* ========================================================================= */}
+      {/* 4. WORKSPACE 2: MARKET & PROCUREMENT HUB                                  */}
+      {/* ========================================================================= */}
+      {activeWorkspace === 'market' && (
+        <MarketProcurementHub
+          language={language}
+          tr={tr}
+          activeTool={activeTool}
+          onSelectTool={(toolId) => setActiveTool(toolId)}
+          onBackToHome={() => setActiveWorkspace('home')}
+          farmerProfile={farmerProfile}
+          playTone={playTone}
+        />
       )}
 
-      {/* ================================================================ */}
-      {/* MODAL: OFFICIAL DOA AGRONOMIC PRESCRIPTION CARD */}
-      {/* ================================================================ */}
-      {/* ================================================================ */}
-      {/* MODAL: OFFICIAL DOA AGRONOMIC PRESCRIPTION CARD (MODULAR)        */}
-      {/* ================================================================ */}
-      <AgriPrescriptionModal
-        isOpen={showPrescriptionModal}
-        onClose={() => setShowPrescriptionModal(false)}
-        farmerProfile={farmerProfile}
-        dosageData={dosageResult || prescriptionData || {}}
-        landAcres={landAcres}
-        crop={selectedCrop}
-        variety={calendarPaddyType === '3_month' ? 'Bg 300 (3 Months)' : calendarPaddyType === '4_month' ? 'Bg 379-2 (4 Months)' : calendarPaddyType === 'traditional' ? 'Suwandel (Traditional)' : 'Bg 352 (3.5 Months)'}
-        zone="Dry Zone (වියළි කලාපය)"
-        season="Maha (මහ කන්නය)"
-        language={language}
-      />
+      {/* ========================================================================= */}
+      {/* 5. WORKSPACE 3: FIELD SCIENCE & ADVISORY HUB                              */}
+      {/* ========================================================================= */}
+      {activeWorkspace === 'science' && (
+        <FieldScienceAdvisoryHub
+          language={language}
+          tr={tr}
+          activeTool={activeTool}
+          onSelectTool={(toolId) => setActiveTool(toolId)}
+          onBackToHome={() => setActiveWorkspace('home')}
+          farmerProfile={farmerProfile}
+          playTone={playTone}
+        />
+      )}
 
-      {/* ================================================================ */}
-      {/* MODAL: FARMER PERSISTENT PROFILE EDIT MODAL                      */}
-      {/* ================================================================ */}
+      {/* ========================================================================= */}
+      {/* MODALS: PROFILE, TOUR & AGRONOMIC PRESCRIPTION                            */}
+      {/* ========================================================================= */}
+
+      {/* 1. Farmer Profile Modal */}
       {showProfileModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 p-6 sm:p-8 space-y-5 animate-scaleIn">
-            <div className="flex items-center space-x-3 border-b border-slate-100 pb-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center text-2xl font-black flex-shrink-0">
-                👨🏽‍🌾
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-slate-900">
-                  {tr("ගොවි පැතිකඩ සංස්කරණය", "Edit Farmer Profile", "விவசாயி சுயவிவரம்")}
-                </h3>
-                <p className="text-xs text-slate-500">
-                  {tr("ඔබගේ විස්තර මෙහිදී ස්ථිරව සේව් කර තබාගත හැක", "Details saved locally for one-tap calculations", "விவரங்கள் போனில் சேமிக்கப்படும்")}
-                </p>
-              </div>
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl space-y-4 border border-emerald-100">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-lg font-black text-slate-900 flex items-center space-x-2">
+                <span>👨🏽‍🌾</span>
+                <span>{tr("ගොවි පැතිකඩ තොරතුරු", "Farmer Profile Settings", "விவசாயி சுயவிவரம்")}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowProfileModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold text-sm"
+              >
+                ✕
+              </button>
             </div>
 
-            <form onSubmit={handleSaveProfile} className="space-y-3.5 text-xs">
+            <form onSubmit={handleSaveProfile} className="space-y-3.5">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">ගොවියාගේ නම (Farmer Name):</label>
+                <label className="text-xs font-black text-slate-800 block mb-1">
+                  {tr("නම:", "Full Name:", "பெயர்:")}
+                </label>
                 <input
                   type="text"
                   value={tempProfile.name}
                   onChange={(e) => setTempProfile({ ...tempProfile, name: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-slate-800 bg-white"
+                  className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">ජා.හැ. අංකය (NIC):</label>
-                  <input
-                    type="text"
-                    value={tempProfile.nic}
-                    onChange={(e) => setTempProfile({ ...tempProfile, nic: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-slate-800 bg-white"
-                  />
-                </div>
-                <div>
-                  <label className="font-bold text-slate-700 block mb-1">දුරකථන අංකය:</label>
-                  <input
-                    type="text"
-                    value={tempProfile.phone}
-                    onChange={(e) => setTempProfile({ ...tempProfile, phone: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-slate-800 bg-white"
-                  />
-                </div>
+              <div>
+                <label className="text-xs font-black text-slate-800 block mb-1">
+                  {tr("ජාතික හැඳුනුම්පත් අංකය (NIC):", "National Identity Card (NIC):", "தேசிய அடையாள அட்டை:")}
+                </label>
+                <input
+                  type="text"
+                  value={tempProfile.nic}
+                  onChange={(e) => setTempProfile({ ...tempProfile, nic: e.target.value })}
+                  className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white font-mono"
+                  required
+                />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">දිස්ත්‍රික්කය:</label>
+                  <label className="text-xs font-black text-slate-800 block mb-1">
+                    {tr("දිස්ත්‍රික්කය:", "District:", "மாவட்டம்:")}
+                  </label>
                   <select
                     value={tempProfile.district}
                     onChange={(e) => setTempProfile({ ...tempProfile, district: e.target.value })}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-slate-800 bg-white"
+                    className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white"
                   >
-                    {["Anuradhapura", "Polonnaruwa", "Ampara", "Kurunegala", "Jaffna", "Hambantota", "Matale", "Kandy", "Badulla", "Monaragala", "Kilinochchi", "Batticaloa"].map(d => (
+                    {['Anuradhapura', 'Polonnaruwa', 'Kurunegala', 'Ampara', 'Hambantota', 'Matale', 'Kandy', 'Badulla', 'Gampaha', 'Kalutara', 'Jaffna'].map(d => (
                       <option key={d} value={d}>{d}</option>
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">ඉඩම (අක්කර):</label>
+                  <label className="text-xs font-black text-slate-800 block mb-1">
+                    {tr("ඉඩම (අක්කර):", "Land (Acres):", "ஏக்கர்:")}
+                  </label>
                   <input
                     type="number"
                     step="0.5"
                     min="0.25"
-                    max="50"
+                    max="100"
                     value={tempProfile.landAcres}
-                    onChange={(e) => setTempProfile({ ...tempProfile, landAcres: parseFloat(e.target.value) || 1.0 })}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-slate-800 bg-white"
+                    onChange={(e) => setTempProfile({ ...tempProfile, landAcres: parseFloat(e.target.value) || 1 })}
+                    className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">ගොවිජන සේවා මධ්‍යස්ථානය (ASC):</label>
+                <label className="text-xs font-black text-slate-800 block mb-1">
+                  {tr("ගොවිජන සේවා මධ්‍යස්ථානය (ASC):", "Agrarian Services Center:", "விவசாய சேவை மையம்:")}
+                </label>
                 <input
                   type="text"
                   value={tempProfile.ascDivision}
                   onChange={(e) => setTempProfile({ ...tempProfile, ascDivision: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-slate-800 bg-white"
+                  className="w-full p-3 rounded-xl border border-slate-300 font-bold text-sm bg-white"
+                  required
                 />
               </div>
 
-              <div>
-                <label className="font-bold text-slate-700 block mb-1">ප්‍රධාන බෝගය (Primary Crop):</label>
-                <select
-                  value={tempProfile.crop}
-                  onChange={(e) => setTempProfile({ ...tempProfile, crop: e.target.value })}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 font-bold text-slate-800 bg-white"
-                >
-                  <option value="paddy">වී වගාව (Paddy)</option>
-                  <option value="maize">බඩඉරිඟු (Maize)</option>
-                  <option value="tea">තේ වගාව (Tea)</option>
-                  <option value="vegetables">එළවළු (Vegetables)</option>
-                  <option value="chilli">මිරිස් (Chilli)</option>
-                </select>
-              </div>
-
-              <div className="flex gap-2 pt-3">
-                <button
-                  type="submit"
-                  className="flex-1 py-3 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow-md transition-all flex items-center justify-center space-x-1.5 active:scale-95"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>තොරතුරු සුරකින්න</span>
-                </button>
+              <div className="pt-2 flex justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => setShowProfileModal(false)}
-                  className="py-3 px-4 rounded-xl border border-slate-300 text-slate-700 font-bold text-xs hover:bg-slate-50 transition-all"
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 font-bold text-xs text-slate-700"
                 >
-                  අවලංගු කරන්න
+                  {tr("අවලංගු කරන්න", "Cancel", "ரத்து")}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-black text-xs shadow-md"
+                >
+                  {tr("සුරකින්න", "Save Profile", "சேமிக்க")}
                 </button>
               </div>
             </form>
@@ -6294,84 +838,109 @@ export default function FarmerMode({ language = 'si' }) {
         </div>
       )}
 
-      {/* Floating Bottom Quick Action Navigation Bar (Helakuru / Consumer App Style) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-emerald-200 py-2 px-3 shadow-2xl flex items-center justify-around max-w-lg mx-auto sm:rounded-2xl sm:bottom-3 sm:border sm:shadow-xl">
+      {/* 2. Interactive Guided Tour Modal */}
+      {showTourModal && (
+        <InteractiveTourModal
+          isOpen={showTourModal}
+          onClose={() => setShowTourModal(false)}
+          onNavigate={(targetTab) => {
+            setShowTourModal(false);
+            handleOpenTool(targetTab);
+          }}
+          language={language}
+        />
+      )}
+
+      {/* 3. Official Printable Agronomic Prescription Modal */}
+      {showPrescriptionModal && (
+        <AgriPrescriptionModal
+          isOpen={showPrescriptionModal}
+          onClose={() => setShowPrescriptionModal(false)}
+          farmerProfile={farmerProfile}
+          prescriptionData={prescriptionData}
+          dosageData={prescriptionData || {}}
+          language={language}
+        />
+      )}
+
+      {/* ========================================================================= */}
+      {/* MOBILE STICKY BOTTOM NAVIGATION BAR                                      */}
+      {/* ========================================================================= */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 px-2 py-2 flex items-center justify-around shadow-2xl">
         <button
           type="button"
-          onClick={() => { playTone('ding'); setActiveTab('home'); }}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all ${
-            activeTab === 'home' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
+          onClick={() => {
+            setActiveWorkspace('home');
+            playTone('ding');
+          }}
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-all ${
+            activeWorkspace === 'home' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <span className="text-xl">🏠</span>
-          <span className="text-[10px] leading-tight mt-0.5">{tr("මුල් පිටුව", "Home", "முகப்பு")}</span>
+          <span className="text-[10px] tracking-tight">{tr("මුල් පිටුව", "Home", "முகப்பு")}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => { playTone('chime'); setActiveTab('calendar'); }}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all ${
-            activeTab === 'calendar' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
+          onClick={() => {
+            setActiveWorkspace('operations');
+            setActiveTool('calendar');
+            playTone('ding');
+          }}
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-all ${
+            activeWorkspace === 'operations' && activeTool === 'calendar' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <span className="text-xl">📅</span>
-          <span className="text-[10px] leading-tight mt-0.5">{tr("කන්නය", "Stages", "பருவம்")}</span>
+          <span className="text-xl">🌾</span>
+          <span className="text-[10px] tracking-tight">{tr("කන්නය", "Calendar", "காலண்டர்")}</span>
         </button>
 
-        {/* Central Voice AI Floating Mic */}
         <button
           type="button"
-          onClick={() => { playTone('chime'); handleStartVoice(); }}
-          className={`-mt-6 w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all transform hover:scale-110 active:scale-95 ${
-            isListening
-              ? 'bg-rose-600 text-white animate-pulse ring-4 ring-rose-300'
-              : 'bg-emerald-600 text-white hover:bg-emerald-500 ring-4 ring-white shadow-emerald-500/40'
+          onClick={() => {
+            setActiveWorkspace('market');
+            setActiveTool('procurement');
+            playTone('ding');
+          }}
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-all ${
+            activeWorkspace === 'market' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
           }`}
-          title={tr("හඬින් අසන්න", "Voice Speak", "குரல் மூலம் கேட்க")}
         >
-          {isListening ? <MicOff className="w-5 h-5 text-white" /> : <Mic className="w-5 h-5 text-white" />}
+          <span className="text-xl">🛒</span>
+          <span className="text-[10px] tracking-tight">{tr("ඇණවුම්", "Orders", "முன்பதிவு")}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => { playTone('ding'); setActiveTab('dosage'); }}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all ${
-            activeTab === 'dosage' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
+          onClick={() => {
+            setActiveWorkspace('operations');
+            setActiveTool('dosage');
+            playTone('ding');
+          }}
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-all ${
+            activeWorkspace === 'operations' && activeTool === 'dosage' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
           <span className="text-xl">⚖️</span>
-          <span className="text-[10px] leading-tight mt-0.5">{tr("පොහොර", "Dosage", "உரம்")}</span>
+          <span className="text-[10px] tracking-tight">{tr("මාත්‍රාව", "Dosage", "அளவு")}</span>
         </button>
 
         <button
           type="button"
-          onClick={() => { playTone('ding'); setActiveTab('leafdoctor'); }}
-          className={`flex flex-col items-center justify-center py-1 px-2 rounded-xl transition-all ${
-            activeTab === 'leafdoctor' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
+          onClick={() => {
+            setActiveWorkspace('science');
+            setActiveTool('leafdoctor');
+            playTone('ding');
+          }}
+          className={`flex flex-col items-center justify-center p-1.5 rounded-xl transition-all ${
+            activeWorkspace === 'science' ? 'text-emerald-700 font-black scale-105' : 'text-slate-500 hover:text-slate-800'
           }`}
         >
-          <span className="text-xl">🌿</span>
-          <span className="text-[10px] leading-tight mt-0.5">{tr("3D වෛද්‍ය", "Doctor", "மருத்துவர்")}</span>
+          <span className="text-xl">🍃</span>
+          <span className="text-[10px] tracking-tight">{tr("පත්‍ර රෝග", "Leaf Doc", "இலை நோய்")}</span>
         </button>
-
-        <a
-          href="tel:1920"
-          className="flex flex-col items-center justify-center py-1 px-2 rounded-xl text-amber-700 hover:text-amber-900 transition-all transform hover:scale-105"
-          title={tr("කෘෂිකර්ම උපදේශන සේවය - 1920", "DOA Hotline 1920", "அரசு உதவி எண் 1920")}
-        >
-          <span className="text-xl">📞</span>
-          <span className="text-[10px] font-black leading-tight mt-0.5">1920</span>
-        </a>
       </div>
-
-
-      {/* Interactive Guided Demo Tour Modal */}
-      <InteractiveTourModal
-        isOpen={showTourModal}
-        onClose={() => setShowTourModal(false)}
-        onNavigateTab={(tab) => { playTone('ding'); setActiveTab(tab); }}
-        language={language}
-      />
 
     </div>
   );
