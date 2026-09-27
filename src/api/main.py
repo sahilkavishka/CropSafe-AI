@@ -54,6 +54,7 @@ from src.models.asc_subsidy_ewallet_ledger import ASCSubsidyEWalletLedger
 from src.models.soil_salinity_reclamation_engine import SoilSalinityReclamationEngine
 from src.models.fertilizer_price_forecaster import price_forecasting_engine
 from src.models.supply_chain_network import SupplyChainNetworkEngine
+from src.models.fertilizer_online_procurement import FertilizerProcurementEngine, ProcurementOrderRequest
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -97,6 +98,7 @@ credit_scorecard = AgrarianMicroCreditScorecardEngine()
 whistleblower_engine = WhistleblowerIncidentEngine()
 subsidy_ledger = ASCSubsidyEWalletLedger()
 salinity_engine = SoilSalinityReclamationEngine()
+procurement_engine = FertilizerProcurementEngine()
 
 # Load Machine Learning Model Zoo
 try:
@@ -566,6 +568,24 @@ def get_nfs_lab_quality_clearances(status: Optional[str] = None):
 def get_supply_chain_network_summary():
     """Returns national aggregate capacity, commodity reserve totals, and import quarantine metrics."""
     return SupplyChainNetworkEngine.get_network_summary()
+
+# =========================================================================
+# FERTILIZER ONLINE PROCUREMENT & DIGITAL PRE-ORDER PORTAL
+# =========================================================================
+@app.get("/api/procurement/distributors")
+def get_authorized_distributors(dist_type: Optional[str] = None):
+    """Returns official registry of authorized state and private fertilizer distributing companies."""
+    return procurement_engine.get_distributors(dist_type)
+
+@app.get("/api/procurement/catalog")
+def get_procurement_catalog():
+    """Returns official certified fertilizer product catalog with gazetted MRP and commercial rates."""
+    return procurement_engine.get_catalog()
+
+@app.post("/api/procurement/order")
+def create_procurement_order(req: ProcurementOrderRequest):
+    """Generates digital purchase pre-order and cryptographic collection token under CAA & Fertilizer Acts."""
+    return procurement_engine.create_preorder(req)
 
 if __name__ == "__main__":
 

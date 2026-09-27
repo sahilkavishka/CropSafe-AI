@@ -58,6 +58,7 @@ import ThreePlantCanvas from './ThreePlantCanvas';
 import ThreeBagCanvas from './ThreeBagCanvas';
 import ThreeSoilCanvas from './ThreeSoilCanvas';
 import ThreeDroneFieldCanvas from './ThreeDroneFieldCanvas';
+import OnlineProcurementPortal from './OnlineProcurementPortal';
 import { translations } from '../i18n';
 
 const API_BASE = "http://localhost:8000";
@@ -1438,6 +1439,8 @@ export default function FarmerMode({ language = 'si' }) {
 
     // 3. Prices, Subsidies & Finance (මිල ගණන්, සහනාධාර සහ ගොවි ආර්ථිකය)
     { id: 'priceforecast', cat: 'finance', label: tr("පොහොර වෙළඳපොළ මිල පුරෝකථනය", "Market Price Trend Forecaster", "உர சந்தை விலை கணிப்பு"), icon: '📈', desc: tr("ඉදිරි මාස 6 මිල ප්‍රවණතා හා ලාභදායී මිලදී ගැනීමේ කාලය", "6-Month fertilizer price trend & best buying window", "அடுத்த 6 மாத உர விலை போக்கு கணிப்பு") },
+    { id: 'procurement', cat: 'finance', label: tr("ඔන්ලයින් පොහොර ඇණවුම් හා වෙන්කර ගැනීම", "Online Fertilizer Pre-Order & Quota", "ஆன்லைன் உர முன்பதிவு"), icon: '🛒', desc: tr("රජයේ සහනාධාර කූපන් හෝ වාණිජ පොහොර ගබඩාවෙන් වෙන්කරවා ගනිමු", "Reserve subsidized quota bags or certified commercial fertilizer at nearest depot", "அரசு மானிய அல்லது வர்த்தக உரங்களை முன்பதிவு செய்யுங்கள்") },
+    { id: 'distributors', cat: 'finance', label: tr("පොහොර බෙදාහරින ආයතන හා ගබඩා නාමාවලිය", "Distributors & Warehouses Directory", "உர விநியோகஸ்தர்கள் மற்றும் களஞ்சியங்கள்"), icon: '🏢', desc: tr("CCF, ලක්පොහොර, බෝවර්, CIC, හේලීස්, ලැන්කම් ගබඩා තොරතුරු හා දුරකථන", "Authorized state and private distributor warehouses, capacity & contacts", "அரசு மற்றும் தனியார் உர நிறுவன களஞ்சியங்கள்") },
     { id: 'subsidy', cat: 'finance', label: tr("රජයේ පොහොර සහනාධාර ඊ-පසුම්බිය", "Govt Subsidy E-Wallet", "அரசு மானிய மின்-பை"), icon: '💳', desc: tr("රු. 15,000 සහනාධාර වවුචර ශේෂය සහ කාබන් දීමනාව", "Check Rs. 15,000 quota and green carbon bonus", "ரூ. 15,000 மானிய இருப்பு மற்றும் கார்பன் நிதி") },
     { id: 'credit', cat: 'finance', label: tr("සහන කෘෂි ණය ශ්‍රේණිය", "Agrarian Concessionary Credit Score", "விவசாய கடன் தகுதி"), icon: '🏦', desc: tr("6.5% අඩු පොලී කෘෂි ණය සඳහා සුදුසුකම් පරීක්ෂාව", "Scorecard for CBSL supported 6.5% agricultural loans", "6.5% குறைந்த வட்டி விவசாய கடன் மதிப்பீடு") },
     { id: 'carbonlca', cat: 'finance', label: tr("කාබන් පියසටහන හා Green Credits", "Carbon LCA & Green Credits", "கார்பன் தடம் & கிரெடிட்"), icon: '🌱', desc: tr("හරිතාගාර වායු විමෝචනය අවම කර කාබන් මුදල් දීමනා ගණනය", "Measure CO2 footprint and carbon credit offset rewards", "CO2 தடம் மற்றும் கார்பன் வரவு மதிப்பீடு") },
@@ -1771,6 +1774,47 @@ export default function FarmerMode({ language = 'si' }) {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* --- Online Fertilizer Procurement & Distributors Action Banner --- */}
+          <div className="clean-card p-5 sm:p-6 bg-gradient-to-r from-emerald-950 via-slate-900 to-teal-950 text-white rounded-3xl shadow-lg border border-emerald-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-2xl sm:text-3xl border border-emerald-400/30 flex-shrink-0">
+                🛒
+              </div>
+              <div className="space-y-1">
+                <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase tracking-wider">
+                  <span>නවතම රාජ්‍ය සහ වාණිජ ඊ-සේවාව (New E-Procurement)</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-black text-white">
+                  {tr("ඔන්ලයින් පොහොර ඇණවුම් හා ගබඩාවෙන් වෙන්කර ගැනීම", "Online Fertilizer Pre-Order & Depot Reservation", "ஆன்லைன் உர முன்பதிவு & களஞ்சிய ஒதுக்கீடு")}
+                </h3>
+                <p className="text-xs text-emerald-100/80 leading-relaxed max-w-xl">
+                  {tr(
+                    "රජයේ සහනාධාර කූපනයට (රු. 2,500) හෝ නිල ගැසට් මිලට CCF, ලක්පොහොර, බෝවර්, CIC, හේලීස් වෙතින් පොහොර වෙන්කරවා ගෙන ආසන්නතම ගබඩාවෙන් පෝලිම් නැතිව ලබාගන්න.",
+                    "Reserve subsidized quota bags (Rs. 2,500) or certified commercial fertilizer from verified distributors with zero depot queues.",
+                    "அரசு மானிய அல்லது வர்த்தக உரங்களை வரிசையின்றி களஞ்சியத்தில் பெற்றுக்கொள்ள முன்பதிவு செய்யுங்கள்."
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 self-start md:self-auto flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => { playTone('ding'); setActiveTab('procurement'); }}
+                className="py-3 px-5 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs sm:text-sm shadow-md transition-all hover:scale-105 active:scale-95 flex items-center space-x-1.5"
+              >
+                <span>🛒 {tr("ඔන්ලයින් ඇණවුම් කරන්න", "Pre-Order Online", "முன்பதிவு செய்")}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { playTone('ding'); setActiveTab('distributors'); }}
+                className="py-3 px-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-all"
+              >
+                <span>🏢 {tr("බෙදාහරින්නන් හා ගබඩා", "Distributors & Depots", "நிறுவன விபரங்கள்")}</span>
+              </button>
             </div>
           </div>
 
@@ -5795,6 +5839,16 @@ export default function FarmerMode({ language = 'si' }) {
           )}
 
         </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* FEATURE: ONLINE FERTILIZER PROCUREMENT & PRE-ORDER PORTAL        */}
+      {/* ================================================================ */}
+      {(activeTab === 'procurement' || activeTab === 'distributors') && (
+        <OnlineProcurementPortal 
+          language={language} 
+          farmerProfile={farmerProfile} 
+        />
       )}
 
       {/* ================================================================ */}
