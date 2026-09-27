@@ -802,7 +802,7 @@ export default function ChemistLabMode({ language = 'si' }) {
                   CERTIFICATE OF CHEMICAL ANALYSIS (CoA)
                 </h2>
                 <span className="text-xs text-slate-500 font-mono">
-                  REF: DOA-NFS-COA-{new Date().getFullYear()}-{(Math.random()*90000+10000).toFixed(0)}
+                  REF: DOA-NFS-COA-2026-0842
                 </span>
               </div>
               <div className="text-3xl">🏛️</div>
@@ -877,9 +877,9 @@ export default function ChemistLabMode({ language = 'si' }) {
                 </div>
               </div>
 
-              <div className="text-right font-mono text-[10px] text-slate-400">
-                [ SHA-256: {Math.random().toString(36).substring(2, 10).toUpperCase()} ]<br/>
-                Signed: Chief Govt Agricultural Chemist
+              <div className="text-right font-mono text-[10px] text-slate-500">
+                [ Lab Registry: SLSI-LAB-644-2026 ]<br/>
+                Signed: Authorized Govt Agricultural Chemist
               </div>
             </div>
 

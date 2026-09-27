@@ -74,7 +74,7 @@ function SplashScreen({ onDone }) {
 
       {/* Features pills */}
       <div className="flex flex-wrap justify-center gap-2 mb-10 animate-fadeIn delay-200">
-        {['50 AI Models', 'Trilingual', 'Farmer Profile', 'Live Camera', 'Officer RBAC'].map((f, i) => (
+        {['50+ Agronomic Tools', 'Trilingual', 'Farmer Profile', 'Photo Evidence', 'Officer RBAC'].map((f, i) => (
           <span key={i} className="px-3 py-1 rounded-full bg-white/15 border border-white/20 text-white text-xs font-bold backdrop-blur-sm">
             ✓ {f}
           </span>

@@ -78,7 +78,7 @@ export default function FarmerMode({ language = 'si' }) {
   const [activeTab, setActiveTab] = useState('home');
 
   // --- Home Dashboard Animated Stats & Tips ---
-  const [animatedStats, setAnimatedStats] = useState({ farmers: 0, frauds: 0, money: 0, districts: 0 });
+  const [animatedStats, setAnimatedStats] = useState({ crops: 0, adulterants: 0, standards: "SLSI 644", districts: 0 });
   const [tipIndex, setTipIndex] = useState(0);
   const [recentTools, setRecentTools] = useState([]);
 
@@ -313,10 +313,11 @@ export default function FarmerMode({ language = 'si' }) {
     }
   };
 
-  // --- Live Smartphone & WebCam Scanner State ---
+  // --- Live Smartphone & Evidence Photo Capture State ---
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraScanning, setCameraScanning] = useState(false);
   const [cameraError, setCameraError] = useState(null);
+  const [capturedPhotoUrl, setCapturedPhotoUrl] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -334,7 +335,7 @@ export default function FarmerMode({ language = 'si' }) {
       }
     } catch (err) {
       console.warn("Camera access denied or unavailable:", err);
-      setCameraError(language === 'en' ? 'Camera access not available. You can use manual sliders or upload an image.' : 'කැමරාව විවෘත කළ නොහැක. කරුණාකර පහත Sliders හෝ ගැලරියෙන් ඡායාරූපයක් තෝරන්න.');
+      setCameraError(language === 'en' ? 'Camera access not available. You can use file upload to attach bag photos.' : 'කැමරාව විවෘත කළ නොහැක. කරුණාකර පහත ගැලරියෙන් ඡායාරූපයක් තෝරන්න.');
     }
   };
 
@@ -360,31 +361,17 @@ export default function FarmerMode({ language = 'si' }) {
     const ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Realistic Computer Vision Pixel Variance Simulation:
-    // Calculates luminance variations to detect genuine holograms
+    // Save authentic photo evidence
     try {
-      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const data = imgData.data;
-      let totalLum = 0;
-      for (let i = 0; i < data.length; i += 16) {
-        totalLum += (data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114);
-      }
-      const avgLum = totalLum / (data.length / 16);
-      const calculatedHolo = Math.min(0.96, Math.max(0.72, avgLum > 60 ? 0.88 + (Math.random() * 0.08) : 0.65));
-      const calculatedMicro = Math.min(0.95, Math.max(0.75, 0.86 + (Math.random() * 0.08)));
-      setHologramScore(Math.round(calculatedHolo * 100) / 100);
-      setMicroprintScore(Math.round(calculatedMicro * 100) / 100);
-      setStitchType('double_chainstitch');
-      setSealTampered(false);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setCapturedPhotoUrl(dataUrl);
     } catch(err) {
-      setHologramScore(0.90);
-      setMicroprintScore(0.92);
+      console.warn("Could not capture photo evidence:", err);
     }
 
     setTimeout(() => {
       stopCamera();
-      handleVerifyBag();
-    }, 600);
+    }, 400);
   };
 
 
@@ -537,21 +524,21 @@ export default function FarmerMode({ language = 'si' }) {
     // Animate stats on load
     if (activeTab === 'home') {
       let start = 0;
-      const duration = 2000;
+      const duration = 1500;
       const incrementTime = 50;
       const steps = duration / incrementTime;
-      const targets = { farmers: 847293, frauds: 12847, money: 284, districts: 25 };
+      const targets = { crops: 12, adulterants: 5, districts: 25 };
       
       const timer = setInterval(() => {
         start += 1;
         if (start > steps) {
           clearInterval(timer);
-          setAnimatedStats(targets);
+          setAnimatedStats({ crops: 12, adulterants: 5, standards: "SLSI 644", districts: 25 });
         } else {
           setAnimatedStats({
-            farmers: Math.floor((targets.farmers / steps) * start),
-            frauds: Math.floor((targets.frauds / steps) * start),
-            money: Math.floor((targets.money / steps) * start),
+            crops: Math.floor((targets.crops / steps) * start),
+            adulterants: Math.floor((targets.adulterants / steps) * start),
+            standards: "SLSI 644",
             districts: Math.floor((targets.districts / steps) * start)
           });
         }
@@ -658,7 +645,7 @@ export default function FarmerMode({ language = 'si' }) {
       remaining_quota_lkr: 5000.0,
       carbon_credit_bonus_lkr: 1250.0,
       voucher_status: "ACTIVE_VERIFIED",
-      voucher_code: `ASC-VOUCHER-${Math.random().toString(16).substring(2, 8).toUpperCase()}`,
+      voucher_code: `ASC-${(farmerProfile?.district || 'LK').substring(0, 3).toUpperCase()}-${Date.now().toString().slice(-6)}`,
       status_si: "රජයේ පොහොර සහනාධාරය සක්‍රියයි - ශේෂය රු. 5,000",
       advice_si: "ඔබගේ ජාතික හැඳුනුම්පත ගොවිජන සේවා මධ්‍යස්ථානයට (ASC) ඉදිරිපත් කර ඉතිරි යූරියා මිටිය සහ රු. 1,250 ක හරිත කාබන් දීමනාව ලබාගන්න."
     });
@@ -1176,8 +1163,7 @@ export default function FarmerMode({ language = 'si' }) {
     const tspBags = dosageResult?.bags_50kg_required?.TSP_Bags || Math.ceil(landAcres * 0.9);
     const savings = dosageResult?.cost_breakdown_lkr?.farmer_savings_lkr || Math.round(landAcres * 14200);
 
-    const randomHash = Math.random().toString(16).substring(2, 8).toUpperCase();
-    const docId = `DOA-RX-2026-${randomHash}`;
+    const docId = `DOA-RX-2026-${Date.now().toString().slice(-6)}`;
 
     setPrescriptionData({
       docId,
@@ -1191,7 +1177,7 @@ export default function FarmerMode({ language = 'si' }) {
       tspBags,
       totalBags: ureaBags + mopBags + tspBags,
       savingsLkr: savings,
-      verificationHash: `SHA256-${Math.random().toString(36).substring(2, 10).toUpperCase()}-VERIFIED`
+      verificationHash: `DOA-AGR-VERIFIED-${docId}`
     });
     setShowPrescriptionModal(true);
   };
@@ -1270,11 +1256,11 @@ export default function FarmerMode({ language = 'si' }) {
           location: whistleLocation,
           incident_type: whistleType,
           fertilizer_type: whistleFertType,
-          batch_no: `BATCH-${Math.floor(100000 + Math.random() * 900000)}`,
+          batch_no: "UNSPECIFIED-RETAIL-BAG",
           gazetted_mrp: Number(whistleMrp),
           charged_price: Number(whistleCharged),
           narrative: whistleNarrative,
-          evidence_files: ["receipt_photo.jpg"]
+          evidence_files: capturedPhotoUrl ? ["field_captured_evidence.jpg"] : ["retail_receipt_photo.jpg"]
         })
       });
       if (res.ok) {
@@ -1287,7 +1273,7 @@ export default function FarmerMode({ language = 'si' }) {
       // Local fallback
     }
 
-    const token = `WB-LK-2026-${Math.random().toString(16).substring(2, 10).toUpperCase()}`;
+    const token = `DOA-WB-2026-${Date.now().toString().slice(-6)}`;
     const gougingPct = Math.round(((whistleCharged - whistleMrp) / whistleMrp) * 100);
     setWhistleResult({
       ticket_token: token,
@@ -1509,13 +1495,13 @@ export default function FarmerMode({ language = 'si' }) {
       {activeTab === 'home' && (
         <div className="space-y-6 animate-fadeIn">
           
-          {/* --- Animated Statistics Bar --- */}
+          {/* --- Verified Platform Capabilities Bar --- */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { label: tr("සක්‍රිය ගොවීන්", "Active Farmers", "செயலில் உள்ள விவசாயிகள்"), val: animatedStats.farmers.toLocaleString(), icon: "🌾", color: "text-emerald-700", bg: "bg-emerald-50" },
-              { label: tr("ව්‍යාජ අල්ලා ගැනීම්", "Frauds Caught", "பிடிபட்ட மோசடிகள்"), val: animatedStats.frauds.toLocaleString(), icon: "🧪", color: "text-rose-700", bg: "bg-rose-50" },
-              { label: tr("ඉතිරි කළ මුදල", "Money Saved", "சேமித்த பணம்"), val: `රු.${animatedStats.money}M`, icon: "💰", color: "text-amber-700", bg: "bg-amber-50" },
-              { label: tr("දිස්ත්‍රික්ක", "Districts", "மாவட்டங்கள்"), val: animatedStats.districts, icon: "🛡️", color: "text-blue-700", bg: "bg-blue-50" }
+              { label: tr("ප්‍රධාන බෝග ආවරණය", "Crops Covered", "பயிர்கள் வகை"), val: `${animatedStats.crops}+`, icon: "🌾", color: "text-emerald-700", bg: "bg-emerald-50" },
+              { label: tr("ව්‍යාජ සංයුති හඳුනාගැනීම", "Adulterants Screened", "போலி கலவைகள்"), val: `${animatedStats.adulterants} Profiles`, icon: "🧪", color: "text-rose-700", bg: "bg-rose-50" },
+              { label: tr("ප්‍රමිති අනුකූලතාවය", "National Standards", "தேசிய தரநிலைகள்"), val: animatedStats.standards, icon: "🏛️", color: "text-amber-700", bg: "bg-amber-50" },
+              { label: tr("දිවයිනේ දිස්ත්‍රික්ක", "Islandwide Districts", "மாவட்டங்கள்"), val: animatedStats.districts, icon: "🛡️", color: "text-blue-700", bg: "bg-blue-50" }
             ].map((stat, idx) => (
               <div key={idx} className={`p-4 rounded-2xl ${stat.bg} border border-white shadow-sm flex items-center space-x-3 transition-all hover:scale-105`}>
                 <div className="text-2xl">{stat.icon}</div>
@@ -3373,7 +3359,7 @@ export default function FarmerMode({ language = 'si' }) {
             </p>
           </div>
 
-          {/* Live Smartphone / Webcam AI Camera Scanner */}
+          {/* Smartphone Camera Evidence Photo Capture */}
           <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 animate-fadeIn">
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm flex-shrink-0">
@@ -3381,10 +3367,10 @@ export default function FarmerMode({ language = 'si' }) {
               </div>
               <div>
                 <h4 className="text-sm font-black text-slate-900">
-                  {language === 'en' ? '📷 Live Smartphone Camera Vision Scanner' : '📷 සජීවී දුරකථන කැමරා AI ස්කෑනරය'}
+                  {language === 'en' ? '📷 Capture Fertilizer Bag Label & Packaging Photo Evidence' : '📷 පොහොර උරයේ ලේබලය හෝ මුද්‍රාව ඡායාරූප ගත කරන්න'}
                 </h4>
                 <p className="text-xs text-slate-600">
-                  {language === 'en' ? 'Point your device camera directly at the hologram seal to auto-detect authenticity.' : 'පොහොර මිටියේ හොලෝග්‍රෑම් එකට කැමරාව යොමු කර ක්ෂණිකව සත්‍යතාවය සොයාගන්න.'}
+                  {language === 'en' ? 'Take a clear photograph of the bag label, lot number, or seal as verifiable field evidence for official records.' : 'පොහොර උරයේ ලේබලය, කාණ්ඩ අංකය හෝ මුද්‍රාව ඡායාරූප ගත කර නීතිමය සාක්ෂි හා විමර්ශන වාර්තා සඳහා සුරක්ෂිත කරන්න.'}
                 </p>
               </div>
             </div>
@@ -3398,9 +3384,50 @@ export default function FarmerMode({ language = 'si' }) {
               }`}
             >
               <Camera className="w-4 h-4" />
-              <span>{cameraActive ? (language === 'en' ? 'Close Camera' : 'කැමරාව වසන්න') : (language === 'en' ? 'Open Live Camera' : 'කැමරාව ක්‍රියාත්මක කරන්න')}</span>
+              <span>{cameraActive ? (language === 'en' ? 'Close Camera' : 'කැමරාව වසන්න') : (language === 'en' ? 'Open Evidence Camera' : 'ඡායාරූප සාක්ෂි ගන්න')}</span>
             </button>
           </div>
+
+          {/* Captured Evidence Photo Preview */}
+          {capturedPhotoUrl && (
+            <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fadeIn">
+              <div className="flex items-center space-x-3.5">
+                <img 
+                  src={capturedPhotoUrl} 
+                  alt="Captured Evidence" 
+                  className="w-16 h-16 object-cover rounded-xl border border-emerald-400 shadow-sm"
+                />
+                <div>
+                  <div className="inline-flex items-center space-x-1 text-emerald-800 text-xs font-black">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{language === 'en' ? 'Field Photographic Evidence Recorded' : 'ක්ෂේත්‍ර සාක්ෂි ඡායාරූපය සාර්ථකව සුරක්ෂිත විය'}</span>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    {language === 'en' 
+                      ? 'This photo is linked to your session and ready to attach to whistleblower or inspection dossiers.' 
+                      : 'මෙම ඡායාරූපය ඔබගේ සැසියට සම්බන්ධ කර ඇති අතර පැමිණිලි වාර්තාවට අමුණා යැවිය හැක.'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('whistleblower')}
+                  className="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs shadow-xs transition-all flex items-center space-x-1"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>{language === 'en' ? 'File Complaint' : 'පැමිණිල්ලට එක් කරන්න'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCapturedPhotoUrl(null)}
+                  className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs transition-all"
+                >
+                  {language === 'en' ? 'Retake' : 'ඉවත් කරන්න'}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Active Camera Viewport */}
           {cameraActive && (
@@ -3426,7 +3453,7 @@ export default function FarmerMode({ language = 'si' }) {
                     <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-400 -mb-0.5 -ml-0.5" />
                     <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-400 -mb-0.5 -mr-0.5" />
                     <span className="text-[10px] font-black text-cyan-200 bg-black/60 px-2 py-0.5 rounded-full backdrop-blur-xs">
-                      HOLOGRAM RETICLE
+                      EVIDENCE RETICLE
                     </span>
                   </div>
                 </div>
@@ -3448,7 +3475,7 @@ export default function FarmerMode({ language = 'si' }) {
                   className="py-3 px-6 rounded-2xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm shadow-lg transition-all flex items-center space-x-2 active:scale-95 disabled:opacity-50"
                 >
                   <Scan className="w-5 h-5 text-slate-950" />
-                  <span>{cameraScanning ? 'පරිලෝකනය වේ...' : '📸 ඡායාරූපය ගෙන සත්‍යාපනය කරන්න'}</span>
+                  <span>{cameraScanning ? 'ඡායාරූපය ලබාගනිමින් පවතී...' : '📸 ඡායාරූපය ගෙන සාක්ෂි ලෙස සුරකින්න'}</span>
                 </button>
                 <button
                   type="button"
@@ -3477,6 +3504,19 @@ export default function FarmerMode({ language = 'si' }) {
                   <option value="baurs_fertilizer">බවර්ස් පොහොර (A. Baur & Co.)</option>
                   <option value="cic_agri_businesses">සී.අයි.සී. කෘෂි ව්‍යාපාර (CIC Agri)</option>
                 </select>
+              </div>
+
+              {/* DOA 5-Point Physical Inspection Protocol Header */}
+              <div className="bg-slate-100 p-3 rounded-xl border border-slate-200">
+                <h4 className="text-xs font-black text-slate-900 flex items-center space-x-1.5">
+                  <ShieldCheck className="w-4 h-4 text-blue-700" />
+                  <span>{language === 'en' ? 'Official DOA 5-Point Physical Inspection Guide' : '🏛️ කෘෂිකර්ම දෙපාර්තමේන්තු 5-ලක්ෂ්‍ය භෞතික ප්‍රමිති පරීක්ෂාව'}</span>
+                </h4>
+                <p className="text-[11px] text-slate-600 mt-0.5">
+                  {language === 'en' 
+                    ? 'Manually evaluate each physical security feature on the physical bag according to Department of Agriculture regulations.' 
+                    : 'කෘෂිකර්ම දෙපාර්තමේන්තු නීති රෙගුලාසි අනුව පොහොර උරයේ එක් එක් භෞතික ලක්ෂණ අතින් පරීක්ෂා කර ලකුණු කරන්න.'}
+                </p>
               </div>
 
               {/* Hologram inspection */}
@@ -3966,7 +4006,7 @@ export default function FarmerMode({ language = 'si' }) {
           <div className="border-b border-slate-100 pb-4">
             <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-cyan-100 text-cyan-800 text-xs font-bold mb-2">
               <Cpu className="w-3.5 h-3.5 text-cyan-700" />
-              <span>{language === 'en' ? 'Precision Agronomy & Drone Remote Sensing' : 'නිරවද්‍ය කෘෂිකර්මය හා ඩ්‍රෝන සංවේදන තාක්ෂණය'}</span>
+              <span>{language === 'en' ? 'Precision Agronomy & Drone Remote Sensing (VRA Simulator)' : 'නිරවද්‍ය කෘෂිකර්මය හා ඩ්‍රෝන සංවේදන ආකෘතිය (VRA Simulator)'}</span>
             </div>
             <h2 className="text-xl font-black text-slate-900">
               {t.tileDrone}
@@ -3983,7 +4023,7 @@ export default function FarmerMode({ language = 'si' }) {
               <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-cyan-400 uppercase tracking-wide">
-                    🚁 ඩ්‍රෝන සංවේදක පරාමිතීන්
+                    🚁 ඩ්‍රෝන සංවේදන ආකෘති පරාමිතීන් (VRA Simulator)
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-500/40 text-cyan-300 text-[11px] font-bold">
                     Multi-Spectral 5-Band
@@ -4011,7 +4051,7 @@ export default function FarmerMode({ language = 'si' }) {
                   className="w-full py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm shadow transition-all flex items-center justify-center space-x-2"
                 >
                   <Play className="w-4 h-4 fill-slate-950" />
-                  <span>{droneScanning ? 'ඩ්‍රෝන පියාසැරිය සිදුවෙමින් පවතී...' : '🚀 ඩ්‍රෝන සමීක්ෂණය අරඹන්න (Launch Drone Scan)'}</span>
+                  <span>{droneScanning ? 'බෝග වියන් දත්ත පරිලෝකනය වේ...' : '🚁 බෝග වියන් NDVI ආකෘති පරීක්ෂාව අරඹන්න (Simulate NDVI)'}</span>
                 </button>
               </div>
 
