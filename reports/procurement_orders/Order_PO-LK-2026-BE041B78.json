@@ -1,0 +1,48 @@
+{
+  "order_token": "PO-LK-2026-BE041B78",
+  "status": "CONFIRMED_RESERVED",
+  "created_at": "2026-09-27T05:09:29.349499+00:00",
+  "pickup_valid_until": "2026-10-02 16:30",
+  "farmer": {
+    "name": "K. M. Bandara",
+    "nic": "198425600123",
+    "phone": "0771234567",
+    "district": "Anuradhapura",
+    "asc_division": "Tambuttegama"
+  },
+  "procurement_channel": "SUBSIDIZED_QUOTA",
+  "distributor": {
+    "id": "DIST-CCF",
+    "name": "කොළඹ කොමර්ෂල් පොහොර සමාගම (CCF)",
+    "type": "STATE_OWNED",
+    "hotline": "011-2948251 / 011-2948252"
+  },
+  "fulfillment": {
+    "type": "DEPOT_PICKUP",
+    "depot_or_hub": "Tambuttegama Depot",
+    "delivery_address": "Tambuttegama",
+    "instructions": "කරුණාකර මෙම ඇණවුම් අංකය (QR කේතය) සහ ජාතික හැඳුනුම්පත රැගෙන දින 5ක් ඇතුළත අදාළ ගබඩාව වෙත පැමිණෙන්න."
+  },
+  "financial_summary": {
+    "gross_products_total_lkr": 5000.0,
+    "government_subsidy_saving_lkr": 12000.0,
+    "delivery_fee_lkr": 0.0,
+    "net_payable_lkr": 5000.0,
+    "total_cargo_weight_kg": 100.0
+  },
+  "order_items": [
+    {
+      "sku": "FERT-UREA-50KG",
+      "name_si": "යූරියා පොහොර (Urea 46% N) - 50kg මිටිය",
+      "quantity_units": 2,
+      "unit_price_lkr": 2500.0,
+      "line_total_lkr": 5000.0,
+      "is_subsidized_price": true
+    }
+  ],
+  "statutory_compliance": [
+    "Regulation of Fertilizers Act No. 68 of 1988",
+    "Consumer Affairs Authority Act No. 9 of 2003 Gazetted MRP Guarantee",
+    "National Fertilizer Secretariat Electronic Quota Clearing Standard"
+  ]
+}

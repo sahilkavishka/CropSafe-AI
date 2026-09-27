@@ -59,6 +59,8 @@ import ThreeBagCanvas from './ThreeBagCanvas';
 import ThreeSoilCanvas from './ThreeSoilCanvas';
 import ThreeDroneFieldCanvas from './ThreeDroneFieldCanvas';
 import OnlineProcurementPortal from './OnlineProcurementPortal';
+import AgriPrescriptionModal from './AgriPrescriptionModal';
+import InteractiveTourModal from './InteractiveTourModal';
 import { translations } from '../i18n';
 
 const API_BASE = "http://localhost:8000";
@@ -237,6 +239,19 @@ export default function FarmerMode({ language = 'si' }) {
   });
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [tempProfile, setTempProfile] = useState({ ...farmerProfile });
+  const [showTourModal, setShowTourModal] = useState(false);
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false);
+    const handleOffline = () => setIsOffline(true);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   const handleSaveProfile = (e) => {
     e?.preventDefault();
@@ -1510,6 +1525,19 @@ export default function FarmerMode({ language = 'si' }) {
       {/* ========================================================================= */}
       {activeTab === 'home' && (
         <div className="space-y-6 animate-fadeIn">
+
+          {/* Offline Mode Indicator Banner */}
+          {isOffline && (
+            <div className="bg-amber-500 text-slate-950 p-3 px-4 rounded-2xl font-bold text-xs flex items-center justify-between shadow-md">
+              <div className="flex items-center space-x-2">
+                <span className="text-base animate-pulse">📡</span>
+                <span>{tr("නොබැඳි මාදිලිය (Offline Mode) සක්‍රියයි - පොහොර මාත්‍රා ගණනය හා උපදෙස් අන්තර්ජාලය නොමැතිවද ක්‍රියාත්මක වේ.", "Offline Mode Active - Fertilizer calculations and guidance remain fully functional without internet.", "ஆஃப்லைன் பயன்முறை செயலில் உள்ளது.")}</span>
+              </div>
+              <span className="text-[10px] bg-amber-950 text-amber-200 px-2 py-0.5 rounded-full font-mono uppercase font-black">
+                PWA READY
+              </span>
+            </div>
+          )}
           
           {/* --- Consolidated Farmer Identity & Welcome Banner --- */}
           <div className={`clean-card overflow-hidden bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-900 text-white shadow-lg ${sunlightMode ? 'border-2 border-slate-900' : 'border-0'}`}>
@@ -1544,8 +1572,19 @@ export default function FarmerMode({ language = 'si' }) {
                   </div>
                 </div>
 
-                {/* Hotline & Accessibility Controls */}
+                {/* Hotline, Demo Tour & Accessibility Controls */}
                 <div className="flex items-center flex-wrap gap-2.5 self-start md:self-auto">
+                  {/* Interactive Demo Tour Button */}
+                  <button
+                    type="button"
+                    onClick={() => { playTone('ding'); setShowTourModal(true); }}
+                    className="px-3.5 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-xs shadow-md flex items-center space-x-1.5 transition-all hover:scale-105 active:scale-95"
+                    title={tr("ක්‍රියාකාරී ආදර්ශන චාරිකාව", "Interactive Demo Tour", "மாதிரி உலா")}
+                  >
+                    <span>🚀</span>
+                    <span>{tr("ආදර්ශන චාරිකාව", "Demo Tour", "மாதிரி உலா")}</span>
+                  </button>
+
                   {/* Emergency Hotline */}
                   <a
                     href="tel:1920"
@@ -2579,10 +2618,24 @@ export default function FarmerMode({ language = 'si' }) {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     <div className="text-4xl">💰</div>
-                    <button onClick={() => window.print()} className="px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs font-bold rounded-lg transition-all flex items-center space-x-1">
-                      <Printer className="w-3.5 h-3.5" />
-                      <span>{tr("මුද්‍රණය", "Print", "அச்சிடு")}</span>
-                    </button>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <button 
+                        type="button"
+                        onClick={() => setShowPrescriptionModal(true)} 
+                        className="px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all hover:scale-105 active:scale-95 flex items-center space-x-1.5"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        <span>{tr("නිල බෙහෙත් වට්ටෝරුව 📜", "Official Prescription 📜", "உர பரிந்துரை 📜")}</span>
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setShowPrescriptionModal(true)} 
+                        className="px-3 py-1.5 bg-white/20 hover:bg-white/30 backdrop-blur text-white text-xs font-bold rounded-xl transition-all flex items-center space-x-1"
+                      >
+                        <Printer className="w-3.5 h-3.5" />
+                        <span>{tr("PDF / Print", "PDF / Print", "அச்சிடு")}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -6098,136 +6151,21 @@ export default function FarmerMode({ language = 'si' }) {
       {/* ================================================================ */}
       {/* MODAL: OFFICIAL DOA AGRONOMIC PRESCRIPTION CARD */}
       {/* ================================================================ */}
-
-      {showPrescriptionModal && prescriptionData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200 p-6 sm:p-8 space-y-6">
-            
-            {/* Header with National Emblem / DOA Details */}
-            <div className="border-b-2 border-emerald-700 pb-4 text-center space-y-1">
-              <div className="flex items-center justify-center space-x-2 text-2xl mb-1">
-                <span>🏛️</span>
-                <span className="font-serif text-xs font-bold uppercase tracking-widest text-emerald-900">
-                  {t.prescriptionDOA || "ශ්‍රී ලංකා ප්‍රජාතාන්ත්‍රික සමාජවාදී ජනරජය | කෘෂිකර්ම දෙපාර්තමේන්තුව"}
-                </span>
-              </div>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900">
-                {t.prescriptionModalTitle || "නිල පොහොර නිර්දේශ පත්‍රිකාව (Official DOA Agronomic Prescription)"}
-              </h2>
-              <p className="text-[11px] text-slate-500">
-                {t.prescriptionNFS || "ජාතික පොහොර ලේකම් කාර්යාලය (NFS) සහ ගොවිජන සංවර්ධන දෙපාර්තමේන්තුව මගින් අනුමතයි"}
-              </p>
-            </div>
-
-            {/* Document ID & Date Strip */}
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-700 gap-2">
-              <div>
-                <span className="font-bold text-slate-900">{t.prescriptionDocId || "නිර්දේශ අංකය:"} </span>
-                <span className="font-mono font-bold text-emerald-800">{prescriptionData.docId}</span>
-              </div>
-              <div>
-                <span className="font-bold text-slate-900">{t.prescriptionDate || "දිනය:"} </span>
-                <span>{prescriptionData.issueDate} ({prescriptionData.issueTime})</span>
-              </div>
-            </div>
-
-            {/* Field & Crop Particulars */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-              <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-100">
-                <span className="text-slate-500 block">බෝගය</span>
-                <strong className="text-emerald-900 font-black block mt-0.5 capitalize">{prescriptionData.crop}</strong>
-              </div>
-              <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-100">
-                <span className="text-slate-500 block">ඉඩම (අක්කර)</span>
-                <strong className="text-emerald-900 font-black block mt-0.5">{prescriptionData.landAcres} Ac ({prescriptionData.landHa} Ha)</strong>
-              </div>
-              <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-100">
-                <span className="text-slate-500 block">පස් කලාපය</span>
-                <strong className="text-emerald-900 font-black block mt-0.5">වියළි/අතරමැදි කලාපය</strong>
-              </div>
-              <div className="p-2.5 bg-emerald-50 rounded-lg border border-emerald-100">
-                <span className="text-slate-500 block">සම්පූර්ණ මිටි</span>
-                <strong className="text-emerald-900 font-black block mt-0.5">{prescriptionData.totalBags} Bags (50kg)</strong>
-              </div>
-            </div>
-
-            {/* Official Dosage Table */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden text-xs">
-              <table className="w-full text-left">
-                <thead className="bg-slate-100 text-slate-700 font-black">
-                  <tr>
-                    <th className="p-2.5">යෙදිය යුතු අවස්ථාව (Stage)</th>
-                    <th className="p-2.5">යූරියා (Urea)</th>
-                    <th className="p-2.5">රතු පොහොර (MOP)</th>
-                    <th className="p-2.5">කළු පොහොර (TSP)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  <tr>
-                    <td className="p-2.5 font-bold text-slate-800">1. මූලික පොහොර (Basal)</td>
-                    <td className="p-2.5 text-slate-500">-</td>
-                    <td className="p-2.5 font-bold text-amber-800">{Math.ceil(prescriptionData.mopBags * 0.35)} කොට්ට</td>
-                    <td className="p-2.5 font-bold text-cyan-800">{prescriptionData.tspBags} කොට්ට (සියල්ල)</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2.5 font-bold text-slate-800">2. පළමු ඉහිරවීම (සති 3)</td>
-                    <td className="p-2.5 font-bold text-emerald-800">{Math.ceil(prescriptionData.ureaBags * 0.45)} කොට්ට</td>
-                    <td className="p-2.5 text-slate-500">-</td>
-                    <td className="p-2.5 text-slate-500">-</td>
-                  </tr>
-                  <tr>
-                    <td className="p-2.5 font-bold text-slate-800">3. දෙවන ඉහිරවීම (කරල් එන විට)</td>
-                    <td className="p-2.5 font-bold text-emerald-800">{Math.ceil(prescriptionData.ureaBags * 0.45)} කොට්ට</td>
-                    <td className="p-2.5 font-bold text-amber-800">{Math.ceil(prescriptionData.mopBags * 0.65)} කොට්ට</td>
-                    <td className="p-2.5 text-slate-500">-</td>
-                  </tr>
-                  <tr className="bg-slate-50 font-black text-slate-900">
-                    <td className="p-2.5">සම්පූර්ණ අවශ්‍යතාවය (Total)</td>
-                    <td className="p-2.5 text-emerald-800">{prescriptionData.ureaBags} කොට්ට</td>
-                    <td className="p-2.5 text-amber-800">{prescriptionData.mopBags} කොට්ට</td>
-                    <td className="p-2.5 text-cyan-800">{prescriptionData.tspBags} කොට්ට</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Savings & QR Seal */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200">
-              <div className="space-y-1">
-                <span className="text-xs text-slate-500 block">නියම මාත්‍රාවෙන් ලැබෙන ආර්ථික වාසිය:</span>
-                <span className="text-lg font-black text-emerald-800">රු. {prescriptionData.savingsLkr.toLocaleString()} /= ඉතිරියක්</span>
-                <span className="text-[10px] text-slate-400 block font-mono">{prescriptionData.verificationHash}</span>
-              </div>
-              <div className="text-center sm:text-right">
-                <div className="inline-block p-2 bg-white rounded-lg border border-slate-300 font-mono text-[10px] text-slate-800">
-                  [ QR-CODE-DOA-VERIFIED ]
-                </div>
-                <span className="text-[10px] text-emerald-700 block font-bold mt-1">✓ DOA Digital Certified</span>
-              </div>
-            </div>
-
-            {/* Actions: Print and Close */}
-            <div className="flex items-center justify-end space-x-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowPrescriptionModal(false)}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-xs sm:text-sm font-bold hover:bg-slate-100 transition-all"
-              >
-                {t.prescriptionClose || "වසන්න"}
-              </button>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="px-6 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-black shadow-md transition-all flex items-center space-x-1.5"
-              >
-                <Printer className="w-4 h-4" />
-                <span>{t.prescriptionPrintNow || "🖨️ මුද්‍රණය කරන්න (Print / PDF)"}</span>
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
+      {/* ================================================================ */}
+      {/* MODAL: OFFICIAL DOA AGRONOMIC PRESCRIPTION CARD (MODULAR)        */}
+      {/* ================================================================ */}
+      <AgriPrescriptionModal
+        isOpen={showPrescriptionModal}
+        onClose={() => setShowPrescriptionModal(false)}
+        farmerProfile={farmerProfile}
+        dosageData={dosageResult || prescriptionData || {}}
+        landAcres={landAcres}
+        crop={selectedCrop}
+        variety={dosageVariety || 'Bg 352 (3.5 Months)'}
+        zone="Dry Zone (වියළි කලාපය)"
+        season="Maha (මහ කන්නය)"
+        language={language}
+      />
 
       {/* ================================================================ */}
       {/* MODAL: FARMER PERSISTENT PROFILE EDIT MODAL                      */}
@@ -6425,6 +6363,28 @@ export default function FarmerMode({ language = 'si' }) {
           <span className="text-[10px] font-black leading-tight mt-0.5">1920</span>
         </a>
       </div>
+
+      {/* Official Agronomic Prescription Modal */}
+      <AgriPrescriptionModal
+        isOpen={showPrescriptionModal}
+        onClose={() => setShowPrescriptionModal(false)}
+        farmerProfile={farmerProfile}
+        dosageData={dosageResult || {}}
+        landAcres={landAcres}
+        crop={selectedCrop}
+        variety={selectedVariety}
+        zone="Dry Zone (වියළි කලාපය)"
+        season="Maha (මහ කන්නය)"
+        language={language}
+      />
+
+      {/* Interactive Guided Demo Tour Modal */}
+      <InteractiveTourModal
+        isOpen={showTourModal}
+        onClose={() => setShowTourModal(false)}
+        onNavigateTab={(tab) => { playTone('ding'); setActiveTab(tab); }}
+        language={language}
+      />
 
     </div>
   );
