@@ -53,6 +53,7 @@ from src.models.whistleblower_incident_engine import WhistleblowerIncidentEngine
 from src.models.asc_subsidy_ewallet_ledger import ASCSubsidyEWalletLedger
 from src.models.soil_salinity_reclamation_engine import SoilSalinityReclamationEngine
 from src.models.fertilizer_price_forecaster import price_forecasting_engine
+from src.models.supply_chain_network import SupplyChainNetworkEngine
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -535,6 +536,36 @@ def get_fertilizer_price_forecast(
         freight_surcharge_pct=freight_surcharge_pct,
         season=season
     )
+
+# =========================================================================
+# SUPPLY CHAIN & STORE NETWORK DIRECTORY (CCF & LAKPOHORA) + NFS LAB QUALITY
+# =========================================================================
+@app.get("/api/supply-chain/warehouses")
+def get_supply_chain_warehouses(
+    district: Optional[str] = None,
+    entity: Optional[str] = None,
+    warehouse_type: Optional[str] = None
+):
+    """Returns statutory state fertilizer warehouse directory (Hunupitiya, Seeppukulama, Nikaweratiya, etc.)."""
+    return SupplyChainNetworkEngine.get_all_warehouses(district, entity, warehouse_type)
+
+@app.get("/api/supply-chain/warehouses/{warehouse_id}")
+def get_supply_chain_warehouse_detail(warehouse_id: str):
+    """Returns granular stock and logistical profile for a specific state warehouse depot."""
+    wh = SupplyChainNetworkEngine.get_warehouse_by_id(warehouse_id)
+    if not wh:
+        raise HTTPException(status_code=404, detail=f"Warehouse {warehouse_id} not found in state network.")
+    return wh
+
+@app.get("/api/supply-chain/nfs-lab-clearances")
+def get_nfs_lab_quality_clearances(status: Optional[str] = None):
+    """Returns authentic National Fertilizer Secretariat import lab quality testing statuses and compliance reports."""
+    return SupplyChainNetworkEngine.get_nfs_lab_clearances(status)
+
+@app.get("/api/supply-chain/network-summary")
+def get_supply_chain_network_summary():
+    """Returns national aggregate capacity, commodity reserve totals, and import quarantine metrics."""
+    return SupplyChainNetworkEngine.get_network_summary()
 
 if __name__ == "__main__":
 
