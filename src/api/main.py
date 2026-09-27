@@ -55,6 +55,7 @@ from src.models.soil_salinity_reclamation_engine import SoilSalinityReclamationE
 from src.models.fertilizer_price_forecaster import price_forecasting_engine
 from src.models.supply_chain_network import SupplyChainNetworkEngine
 from src.models.fertilizer_online_procurement import FertilizerProcurementEngine, ProcurementOrderRequest
+from src.models.gov_fertilizer_registry import GovFertilizerRegistryEngine, GovTokenGenerationRequest
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -597,6 +598,49 @@ def get_procurement_catalog():
 def create_procurement_order(req: ProcurementOrderRequest):
     """Generates digital purchase pre-order and cryptographic collection token under CAA & Fertilizer Acts."""
     return procurement_engine.create_preorder(req)
+
+# =========================================================================
+# SRI LANKA AGRARIAN GOVERNMENT REGISTRY & DIGITAL GOVI PASSBOOK APIS
+# =========================================================================
+@app.get("/api/gov/farmer-registry/{nic}")
+def get_gov_farmer_registry_record(nic: str):
+    """
+    Connects to Department of Agrarian Development (DAD) to retrieve verified official
+    farmer credentials, land parcels, registered Yaya, tenancy, and AAIB policy status.
+    """
+    return GovFertilizerRegistryEngine.get_farmer_record(nic)
+
+@app.get("/api/gov/digital-passbook/{nic}")
+def get_gov_digital_passbook(nic: str):
+    """
+    Returns real-time seasonal fertilizer passbook, quota entitlements, redeemed bags,
+    and remaining balance for the active Maha/Yala season under National Fertilizer Secretariat.
+    """
+    return GovFertilizerRegistryEngine.get_digital_passbook(nic)
+
+@app.post("/api/gov/generate-collection-token")
+def generate_gov_collection_token(req: GovTokenGenerationRequest):
+    """
+    Generates cryptographically signed fast-track QR pickup token for state fertilizer depots
+    (ASC, Ceylon Fertilizer Co. Lakpohora, Colombo Commercial Fertilizers).
+    """
+    return GovFertilizerRegistryEngine.generate_collection_token(req)
+
+@app.get("/api/gov/subsidy-bank-status/{nic}")
+def get_gov_subsidy_bank_status(nic: str):
+    """
+    Tracks Direct Benefit Transfer (DBT) government cash subsidy disbursement
+    progress and BOC/People's Bank deposit milestones.
+    """
+    return GovFertilizerRegistryEngine.get_subsidy_bank_status(nic)
+
+@app.post("/api/gov/verify-token")
+def verify_gov_collection_token(token_data: Dict[str, str]):
+    """
+    Storekeeper and Agrarian Officer field scanning verification for cryptographic QR collection tokens.
+    """
+    token_id = token_data.get("token_id", "")
+    return GovFertilizerRegistryEngine.verify_token(token_id)
 
 if __name__ == "__main__":
 

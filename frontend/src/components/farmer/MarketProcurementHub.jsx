@@ -18,6 +18,7 @@ import {
   Award
 } from 'lucide-react';
 import OnlineProcurementPortal from '../OnlineProcurementPortal';
+import DigitalGoviPassbookPortal from './DigitalGoviPassbookPortal';
 import { translations } from '../../i18n';
 
 const API_BASE = "http://localhost:8000";
@@ -25,15 +26,16 @@ const API_BASE = "http://localhost:8000";
 export default function MarketProcurementHub({
   language = 'si',
   tr = (si, en, ta) => (language === 'ta' ? (ta || en || si) : language === 'en' ? (en || si) : si),
-  activeTool = 'procurement',
+  activeTool = 'govpassbook',
   onSelectTool = () => {},
   onBackToHome = () => {},
   farmerProfile = { name: 'කේ. එම්. බණ්ඩාර', nic: '198425600123', district: 'Anuradhapura', ascDivision: 'තඹුත්තේගම ගොවිජන සේවා මධ්‍යස්ථානය', landAcres: 2.5, crop: 'paddy' },
+  onUpdateProfile = () => {},
   playTone = () => {}
 }) {
   const t = translations[language] || translations.si;
 
-  const [currentTool, setCurrentTool] = useState(activeTool || 'procurement');
+  const [currentTool, setCurrentTool] = useState(activeTool || 'govpassbook');
 
   useEffect(() => {
     if (activeTool && activeTool !== 'home') {
@@ -321,6 +323,7 @@ export default function MarketProcurementHub({
   };
 
   const marketTools = [
+    { id: 'govpassbook', label: tr("🪪 ඩිජිටල් ගොවි පොත & DAD ද්වාරය", "Digital Passbook & GovNet", "டிஜிட்டல் உர புத்தகம்"), icon: "🪪" },
     { id: 'procurement', label: tr("ඔන්ලයින් ඇණවුම් & ගබඩා", "Online Orders & Depots", "உர முன்பதிவு"), icon: "🛒" },
     { id: 'priceforecast', label: tr("මාස 6 මිල අනාවැකි", "Price Forecaster", "விலை கணிப்பு"), icon: "📈" },
     { id: 'subsidy', label: tr("සහනාධාර E-Wallet", "Subsidy E-Wallet", "மானிய மின்-பை"), icon: "💳" },
@@ -393,6 +396,21 @@ export default function MarketProcurementHub({
           ))}
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* 0. DIGITAL GOVI PASSBOOK & DAD GOVERNMENT REGISTRY GATEWAY               */}
+      {/* ========================================================================= */}
+      {currentTool === 'govpassbook' && (
+        <div className="animate-fadeIn">
+          <DigitalGoviPassbookPortal
+            language={language}
+            tr={tr}
+            farmerProfile={farmerProfile}
+            onUpdateProfile={onUpdateProfile}
+            playTone={playTone}
+          />
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 1. ONLINE FERTILIZER PROCUREMENT & DIRECT DEPOT ORDERING                 */}

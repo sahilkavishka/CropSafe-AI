@@ -218,7 +218,7 @@ export default function FarmerMode({ language = 'si' }) {
   // Open Tool and Route to Appropriate Workspace
   const handleOpenTool = (toolId) => {
     const operationsTools = ['dosage', 'calendar', 'screening', 'bagscan', 'tankmix', 'granule3d'];
-    const marketTools = ['procurement', 'distributors', 'priceforecast', 'subsidy', 'credit', 'carbonlca'];
+    const marketTools = ['govpassbook', 'procurement', 'distributors', 'priceforecast', 'subsidy', 'credit', 'carbonlca'];
     const scienceTools = ['leafdoctor', 'chat', 'weather', 'organic', 'dolomite', 'straw', 'salinity', 'ellangawa', 'drone', 'whistleblower'];
 
     if (operationsTools.includes(toolId)) {
@@ -274,6 +274,7 @@ export default function FarmerMode({ language = 'si' }) {
     { id: 'granule3d', hub: 'operations', cat: 'quality', label: t.tileGranule3D, icon: '🧊', desc: t.granule3DHelp },
 
     // 2. Market & Procurement Hub (වෙළඳපොළ සහ ප්‍රසම්පාදන)
+    { id: 'govpassbook', hub: 'market', cat: 'finance', label: tr("ඩිජිටල් ගොවි පොත සහ DAD ද්වාරය", "Digital Govi Passbook & GovNet", "டிஜிட்டல் உர புத்தகம்"), icon: '🪪', desc: tr("DAD ගොවි ලියාපදිංචිය, යාය ලේඛනය, කන්න කෝටා සහ පෝලිම් රහිත QR වවුචරය", "Verified DAD Registry, Yaya cadastre, season quota balance & fast-track QR pass", "அரசு விவசாயி பதிவு, நில விபரம், பருவ உர ஒதுக்கீடு மற்றும் QR டோக்கன்"), popular: true },
     { id: 'procurement', hub: 'market', cat: 'finance', label: tr("ඔන්ලයින් පොහොර මිලදී ගැනීම් හා පෙර-ඇණවුම්", "Online Fertilizer Procurement & Pre-orders", "ஆன்லைன் உர கொள்முதல்"), icon: '🛒', desc: tr("රජයේ හා බලපත්‍රලාභී සමාගම්වලින් සෘජුවම සහන මිලට පොහොර වෙන්කරවා ගැනීම", "Reserve verified fertilizers directly from state and licensed private distributors", "அரசு மற்றும் தனியார் நிறுவனங்களிடம் இருந்து நேரடி உர கொள்முதல்"), popular: true },
     { id: 'priceforecast', hub: 'market', cat: 'finance', label: tr("පොහොර වෙළඳපොළ මිල අනාවැකි (මාස 6)", "6-Month Fertilizer Market Price Forecaster", "உர சந்தை விலை கணிப்பு"), icon: '📈', desc: tr("ගෝලීය බොරතෙල්, USD/LKR හා නැව් ගාස්තු අනුව ඉදිරි මාසවල මිල පුරෝකථනය", "Econometric retail price trend prediction to spot the most profitable buy window", "எதிர்கால உர விலை மாற்றங்களை முன்கூட்டியே அறிந்து சேமிக்கவும்") },
     { id: 'distributors', hub: 'market', cat: 'finance', label: tr("පොහොර බෙදාහරින ආයතන හා ගබඩා නාමාවලිය", "Distributors & Warehouses Directory", "உர விநியோகஸ்தர்கள் மற்றும் களஞ்சியங்கள்"), icon: '🏢', desc: tr("CCF, ලක්පොහොර, බෝවර්, CIC, හේලීස්, ලැන්කම් ගබඩා තොරතුරු හා දුරකථන", "Authorized state and private distributor warehouses, capacity & contacts", "அரசு மற்றும் தனியார் உர நிறுவன களஞ்சியங்கள்") },
@@ -704,6 +705,7 @@ export default function FarmerMode({ language = 'si' }) {
           onSelectTool={(toolId) => setActiveTool(toolId)}
           onBackToHome={() => setActiveWorkspace('home')}
           farmerProfile={farmerProfile}
+          onUpdateProfile={(updated) => setFarmerProfile(prev => ({ ...prev, ...updated }))}
           playTone={playTone}
         />
       )}
