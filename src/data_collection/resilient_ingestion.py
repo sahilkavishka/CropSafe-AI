@@ -45,11 +45,29 @@ SANITY_BOUNDS = {
 }
 
 
+def _find_path(rel_path):
+    base = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    clean = rel_path.replace("cropsafe AI/", "")
+    candidates = [
+        rel_path,
+        clean,
+        os.path.join(base, clean),
+        os.path.join(base, rel_path)
+    ]
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+    return os.path.join(base, clean)
+
+
 class ResilientDataIngestionEngine:
-    def __init__(self, data_dir="cropsafe AI/data"):
-        self.data_dir = data_dir
-        self.standards_path = os.path.join(data_dir, "scraped/slsi_fertilizer_standards.csv")
-        self.geo_path = os.path.join(data_dir, "scraped/sri_lanka_25_districts_geo.csv")
+    def __init__(self, data_dir=None):
+        if data_dir is None:
+            self.data_dir = _find_path("data")
+        else:
+            self.data_dir = _find_path(data_dir)
+        self.standards_path = _find_path("data/scraped/slsi_fertilizer_standards.csv")
+        self.geo_path = _find_path("data/scraped/sri_lanka_25_districts_geo.csv")
         self.standards_df = self._load_standards()
 
     def _load_standards(self):
@@ -250,11 +268,13 @@ class ResilientDataIngestionEngine:
     # Step 4: Continuous Data Collection (Appending to Master Dataset)
     # -------------------------------------------------------------
     def append_validated_records_to_master(self, new_records_df,
-                                           master_path="cropsafe AI/data/processed/cropsafe_master_dataset.csv",
-                                           audit_log_path="cropsafe AI/data/ingestion_audit_log.jsonl"):
+                                           master_path=None,
+                                           audit_log_path=None):
         """
         Appends newly verified batches into the active master dataset and updates the continuous audit trail.
         """
+        master_path = _find_path(master_path or "data/processed/cropsafe_master_dataset.csv")
+        audit_log_path = _find_path(audit_log_path or "data/ingestion_audit_log.jsonl")
         if new_records_df.empty:
             print("No records to append.")
             return False

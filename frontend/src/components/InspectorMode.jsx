@@ -73,29 +73,50 @@ export default function InspectorMode({ language = 'si' }) {
 
   const handleRunPackScan = async () => {
     setPackLoading(true);
-    setTimeout(() => {
-      const isAuthentic = packInput.hologram_diffraction_score > 0.75 && 
-                          packInput.microprint_sharpness_score > 0.75 && 
-                          packInput.stitch_type_detected === 'double_chainstitch' &&
-                          !packInput.seal_tamper_flag;
-      
-      const score = Math.round(
-          ((packInput.hologram_diffraction_score + packInput.microprint_sharpness_score) / 2) * 100
-      ) - (packInput.stitch_type_detected !== 'double_chainstitch' ? 30 : 0) - (packInput.seal_tamper_flag ? 40 : 0);
-      
-      setPackResult({
-        brand: packInput.brand_key,
-        packaging_authenticity: isAuthentic ? "AUTHENTIC_GENUINE" : "COUNTERFEIT_TAMPERED",
-        authenticity_confidence_pct: isAuthentic ? 95.8 : 32.4,
-        hologram_status: packInput.hologram_diffraction_score > 0.75 ? "VALID_DOE_HOLOGRAM" : "SUSPECT_STICKER_COPY",
-        microprint_status: packInput.microprint_sharpness_score > 0.75 ? "CRISP_MICROPRINT" : "BLURRED_INKJET_FORGERY",
-        stitching_integrity: packInput.stitch_type_detected === 'double_chainstitch' ? "INDUSTRIAL_FACTORY_SEAL" : "MANUAL_RE-STITCHED_BAG",
-        tamper_detected: packInput.seal_tamper_flag,
-        legal_status: isAuthentic ? "APPROVED_FOR_DISTRIBUTION" : "SEIZE_AND_IMPOUND_UNDER_ACT_68",
-        risk_score: Math.max(0, 100 - score)
+    try {
+      const res = await fetch(`${API_BASE}/api/inspector/packaging-scan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          brand_key: packInput.brand_key,
+          hologram_diffraction_score: Number(packInput.hologram_diffraction_score),
+          microprint_sharpness_score: Number(packInput.microprint_sharpness_score),
+          stitch_type_detected: packInput.stitch_type_detected,
+          seal_tamper_flag: Boolean(packInput.seal_tamper_flag)
+        })
       });
-      setPackLoading(false);
-    }, 1200);
+      if (res.ok) {
+        const data = await res.json();
+        setPackResult(data);
+        setPackLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.warn("Packaging scan backend unavailable, using local audit:", e);
+    }
+
+    // Local deterministic fallback
+    const isAuthentic = packInput.hologram_diffraction_score > 0.75 && 
+                        packInput.microprint_sharpness_score > 0.75 && 
+                        packInput.stitch_type_detected === 'double_chainstitch' &&
+                        !packInput.seal_tamper_flag;
+    
+    const score = Math.round(
+        ((packInput.hologram_diffraction_score + packInput.microprint_sharpness_score) / 2) * 100
+    ) - (packInput.stitch_type_detected !== 'double_chainstitch' ? 30 : 0) - (packInput.seal_tamper_flag ? 40 : 0);
+    
+    setPackResult({
+      brand: packInput.brand_key,
+      packaging_authenticity: isAuthentic ? "AUTHENTIC_GENUINE" : "COUNTERFEIT_TAMPERED",
+      authenticity_confidence_pct: isAuthentic ? 95.8 : 32.4,
+      hologram_status: packInput.hologram_diffraction_score > 0.75 ? "VALID_DOE_HOLOGRAM" : "SUSPECT_STICKER_COPY",
+      microprint_status: packInput.microprint_sharpness_score > 0.75 ? "CRISP_MICROPRINT" : "BLURRED_INKJET_FORGERY",
+      stitching_integrity: packInput.stitch_type_detected === 'double_chainstitch' ? "INDUSTRIAL_FACTORY_SEAL" : "MANUAL_RE-STITCHED_BAG",
+      tamper_detected: packInput.seal_tamper_flag,
+      legal_status: isAuthentic ? "APPROVED_FOR_DISTRIBUTION" : "SEIZE_AND_IMPOUND_UNDER_ACT_68",
+      risk_score: Math.max(0, 100 - score)
+    });
+    setPackLoading(false);
   };
 
   const calculateCourtDate = () => {
@@ -134,30 +155,64 @@ ${bReportInput.court_jurisdiction} හමුවේ ඉදිරිපත් ක�
     setGeneratedReport(reportText.trim());
   };
 
-  const handleRunWargame = () => {
+  const handleRunWargame = async () => {
     setWargameLoading(true);
     setCounter1(0); setCounter2(0);
-    setTimeout(() => {
-        const result = {
-            scenario: wargameInput.scenario_name,
-            season: wargameInput.season,
-            projected_national_buffer_runway_weeks: Math.max(3.2, (12.0 - wargameInput.port_arrival_delay_weeks * 1.8)).toFixed(1),
-            national_paddy_yield_deficit_pct: (wargameInput.chemical_subsidy_cut_pct * 0.45 + wargameInput.port_arrival_delay_weeks * 2.1).toFixed(1),
-            emergency_fiscal_impact_lkr_billions: (wargameInput.global_urea_price_change_pct * 0.38 + 4.2).toFixed(1),
-            strategic_recommendation_si: "කොළඹ වරායේ බෆර් තොග වහාම දිස්ත්‍රික් මධ්‍යස්ථාන වෙත මුදාහරින්න. පිදුරු දිරවීම හා ජීවාමෘත මඟින් රසායනික යූරියා 30%ක් කාබනිකව විස්ථාපනය කරන්න."
-        };
+
+    try {
+      const res = await fetch(`${API_BASE}/api/policy/wargame`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scenario_name: wargameInput.scenario_name,
+          global_urea_price_change_pct: Number(wargameInput.global_urea_price_change_pct),
+          port_arrival_delay_weeks: Number(wargameInput.port_arrival_delay_weeks),
+          chemical_subsidy_cut_pct: Number(wargameInput.chemical_subsidy_cut_pct),
+          organic_substitution_pct: Number(wargameInput.organic_substitution_pct),
+          season: wargameInput.season
+        })
+      });
+      if (res.ok) {
+        const result = await res.json();
         setWargameResult(result);
         setWargameLoading(false);
-        
+
         let c1 = 0, c2 = 0;
+        const target1 = parseFloat(result.national_paddy_yield_deficit_pct || 0);
+        const target2 = parseFloat(result.emergency_fiscal_impact_lkr_billions || 0);
         const interval = setInterval(() => {
-            if (c1 < parseFloat(result.national_paddy_yield_deficit_pct)) c1 += 0.5;
-            if (c2 < parseFloat(result.emergency_fiscal_impact_lkr_billions)) c2 += 0.2;
+            if (c1 < target1) c1 = Math.min(target1, +(c1 + 0.5).toFixed(1));
+            if (c2 < target2) c2 = Math.min(target2, +(c2 + 0.2).toFixed(1));
             setCounter1(c1);
             setCounter2(c2);
-            if (c1 >= parseFloat(result.national_paddy_yield_deficit_pct) && c2 >= parseFloat(result.emergency_fiscal_impact_lkr_billions)) clearInterval(interval);
+            if (c1 >= target1 && c2 >= target2) clearInterval(interval);
         }, 50);
-    }, 1500);
+        return;
+      }
+    } catch (e) {
+      console.warn("Policy wargame backend unavailable, using local calculation:", e);
+    }
+
+    // Local calculation fallback
+    const result = {
+        scenario: wargameInput.scenario_name,
+        season: wargameInput.season,
+        projected_national_buffer_runway_weeks: Math.max(3.2, (12.0 - wargameInput.port_arrival_delay_weeks * 1.8)).toFixed(1),
+        national_paddy_yield_deficit_pct: (wargameInput.chemical_subsidy_cut_pct * 0.45 + wargameInput.port_arrival_delay_weeks * 2.1).toFixed(1),
+        emergency_fiscal_impact_lkr_billions: (wargameInput.global_urea_price_change_pct * 0.38 + 4.2).toFixed(1),
+        strategic_recommendation_si: "කොළඹ වරායේ බෆර් තොග වහාම දිස්ත්‍රික් මධ්‍යස්ථාන වෙත මුදාහරින්න. පිදුරු දිරවීම හා ජීවාමෘත මඟින් රසායනික යූරියා 30%ක් කාබනිකව විස්ථාපනය කරන්න."
+    };
+    setWargameResult(result);
+    setWargameLoading(false);
+    
+    let c1 = 0, c2 = 0;
+    const interval = setInterval(() => {
+        if (c1 < parseFloat(result.national_paddy_yield_deficit_pct)) c1 += 0.5;
+        if (c2 < parseFloat(result.emergency_fiscal_impact_lkr_billions)) c2 += 0.2;
+        setCounter1(c1);
+        setCounter2(c2);
+        if (c1 >= parseFloat(result.national_paddy_yield_deficit_pct) && c2 >= parseFloat(result.emergency_fiscal_impact_lkr_billions)) clearInterval(interval);
+    }, 50);
   };
 
   const loadScenario = (type) => {

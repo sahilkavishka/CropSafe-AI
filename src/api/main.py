@@ -229,6 +229,17 @@ class PriceForecastRequest(BaseModel):
 # -------------------------------------------------------------
 # Endpoints
 # -------------------------------------------------------------
+@app.get("/")
+def root():
+    """CropSafe AI Gateway Root Endpoint."""
+    return {
+        "service": "CropSafe AI API Gateway",
+        "version": "2.0.0",
+        "status": "ONLINE",
+        "docs_url": "/docs",
+        "health_check": "/api/health"
+    }
+
 @app.get("/api/health")
 def health_check():
     """Health check and engine catalog status."""

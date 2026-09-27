@@ -92,6 +92,15 @@ def evaluate_multi_method_drift(baseline_df, incoming_df, feature_cols, p_thresh
 
     return overall_drift, pd.DataFrame(drift_records)
 
+def evaluate_data_drift(baseline_df, incoming_df, feature_cols, p_thresh=0.05):
+    """Convenience alias for evaluate_multi_method_drift used across pipelines."""
+    return evaluate_multi_method_drift(baseline_df, incoming_df, feature_cols, p_thresh)
+
+def trigger_retraining_pipeline(dataset_path=None):
+    """Safe automated retraining workflow stub ensuring MLOps pipeline continuity."""
+    print("Triggering retraining pipeline on dataset:", dataset_path)
+    return True
+
 def active_learning_uncertainty_sampling(model, pipeline, feature_cols, incoming_df, top_k=10):
     """
     Identifies the most ambiguous/uncertain incoming consignments using:

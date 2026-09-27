@@ -88,8 +88,8 @@ export default function WarehouseMode({ language = 'si' }) {
       pallets: "15cm Treated Hardwood Dunnage",
       status: isCakingRisk ? "CAKING_RISK" : "OPTIMAL_STORAGE",
       color: "emerald",
-      lastRestock: "2023-10-12",
-      nextDelivery: "2023-11-05"
+      lastRestock: "2026-09-12",
+      nextDelivery: "2026-10-05"
     },
     bay_b: {
       name: tr("Bay B: ත්‍රිත්ව සුපර් පොස්පේට් (TSP)", "Bay B: Triple Superphosphate (TSP)", "பகுதி B: TSP பாஸ்பேட்"),
@@ -101,8 +101,8 @@ export default function WarehouseMode({ language = 'si' }) {
       pallets: "Waterproof Plastic Skid Pallets",
       status: "OPTIMAL_STORAGE",
       color: "cyan",
-      lastRestock: "2023-09-28",
-      nextDelivery: "2023-10-30"
+      lastRestock: "2026-09-20",
+      nextDelivery: "2026-10-10"
     },
     bay_c: {
       name: tr("Bay C: මියුරියේට් ඔෆ් පොටෑෂ් (MOP)", "Bay C: Muriate of Potash (MOP)", "பகுதி C: MOP பொட்டாஷ்"),
@@ -114,8 +114,8 @@ export default function WarehouseMode({ language = 'si' }) {
       pallets: "Heavy-Duty Dunnage Stacks",
       status: "OPTIMAL_STORAGE",
       color: "rose",
-      lastRestock: "2023-08-15",
-      nextDelivery: "2023-10-25"
+      lastRestock: "2026-09-08",
+      nextDelivery: "2026-10-01"
     }
   };
 
@@ -128,7 +128,7 @@ export default function WarehouseMode({ language = 'si' }) {
           <div className="bg-gradient-to-r from-red-600 to-rose-500 text-white p-4 rounded-xl shadow-lg flex items-center justify-between mb-4">
               <div className="flex items-center space-x-3">
                   <ShieldAlert className="w-6 h-6 animate-pulse" />
-                  <span className="font-bold text-sm sm:text-base">⚠️ අවදානම්! ගබඩාව තෙතමනය ඉකිවා ඇත! විදීරණ සක්රිය කරන්න</span>
+                  <span className="font-bold text-sm sm:text-base">⚠️ අවදානම්! ගබඩාවේ තෙතමනය ඉක්මවා ඇත! වාතාශ්‍රකරණය සක්‍රිය කරන්න</span>
               </div>
               <button onClick={() => setDismissAlert(true)} className="text-white hover:text-red-200">
                   <XCircle className="w-5 h-5" />
@@ -141,7 +141,7 @@ export default function WarehouseMode({ language = 'si' }) {
         {/* Animated ticker */}
         <div className="absolute top-0 left-0 w-full bg-amber-100 py-1 px-4 flex items-center space-x-2 border-b border-amber-200">
             <Radio className="w-3 h-3 text-amber-700 animate-pulse" />
-            <span className="text-[10px] font-bold text-amber-800">Live Sensor Update: {lastUpdate}</span>
+            <span className="text-[10px] font-bold text-amber-800">IoT Simulation Stream: {lastUpdate}</span>
         </div>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-4">
           <div className="flex items-center space-x-4">
@@ -151,13 +151,13 @@ export default function WarehouseMode({ language = 'si' }) {
             <div>
               <div className="inline-flex items-center space-x-1.5 px-3 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-black mb-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                <span>{tr("තත්‍ය කාලීන IoT සංවේදක සක්‍රියයි", "Live IoT Sensor Stream Active", "நேரலை IoT சென்சார்கள்")}</span>
+                <span>{tr("IoT ඩිජිටල් නිවුන් ආදර්ශකය (Prototype)", "IoT Digital Twin Prototype", "IoT மாதிரி")}</span>
               </div>
               <h1 className="text-xl sm:text-2xl font-black text-slate-900">
-                {tr("3D ඩිජිටල් නිවුන් ස්මාර්ට් ගබඩා පාලන මැදිරිය", "3D Digital Twin Smart Warehouse Management", "3D டிஜிட்டல் களஞ்சிய மேலாண்மை")}
+                {tr("3D ඩිජිටල් නිවුන් ස්මාර්ට් ගබඩා කළමනාකරණය", "3D Digital Twin Smart Warehouse Management", "3D டிஜிட்டல் களஞ்சிய மேலாண்மை")}
               </h1>
               <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-2xl leading-relaxed">
-                {tr("අනුරාධපුර ප්‍රධාන මධ්‍යම පොහොර ගබඩාවේ 5,000 MT තොගය, උෂ්ණත්ව/ආර්ද්‍රතා සංවේදක සහ යූරියා කැට ගල්වීම (Caking) වළක්වන ස්වයංක්‍රීය වාතාශ්‍ර පද්ධතිය.", "Anuradhapura Central 5,000 MT Depot with real-time temperature, RH caking prevention, and automated ventilation.", "அனுராதபுரம் 5,000 MT உரக் களஞ்சியத்தின் வெப்பநிலை மற்றும் உரம் கட்டிபிடிப்பதை தடுக்கும் அமைப்பு.")}
+                {tr("අනුරාධපුර මධ්‍යම ගබඩා සංකීර්ණයේ (WH-AP-01) 5,000 MT තොගය සහ යූරියා කැට ගල්වීම (Caking) වැළැක්වීමේ ස්වයංක්‍රීය වාතාශ්‍රකරණ ඩිජිටල් ආදර්ශකය.", "Anuradhapura Central 5,000 MT Depot simulation with temperature, RH caking prevention, and automated ventilation.", "அனுராதபுரம் 5,000 MT உரக் களஞ்சிய மாதிரி மற்றும் உரம் கட்டிபிடிப்பதை தடுக்கும் அமைப்பு.")}
               </p>
             </div>
           </div>

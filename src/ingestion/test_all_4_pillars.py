@@ -10,9 +10,12 @@ import os
 import sys
 import pandas as pd
 
-# Add paths
-sys.path.append(os.path.abspath("cropsafe AI/src/data_collection"))
-sys.path.append(os.path.abspath("cropsafe AI/src/models"))
+# Add paths dynamically relative to current file
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if os.path.join(BASE_DIR, "src", "data_collection") not in sys.path:
+    sys.path.append(os.path.join(BASE_DIR, "src", "data_collection"))
+if os.path.join(BASE_DIR, "src", "models") not in sys.path:
+    sys.path.append(os.path.join(BASE_DIR, "src", "models"))
 
 from resilient_ingestion import ResilientDataIngestionEngine
 from weather_collector import fetch_weather_for_province, PROVINCE_COORDINATES
@@ -54,7 +57,7 @@ def test_four_pillars():
     # Pillar 3: Continuous Data Collection (Active Database Ingestion)
     # -------------------------------------------------------------
     print("\n--- [Pillar 3: Continuous Data Collection] ---")
-    master_path = "cropsafe AI/data/processed/cropsafe_master_dataset.csv"
+    master_path = os.path.join(BASE_DIR, "data", "processed", "cropsafe_master_dataset.csv")
     orig_df = pd.read_csv(master_path)
     print(f"Current Master Dataset Size: {len(orig_df)} records.")
 
@@ -87,7 +90,7 @@ def test_four_pillars():
     # Pillar 4: Data Drift & Retraining Pipeline
     # -------------------------------------------------------------
     print("\n--- [Pillar 4: Data Drift & Retraining Pipeline] ---")
-    feature_cols = joblib.load("cropsafe AI/models/feature_columns.pkl")
+    feature_cols = joblib.load(os.path.join(BASE_DIR, "models", "feature_columns.pkl"))
     baseline = updated_df[updated_df["Year"] < 2024]
     incoming = updated_df[updated_df["Year"] >= 2024]
     
