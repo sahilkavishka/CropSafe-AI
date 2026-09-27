@@ -6161,7 +6161,7 @@ export default function FarmerMode({ language = 'si' }) {
         dosageData={dosageResult || prescriptionData || {}}
         landAcres={landAcres}
         crop={selectedCrop}
-        variety={dosageVariety || 'Bg 352 (3.5 Months)'}
+        variety={calendarPaddyType === '3_month' ? 'Bg 300 (3 Months)' : calendarPaddyType === '4_month' ? 'Bg 379-2 (4 Months)' : calendarPaddyType === 'traditional' ? 'Suwandel (Traditional)' : 'Bg 352 (3.5 Months)'}
         zone="Dry Zone (වියළි කලාපය)"
         season="Maha (මහ කන්නය)"
         language={language}
@@ -6364,19 +6364,6 @@ export default function FarmerMode({ language = 'si' }) {
         </a>
       </div>
 
-      {/* Official Agronomic Prescription Modal */}
-      <AgriPrescriptionModal
-        isOpen={showPrescriptionModal}
-        onClose={() => setShowPrescriptionModal(false)}
-        farmerProfile={farmerProfile}
-        dosageData={dosageResult || {}}
-        landAcres={landAcres}
-        crop={selectedCrop}
-        variety={selectedVariety}
-        zone="Dry Zone (වියළි කලාපය)"
-        season="Maha (මහ කන්නය)"
-        language={language}
-      />
 
       {/* Interactive Guided Demo Tour Modal */}
       <InteractiveTourModal
