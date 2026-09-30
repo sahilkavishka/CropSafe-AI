@@ -25,8 +25,11 @@ if sys.stdout and hasattr(sys.stdout, "reconfigure"):
         pass
 
 
+from google import genai
+from google.genai import types
+
 class VoiceFarmerAssistant:
-    """Conversational voice and natural language bridge for rural farmers."""
+    """Conversational voice and natural language bridge for rural farmers (Powered by Gemini AI)."""
 
     INTENT_KEYWORDS = {
         "INTENT_ADULTERATION_TEST": [
@@ -50,27 +53,75 @@ class VoiceFarmerAssistant:
     def __init__(self, log_dir: str = "reports/voice_queries"):
         self.log_dir = log_dir
         os.makedirs(self.log_dir, exist_ok=True)
+        self.api_key = os.environ.get("GEMINI_API_KEY")
+        self.client = None
+        if self.api_key:
+            try:
+                self.client = genai.Client(api_key=self.api_key)
+            except Exception as e:
+                print(f"Failed to initialize Gemini Client: {e}")
 
     def process_voice_query(self, voice_transcript: str) -> Dict[str, Any]:
         """
-        Classifies speech intent, extracts agronomic entities, and constructs
-        a voice response audio transcript in natural conversational Sinhala.
+        Calls Gemini AI for a dynamic conversational response. Falls back to hardcoded logic if no API key is provided.
         """
+        session_id = f"VOICE-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
         normalized_text = voice_transcript.lower()
+        
+        # If we have Gemini AI configured, use it for dynamic responses!
+        if self.client:
+            try:
+                prompt = f"""You are 'CropSafe AI', an expert agricultural AI assistant in Sri Lanka helping rural farmers.
+Answer the following farmer's question dynamically, accurately, and naturally in Sinhala.
+Keep your response conversational but concise (maximum 2-3 sentences).
+Focus on fertilizers, paddy, crop diseases, and agronomic advice. Be friendly and professional.
+
+Farmer's Question: {voice_transcript}
+"""
+                response = self.client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=prompt,
+                )
+                
+                sinhala_reply = response.text.strip()
+                
+                # Still try to extract intents for UI routing, but use Gemini's text
+                intent = self._classify_intent(normalized_text)
+                entities = self._extract_entities(normalized_text)
+                
+                result_payload = {
+                    "session_id": session_id,
+                    "input_transcript": voice_transcript,
+                    "detected_intent": intent if intent != "INTENT_UNKNOWN" else "DYNAMIC_AI_RESPONSE",
+                    "extracted_entities": entities,
+                    "action_routing": "GENERAL_ASSISTANCE",
+                    "speech_synthesis_transcript": {
+                        "sinhala_response": sinhala_reply,
+                        "english_translation": "Dynamically generated via Gemini AI."
+                    },
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+                self._log_session(result_payload, session_id)
+                return result_payload
+                
+            except Exception as e:
+                print(f"Gemini API Error: {e}")
+                # Fallback to hardcoded logic if Gemini fails
+        
+        # --- FALLBACK HARDCODED LOGIC ---
+        return self._hardcoded_fallback_logic(normalized_text, voice_transcript, session_id)
+
+    def _hardcoded_fallback_logic(self, normalized_text: str, voice_transcript: str, session_id: str) -> Dict[str, Any]:
         intent = self._classify_intent(normalized_text)
         entities = self._extract_entities(normalized_text)
 
-        # Generate contextual conversational response
         if intent == "INTENT_ADULTERATION_TEST":
             response_si = (
                 "ගොවි මහත්මයා, ඔබගේ පොහොර සාම්පලයේ වැලි හෝ දිය නොවන අපද්‍රව්‍ය තැන්පත් වේ නම් එය බාල පොහොරක් වීමට ඉහළ අවදානමක් ඇත. "
                 "නියම යූරියා වතුරට දැමූ විගස ජලය අයිස් මෙන් ශීතල විය යුතුය. වහාම විනාකිරි බිංදු කිහිපයක් දමා පරීක්ෂා කරන්න; "
                 "බුබුළු නගී නම් හුණු කුඩු මිශ්‍ර කර ඇත. කුඹුරට යෙදීමට පෙර ගොවිජන සේවා මධ්‍යස්ථානයට පෙන්වන්න."
             )
-            response_en = (
-                "Farmer, if your fertilizer leaves sediment or milky residue, there is high risk of adulteration. "
-                "Genuine urea must cause an instant icy cold reaction. Do not apply to field until checked."
-            )
+            response_en = "Farmer, if your fertilizer leaves sediment, there is high risk of adulteration."
             action_tag = "DISPATCH_FIELD_WIZARD"
 
         elif intent == "INTENT_DOSAGE_CALC":
@@ -80,10 +131,7 @@ class VoiceFarmerAssistant:
                 f"MOP (රතු පොහොර) මිටි {max(1, int(acres * 0.8))}, සහ TSP මිටි {max(1, int(acres * 0.6))} කි. "
                 f"රජයේ සහනාධාර මිල අනුව මිටියක් රුපියල් 2,500 බැගින් ලබාගත හැකි අතර වැඩිපුර මිල නොගෙවන්න."
             )
-            response_en = (
-                f"For {acres:.1f} acres, DOA recommends approximately {max(1, int(acres * 1.2))} bags Urea, "
-                f"{max(1, int(acres * 0.8))} bags MOP, and {max(1, int(acres * 0.6))} bags TSP at subsidized Rs. 2,500/bag."
-            )
+            response_en = f"For {acres:.1f} acres, DOA recommends approximately {max(1, int(acres * 1.2))} bags Urea."
             action_tag = "DISPATCH_DOSAGE_CALCULATOR"
 
         elif intent == "INTENT_CROP_TOXICITY":
@@ -91,10 +139,7 @@ class VoiceFarmerAssistant:
                 "පොහොර යෙදූ පසු කොළ අග කහ වීම හෝ පිච්චීම සිදුවී ඇත්නම්, එය බයියුරෙට් විෂවීමක් හෝ පොහොර සැර වැඩිවීමක් විය හැක. "
                 "කඩිනමින් කුඹුරට අඟල් 2-3ක් ජලය බැඳ අතිරික්ත ලවණ සෝදා හරින්න. ඉදිරි සති දෙක තුළ කිසිදු රසායනික පොහොරක් නොයොදන්න."
             )
-            response_en = (
-                "If leaf tips are turning yellow or scorched, it indicates biuret toxicity or salt burn. "
-                "Immediately flush the field with 2-3 inches of clean water to leach salts and pause fertilizer application."
-            )
+            response_en = "If leaf tips are turning yellow or scorched, it indicates biuret toxicity or salt burn."
             action_tag = "DISPATCH_TOXICITY_TROUBLESHOOTER"
 
         elif intent == "INTENT_PRICE_GOUGING":
@@ -103,18 +148,14 @@ class VoiceFarmerAssistant:
                 "වෙළෙන්දා ඊට වඩා වැඩි මිලක් අය කරන්නේ නම්, එය නීතිවිරෝධී කළුකඩ වෙළඳාමකි. "
                 "අපගේ නිර්නාමික පැමිණිලි පද්ධතිය ඔස්සේ වෙළඳසැලට එරෙහිව පාරිභෝගික කටයුතු අධිකාරියට පැමිණිල්ලක් දැන්ම ලියාපදිංචි කළ හැක."
             )
-            response_en = (
-                "Gazetted MRP for subsidized fertilizer is LKR 2,500. Charging higher prices is illegal black-marketing. "
-                "You can log an anonymous complaint directly to the Consumer Affairs Authority via CropSafe AI."
-            )
+            response_en = "Gazetted MRP for subsidized fertilizer is LKR 2,500. Charging higher prices is illegal."
             action_tag = "DISPATCH_WHISTLEBLOWER_PORTAL"
 
         else:
-            response_si = "ගොවි මහත්මයා, ඔබගේ කෘෂිකාර්මික විමසීම CropSafe AI වෙත ලැබුණි. කරුණාකර පොහොර වර්ගය සහ ගැටලුව පැහැදිලි කරන්න."
-            response_en = "Farmer, your voice query was received. Please specify the fertilizer type and your concern."
+            response_si = "ගොවි මහත්මයා, මට Gemini AI සක්‍රීය කර නොමැති බැවින් සියලුම ප්‍රශ්න වලට පිළිතුරු දීමට නොහැක. කරුණාකර API Key එක ලබා දෙන්න."
+            response_en = "Farmer, my Gemini AI is currently inactive. Please provide an API key for dynamic responses."
             action_tag = "GENERAL_ASSISTANCE"
 
-        session_id = f"VOICE-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
         result_payload = {
             "session_id": session_id,
             "input_transcript": voice_transcript,
@@ -128,13 +169,14 @@ class VoiceFarmerAssistant:
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
 
-        # Log session
+        self._log_session(result_payload, session_id)
+        return result_payload
+
+    def _log_session(self, payload: Dict[str, Any], session_id: str):
         log_file = os.path.join(self.log_dir, f"{session_id}.json")
         with open(log_file, "w", encoding="utf-8") as f:
-            json.dump(result_payload, f, indent=2, ensure_ascii=False)
-
-        result_payload["log_file"] = log_file
-        return result_payload
+            json.dump(payload, f, indent=2, ensure_ascii=False)
+        payload["log_file"] = log_file
 
     def _classify_intent(self, text: str) -> str:
         scores = {}

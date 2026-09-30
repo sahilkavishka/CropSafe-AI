@@ -56,7 +56,7 @@ from src.models.fertilizer_price_forecaster import price_forecasting_engine
 from src.models.supply_chain_network import SupplyChainNetworkEngine
 from src.models.fertilizer_online_procurement import FertilizerProcurementEngine, ProcurementOrderRequest
 from src.models.gov_fertilizer_registry import GovFertilizerRegistryEngine, GovTokenGenerationRequest
-from src.models.user_auth_engine import UserAuthEngine, LoginRequest
+from src.models.user_auth_engine import UserAuthEngine, LoginRequest, RegisterFarmerRequest
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("CropSafeAPI")
@@ -658,6 +658,13 @@ def login_user(req: LoginRequest):
     or 1-click verified institutional role demo.
     """
     return UserAuthEngine.authenticate(req)
+
+@app.post("/api/auth/register-farmer")
+def register_farmer(req: RegisterFarmerRequest):
+    """
+    Registers a new Sri Lankan farmer into DAD Yaya Cadastre registry and returns authenticated session.
+    """
+    return UserAuthEngine.register_farmer(req)
 
 if __name__ == "__main__":
 
