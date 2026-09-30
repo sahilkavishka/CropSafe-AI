@@ -1,14 +1,4 @@
-"""
-CropSafe AI - Feature Engineering & Selection Notebook Builder
-Builds and executes the comprehensive Jupyter Notebook for DS3206 Capstone Project II.
-Covers:
-  1. Domain-specific Feature Engineering (Deviations, Quality Index, Price Ratios)
-  2. Multicollinearity & Variance Inflation Factor (VIF) Analysis
-  3. Information-Theoretic Mutual Information (MI) Ranking
-  4. Tree-based Feature Importance
-  5. Final Feature Contract Definition
-  6. Production Scikit-Learn Preprocessing Pipeline Serialization
-"""
+
 
 import os
 import nbformat as nbf

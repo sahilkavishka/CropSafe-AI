@@ -1,16 +1,4 @@
-"""
-CropSafe AI - Advanced Feature Engineering & Selection Notebook Builder (Upgrade)
-Constructs and executes the comprehensive Jupyter Notebook for DS3206 Capstone Project II.
-Incorporates:
-  1. Agronomic Stoichiometric Features (Total NPK Mass, Estimated Inert Filler, Nutrient Ratios)
-  2. Economic Exploitation Indices (Cost per Gram of Active Nutrient, Moisture Waste Cost)
-  3. Multi-Modal TF-IDF NLP Extraction from Inspector Notes
-  4. Multicollinearity VIF Diagnostics
-  5. Information-Theoretic Mutual Information (MI)
-  6. Recursive Feature Elimination with Cross-Validation (RFECV)
-  7. Permutation Feature Importance
-  8. Robust Preprocessing Pipeline Serialization
-"""
+
 
 import os
 import nbformat as nbf

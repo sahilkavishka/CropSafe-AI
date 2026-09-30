@@ -1,7 +1,4 @@
 """
-CropSafe AI - Elite Research-Grade Predictive & Prescriptive Analytics Suite (Extended & Deepened)
-Constructs and executes the comprehensive Jupyter Notebook 05 for DS3206 Capstone Project II.
-Faculty of Computing | Sabaragamuwa University of Sri Lanka
 
 Deepened Modules:
   1. Executive Problem Formulation & Theoretical Taxonomy
@@ -39,9 +36,6 @@ def build_predictive_prescriptive_notebook():
 
     # Title & Metadata
     cells.append(nbf.v4.new_markdown_cell("""# CropSafe AI: Advanced Predictive & Prescriptive Intelligence Suite
-### Department of Data Science | Faculty of Computing | Sabaragamuwa University of Sri Lanka
-**Course:** Capstone Project in Data Science II (DS3206)  
-**Study:** Dual-Target Agronomic & Financial Loss Regression, Monte Carlo Value-at-Risk (VaR/CVaR), Fertilizer Shelf-Life Rheology, Multi-Objective Pareto Routing (2-Opt TSP), Interactive Geospatial Cartography (Folium), Supply Chain Fraud Contagion Networks, and Climate Stress Demand Forecasting.
 
 ---
 ## Theoretical & Operational Architecture:

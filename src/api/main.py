@@ -1,13 +1,4 @@
-"""
-CropSafe AI - Production REST API Microservice Gateway
-Module: src/api/main.py
-Author: Sabaragamuwa University of Sri Lanka (SUSL) - DS3206 Capstone Project II
 
-Serves as the high-speed backend for the 3D Web Application and Mobile Edge Clients.
-Provides endpoints for all 50 models, including ML inference, farmer screening, 
-precision dosage, tank-mix compatibility, leaf deficiency diagnostics, 3D warehouse twin,
-national policy wargaming, and geospatial analytics.
-"""
 
 import os
 import sys

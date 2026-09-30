@@ -69,11 +69,28 @@ st.set_page_config(
 st.markdown("""
 <style>
     .metric-card {
-        background: #ffffff;
+        background: #1e293b !important;
+        color: #f8fafc !important;
         border-radius: 12px;
-        padding: 18px;
-        border-left: 5px solid #059669;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06);
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-left: 5px solid #10b981 !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .metric-card h4 {
+        color: #34d399 !important;
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-weight: 700;
+        font-size: 1.15rem;
+    }
+    .metric-card p {
+        color: #f1f5f9 !important;
+        margin: 6px 0;
+        font-size: 0.95rem;
+    }
+    .metric-card b {
+        color: #38bdf8 !important;
     }
     .badge-pure {
         background-color: #d1fae5;
@@ -307,13 +324,13 @@ elif sel == "explorer":
             card_col1, card_col2, card_col3 = st.columns([1, 1, 1])
             with card_col1:
                 st.markdown(f"""
-                <div class="metric-card">
-                    <h4>Batch: {row.get('Batch_ID', 'N/A')}</h4>
-                    <p><b>Product:</b> {row.get('Product_Name', 'N/A')}</p>
-                    <p><b>Supplier:</b> {row.get('Supplier', 'N/A')}</p>
-                    <p><b>Province:</b> {row.get('Region', 'N/A')}</p>
-                    <p><b>Season:</b> {row.get('Season', 'N/A')}</p>
-                    <p><b>Tested Date:</b> {row.get('Test_Date', 'N/A')}</p>
+                <div class="metric-card" style="background:#1e293b; color:#ffffff; border-radius:12px; padding:18px; border-left:5px solid #10b981; box-shadow:0 4px 12px rgba(0,0,0,0.4); border:1px solid rgba(255,255,255,0.1);">
+                    <h4 style="color:#34d399; margin-top:0; margin-bottom:12px; font-weight:700; font-size:1.15rem;">Batch: {row.get('Batch_ID', 'N/A')}</h4>
+                    <p style="color:#f8fafc; margin:6px 0; font-size:0.95rem;"><b style="color:#38bdf8;">Product:</b> {row.get('Product_Name', 'N/A')}</p>
+                    <p style="color:#f8fafc; margin:6px 0; font-size:0.95rem;"><b style="color:#38bdf8;">Supplier:</b> {row.get('Supplier', 'N/A')}</p>
+                    <p style="color:#f8fafc; margin:6px 0; font-size:0.95rem;"><b style="color:#38bdf8;">Province:</b> {row.get('Region', 'N/A')}</p>
+                    <p style="color:#f8fafc; margin:6px 0; font-size:0.95rem;"><b style="color:#38bdf8;">Season:</b> {row.get('Season', 'N/A')}</p>
+                    <p style="color:#f8fafc; margin:6px 0; font-size:0.95rem;"><b style="color:#38bdf8;">Tested Date:</b> {row.get('Test_Date', 'N/A')}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -400,33 +417,66 @@ elif sel == "quality":
         "Moisture_Volatilization_Interaction": ("Moisture Volatilization Interaction", "Interaction term for urea caking and nitrogen loss", 0.0, 1.0, 0.01),
     }
 
-    st.markdown("#### ⚡ Quick Diagnostic Presets")
+    PRESETS = {
+        "pure": {
+            "Total_Active_NPK": 46.5, "Estimated_Inert_Filler": 52.0, "Quality_Score": 98.0, 
+            "Chemical_Deviation_Score": 1.0, "dev_n": 0.01, "dev_p": 0.0, "dev_k": 0.0, 
+            "excess_moisture": 0.0, "Cost_per_Gram_Active_Nutrient": 0.22, "Price_Deviation_Pct": -2.0, 
+            "Moisture_Cost_Waste_LKR_kg": 0.0, "Ratio_N_to_P": 310.0, "NLP_Risk_Score": 0.1, 
+            "Moisture_Volatilization_Interaction": 0.01
+        },
+        "substandard": {
+            "Total_Active_NPK": 30.0, "Estimated_Inert_Filler": 65.0, "Quality_Score": 40.0, 
+            "Chemical_Deviation_Score": 35.0, "dev_n": 0.35, "dev_p": 0.1, "dev_k": 0.1, 
+            "excess_moisture": 0.0, "Cost_per_Gram_Active_Nutrient": 0.45, "Price_Deviation_Pct": 10.0, 
+            "Moisture_Cost_Waste_LKR_kg": 0.0, "Ratio_N_to_P": 150.0, "NLP_Risk_Score": 0.3, 
+            "Moisture_Volatilization_Interaction": 0.05
+        },
+        "heavy_filler": {
+            "Total_Active_NPK": 18.0, "Estimated_Inert_Filler": 78.0, "Quality_Score": 22.0, 
+            "Chemical_Deviation_Score": 55.0, "dev_n": 0.60, "dev_p": 0.2, "dev_k": 0.2, 
+            "excess_moisture": 3.0, "Cost_per_Gram_Active_Nutrient": 0.85, "Price_Deviation_Pct": -12.0, 
+            "Moisture_Cost_Waste_LKR_kg": 8.0, "Ratio_N_to_P": 80.0, "NLP_Risk_Score": 0.7, 
+            "Moisture_Volatilization_Interaction": 0.25
+        }
+    }
+
+    def apply_preset(preset_key):
+        p_dict = PRESETS[preset_key]
+        for k, v in p_dict.items():
+            st.session_state[f"chem_{k}"] = float(v)
+        st.session_state["execute_chem_diag"] = True
+
+    # Initialize all session state keys if not already present
+    for c in feat_cols:
+        if f"chem_{c}" not in st.session_state:
+            default_v = labels_info.get(c, (c, "", 0.0, 100.0, 50.0))[4]
+            st.session_state[f"chem_{c}"] = float(default_v)
+
+    st.markdown("#### ⚡ Quick Diagnostic Presets (Click to Auto-Diagnose)")
     p1, p2, p3 = st.columns(3)
-    preset_data = None
-    if p1.button("🟢 Standard Pure Urea Sample", use_container_width=True):
-        preset_data = {"Total_Active_NPK": 46.5, "Estimated_Inert_Filler": 52.0, "Quality_Score": 98.0, "Chemical_Deviation_Score": 1.0, "dev_n": 0.01, "excess_moisture": 0.0}
-    if p2.button("🟡 Substandard Blend Sample", use_container_width=True):
-        preset_data = {"Total_Active_NPK": 30.0, "Estimated_Inert_Filler": 65.0, "Quality_Score": 40.0, "Chemical_Deviation_Score": 35.0, "dev_n": 0.35, "excess_moisture": 0.0}
-    if p3.button("🔴 Heavy Filler Adulteration", use_container_width=True):
-        preset_data = {"Total_Active_NPK": 20.0, "Estimated_Inert_Filler": 75.0, "Quality_Score": 25.0, "Chemical_Deviation_Score": 50.0, "dev_n": 0.5, "excess_moisture": 5.0, "Moisture_Cost_Waste_LKR_kg": 15.0}
+    p1.button("🟢 Standard Pure Urea Sample", on_click=apply_preset, args=("pure",), use_container_width=True)
+    p2.button("🟡 Substandard Blend Sample", on_click=apply_preset, args=("substandard",), use_container_width=True)
+    p3.button("🔴 Heavy Filler Adulteration", on_click=apply_preset, args=("heavy_filler",), use_container_width=True)
 
     col1, col2 = st.columns(2)
     features = {}
     for i, c in enumerate(feat_cols):
         info = labels_info.get(c, (c, "", 0.0, 100.0, 50.0))
-        val_default = preset_data.get(c, info[4]) if preset_data else info[4]
         with (col1 if i % 2 == 0 else col2):
             features[c] = st.number_input(
                 info[0], 
                 min_value=info[2], 
                 max_value=info[3], 
-                value=float(val_default), 
                 help=info[1], 
                 key=f"chem_{c}"
             )
 
     st.markdown("---")
-    if st.button("🚀 Execute Machine Learning Diagnostic", type="primary", use_container_width=True):
+    exec_clicked = st.button("🚀 Execute Machine Learning Diagnostic", type="primary", use_container_width=True)
+    should_run = exec_clicked or st.session_state.get("execute_chem_diag", False)
+    if should_run:
+        st.session_state["execute_chem_diag"] = False
         input_df = pd.DataFrame([features])
         transformed = models["preprocessor"].transform(input_df[feat_cols])
         pred_idx = models["classifier"].predict(transformed)[0]
@@ -778,6 +828,6 @@ st.markdown("""
 <div style="text-align:center;color:#64748b;padding:1.5rem;">
     <strong>🌾 CropSafe AI v2.0</strong> — Sri Lanka National Fertilizer Quality Intelligence Platform<br>
     <small>Sabaragamuwa University of Sri Lanka | Faculty of Computing | Department of Data Science<br>
-    DS3206 Capstone Project II | Final Degree Evaluation & Defense</small>
+    DS3206 Capstone Project II </small>
 </div>
 """, unsafe_allow_html=True)

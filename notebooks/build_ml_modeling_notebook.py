@@ -1,6 +1,4 @@
-"""
-CropSafe AI - Elite Research-Grade Machine Learning Modeling, Benchmarking & Hyperparameter Optimization Builder
-Constructs and executes the production-grade Jupyter Notebook 03 for DS3206 Capstone Project II.
+""""
 Comprehensive Modules:
   1. Feature Preprocessing & Stratified Train/Test Partitioning
   2. Baseline Establishment & Multi-Model Benchmark (Dummy, LR, SVC, RF, XGB, LGBM, CatBoost)
